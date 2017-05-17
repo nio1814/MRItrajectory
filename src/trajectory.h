@@ -22,19 +22,18 @@ struct Trajectory
 	float maxGradientAmplitude;
 	float maxReadoutGradientAmplitude;
 	float maxSlewRate;
-	short waveformPoints;
-	unsigned short readoutPoints;
+	int waveformPoints;
+	int readoutPoints;
+	float samplingInterval;
 	float *densityCompensation;
-	short *shortGradientWaveforms;
+	short *gradientWaveformsShort;
 	float *gradientWaveforms;
 	float *kSpaceCoordinates;
-	float samplingInterval;
-//	enum TrajTypes trajType;
-//	enum TrajStatus status;
 	enum WaveformStorageType storage;
-//	short ID;
 	struct VariableDensity *variableDensity;
 };
+
+void initializeTrajectory(struct Trajectory* trajectory);
 
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution);
 

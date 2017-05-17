@@ -7,6 +7,8 @@
  This source code is under a BSD 3-Clause License.
  See LICENSE for more information.
 
+To distribute this file, substitute the full license for the above reference.
+
 **************************************************************************/
 #include "angles.h"
 

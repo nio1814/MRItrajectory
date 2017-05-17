@@ -522,25 +522,24 @@ void interpolateCone(float fieldOfViewXY, float fieldOfViewZ, float spatialResol
 	return;
 }
 
-void initializeConesSchedule(struct ConesSchedule *schedule, int length)
+void initializeConesInterpolation(struct ConesInterpolation *interpolation, int readouts)
 {
-	schedule->length = length;
-	schedule->theta = (float*)malloc(length*sizeof(float));
-	schedule->thetaIndex = (int*)malloc(length*sizeof(int));
-	schedule->scaleXY = (float*)malloc(length*sizeof(float));
-	schedule->scaleZ = (float*)malloc(length*sizeof(float));
-	schedule->phi = (float*)malloc(length*sizeof(float));
-	schedule->coneIndex = (int*)malloc(length*sizeof(int));
-	schedule->readout = (int*)malloc(length*sizeof(int));
-	schedule->interleavesOnCone = (int*)malloc(length*sizeof(int));
-	schedule->interleafOnCone = (int*)malloc(length*sizeof(int));
+	interpolation->readouts = readouts;
+	interpolation->theta = (float*)malloc(readouts*sizeof(float));
+	interpolation->thetaIndex = (int*)malloc(readouts*sizeof(int));
+	interpolation->scaleXY = (float*)malloc(readouts*sizeof(float));
+	interpolation->scaleZ = (float*)malloc(readouts*sizeof(float));
+	interpolation->phi = (float*)malloc(readouts*sizeof(float));
+	interpolation->cone = (int*)malloc(readouts*sizeof(int));
+	interpolation->readout = (int*)malloc(readouts*sizeof(int));
+	interpolation->interleavesOnCone = (int*)malloc(readouts*sizeof(int));
+	interpolation->interleafOnCone = (int*)malloc(readouts*sizeof(int));
 }
 
-void makeConesSchedule(struct Cones *cones)
+void makeConesInterpolation(struct Cones *cones)
 {
-	struct ConesSchedule singleInterleafSchedule;
+	struct ConesInterpolation singleInterleafInterpolation;
 	struct Trajectory *trajectory = &cones->trajectory;
-//	int readoutPoints = cones->trajectory.readoutPoints;
 	float thetaMax = M_PI_2;
 	float coneCoverageStart;
 	float coneCoverageEnd;
@@ -552,53 +551,53 @@ void makeConesSchedule(struct Cones *cones)
 	int c;
 	int r=0;
 	int i;
-	initializeConesSchedule(&singleInterleafSchedule, cones->numCones);
+	initializeConesInterpolation(&singleInterleafInterpolation, cones->numCones);
 	trajectory->readouts = 0;
 	cones->coneAngleDensityCompensation = (float*)malloc(cones->numCones*trajectory->readoutPoints*sizeof(float));
 	for (c=0; c<cones->numCones; c++)
 	{
-		singleInterleafSchedule.theta[c] = cones->coneAngles[c];
+		singleInterleafInterpolation.theta[c] = cones->coneAngles[c];
 //		singleInterleafSchedule.coneIndex[c] = fmin(trajectory->bases, fmax(1,ceil(fabs(singleInterleafSchedule.theta[c])/(M_PI_2)*trajectory->bases)))-1;
-		singleInterleafSchedule.coneIndex[c] = (1-fabs(1-singleInterleafSchedule.theta[c]*M_2_PI))*trajectory->bases;
+		singleInterleafInterpolation.cone[c] = (1-fabs(1-singleInterleafInterpolation.theta[c]*M_2_PI))*trajectory->bases;
 
-		coneCoverageStart = singleInterleafSchedule.coneIndex[c]/(1.0*trajectory->bases)*thetaMax;
-		singleInterleafSchedule.scaleXY[c] = cos(singleInterleafSchedule.theta[c])/cos(coneCoverageStart);
-		coneCoverageEnd = (singleInterleafSchedule.coneIndex[c]+1)/(1.0*trajectory->bases)*thetaMax;
-		singleInterleafSchedule.scaleZ[c] = sin(singleInterleafSchedule.theta[c])/sin(coneCoverageEnd);
+		coneCoverageStart = singleInterleafInterpolation.cone[c]/(1.0*trajectory->bases)*thetaMax;
+		singleInterleafInterpolation.scaleXY[c] = cos(singleInterleafInterpolation.theta[c])/cos(coneCoverageStart);
+
+		coneCoverageEnd = (singleInterleafInterpolation.cone[c]+1)/(1.0*trajectory->bases)*thetaMax;
+		singleInterleafInterpolation.scaleZ[c] = sin(singleInterleafInterpolation.theta[c])/sin(coneCoverageEnd);
 
 	   if(c)
-		   deltaConeAngle = singleInterleafSchedule.theta[c]-singleInterleafSchedule.theta[c-1];
+		   deltaConeAngle = singleInterleafInterpolation.theta[c]-singleInterleafInterpolation.theta[c-1];
 	   else
-		   deltaConeAngle = 2*singleInterleafSchedule.theta[c];
+		   deltaConeAngle = 2*singleInterleafInterpolation.theta[c];
 
-		basisGradientWaveforms = &cones->basisGradientWaveforms[3*trajectory->waveformPoints*singleInterleafSchedule.coneIndex[c]];
-		interpolateCone(trajectory->fieldOfView[0], trajectory->fieldOfView[2], trajectory->spatialResolution[0], trajectory->spatialResolution[2], basisGradientWaveforms, cones->basisWaveformPoints[singleInterleafSchedule.coneIndex[c]], cones->basisReadoutPoints[singleInterleafSchedule.coneIndex[c]], trajectory->waveformPoints, singleInterleafSchedule.theta[c], singleInterleafSchedule.scaleXY[c], singleInterleafSchedule.scaleZ[c], trajectory->variableDensity, cones->interconeCompensation, deltaConeAngle, trajectory->samplingInterval, &singleInterleafSchedule.interleavesOnCone[c], &cones->coneAngleDensityCompensation[c*trajectory->readoutPoints], interpolatedGradientWaveforms);
-		trajectory->readouts += singleInterleafSchedule.interleavesOnCone[c];
+		basisGradientWaveforms = &cones->basisGradientWaveforms[3*trajectory->waveformPoints*singleInterleafInterpolation.cone[c]];
+		interpolateCone(trajectory->fieldOfView[0], trajectory->fieldOfView[2], trajectory->spatialResolution[0], trajectory->spatialResolution[2], basisGradientWaveforms, cones->basisWaveformPoints[singleInterleafInterpolation.cone[c]], cones->basisReadoutPoints[singleInterleafInterpolation.cone[c]], trajectory->waveformPoints, singleInterleafInterpolation.theta[c], singleInterleafInterpolation.scaleXY[c], singleInterleafInterpolation.scaleZ[c], trajectory->variableDensity, cones->interconeCompensation, deltaConeAngle, trajectory->samplingInterval, &singleInterleafInterpolation.interleavesOnCone[c], &cones->coneAngleDensityCompensation[c*trajectory->readoutPoints], interpolatedGradientWaveforms);
+		trajectory->readouts += singleInterleafInterpolation.interleavesOnCone[c];
 
-		printf("theta %f\tcone %d\tnintl %d\n", singleInterleafSchedule.theta[c], singleInterleafSchedule.coneIndex[c], singleInterleafSchedule.interleavesOnCone[c]);
+		printf("theta %f\tcone %d\tnintl %d\n", singleInterleafInterpolation.theta[c], singleInterleafInterpolation.cone[c], singleInterleafInterpolation.interleavesOnCone[c]);
 	}
 	printf("Max readout length:\t%d\n", trajectory->readoutPoints);
 	printf("readouts %d\n", trajectory->readouts);
 
-	cones->schedule = (struct ConesSchedule*)malloc(sizeof(struct ConesSchedule));
-	initializeConesSchedule(cones->schedule, trajectory->readouts);
+	initializeConesInterpolation(&cones->interpolation, trajectory->readouts);
 	for(c=0; c<cones->numCones; c++)
 	{
 		if(c)
-			phiOffset = M_PI/singleInterleafSchedule.interleavesOnCone[c-1];
+			phiOffset = M_PI/singleInterleafInterpolation.interleavesOnCone[c-1];
 		else
 			phiOffset = 0;
 
-		for(i=0; i<singleInterleafSchedule.interleavesOnCone[c]; i++)
+		for(i=0; i<singleInterleafInterpolation.interleavesOnCone[c]; i++)
 		{
-			cones->schedule->readout[r] = r;
-			cones->schedule->coneIndex[r] = singleInterleafSchedule.coneIndex[c];
-			cones->schedule->scaleXY[r] = singleInterleafSchedule.scaleXY[c];
-			cones->schedule->scaleZ[r] = singleInterleafSchedule.scaleZ[c];
-			cones->schedule->theta[r] = singleInterleafSchedule.theta[c];
-			cones->schedule->thetaIndex[r] = c;
-			cones->schedule->interleavesOnCone[r] = singleInterleafSchedule.interleavesOnCone[c];
-			cones->schedule->phi[r] = i*2*M_PI/singleInterleafSchedule.interleavesOnCone[c] + phiOffset;
+			cones->interpolation.readout[r] = r;
+			cones->interpolation.cone[r] = singleInterleafInterpolation.cone[c];
+			cones->interpolation.scaleXY[r] = singleInterleafInterpolation.scaleXY[c];
+			cones->interpolation.scaleZ[r] = singleInterleafInterpolation.scaleZ[c];
+			cones->interpolation.theta[r] = singleInterleafInterpolation.theta[c];
+			cones->interpolation.thetaIndex[r] = c;
+			cones->interpolation.interleavesOnCone[r] = singleInterleafInterpolation.interleavesOnCone[c];
+			cones->interpolation.phi[r] = i*2*M_PI/singleInterleafInterpolation.interleavesOnCone[c] + phiOffset;
 		}
 	}
 }
@@ -666,8 +665,6 @@ int generateConesBasis(struct Cones *cones)
 
 	printf("Number of cones:\t%d\n", cones->numCones);
 
-	//readoutGradientWaveforms = (float*)calloc(3*trajectory->bases*trajectory->readoutPoints, sizeof(float));
-
 	cones->designConeAngles = (float*)malloc(trajectory->bases*sizeof(float));
 
 	basisReadoutGradientWaveforms = (float*)malloc(3*trajectory->bases*trajectory->readoutPoints*sizeof(float));
@@ -731,8 +728,6 @@ int generateConesBasis(struct Cones *cones)
 		}
 	}
 
-	//saveGradientWaveforms("readouts.wav", basisReadoutGradientWaveforms, 3, trajectory->bases, trajectory->readoutPoints, trajectory->readoutPoints, fmax(trajectory->fieldOfView[0],trajectory->fieldOfView[2]), trajectory->maxGradientAmplitude, 4, trajectory->samplingInterval, "cones readouts", LittleEndian);
-
 	trajectory->waveformPoints = 0;
 	for(b=0; b<trajectory->bases; b++)
 	{
@@ -762,39 +757,35 @@ traverseKspaceToZero(&basisReadoutGradientWaveforms[b*trajectory->readoutPoints*
 		memcpy(&cones->basisGradientWaveforms[b*3*trajectory->waveformPoints], basisGradientRewoundX[b], cones->basisWaveformPoints[b]*sizeof(float));
 		memcpy(&cones->basisGradientWaveforms[(b*3+1)*trajectory->waveformPoints], basisGradientRewoundY[b], cones->basisWaveformPoints[b]*sizeof(float));
 		memcpy(&cones->basisGradientWaveforms[(b*3+2)*trajectory->waveformPoints], basisGradientRewoundZ[b], cones->basisWaveformPoints[b]*sizeof(float));
-//		memcpy(&cones->basisGradientWaveforms[b*3*trajectory->waveformPoints], &basisReadoutGradientWaveforms[b*3*trajectory->readoutPoints], 3*cones->basisReadoutPoints[b]*sizeof(float));
-//		rewindPoints = cones->basisWaveformPoints[b]-cones->basisReadoutPoints[b];
-//		memcpy(&cones->basisGradientWaveforms[3*b*trajectory->waveformPoints+trajectory->readoutPoints], &basisGradientRewoundX[b], rewindPoints*sizeof(float));
-//		memcpy(&cones->basisGradientWaveforms[(3*b+1)*trajectory->waveformPoints+trajectory->readoutPoints], &basisGradientRewoundY[b], rewindPoints*sizeof(float));
-//		memcpy(&cones->basisGradientWaveforms[(3*b+2)*trajectory->waveformPoints+trajectory->readoutPoints], &basisGradientRewoundZ[b], rewindPoints*sizeof(float));
 	}
 
 	return status;
 }
 
-float* gradientWaveform(struct Cones* cones, int basis, int axis)
+float* conesBasisGradientWaveform(const struct Cones* cones, int basis, int axis)
 {
 	return &cones->basisGradientWaveforms[(basis*3+axis)*cones->trajectory.waveformPoints];
 }
 
 void generateReadoutWaveforms(int index, const struct Cones* cones, float* gradientX, float* gradientY, float* gradientZ)
 {
-	struct ConesSchedule *schedule = cones->schedule;
+	const struct ConesInterpolation *interpolation = &cones->interpolation;
 	const struct Trajectory *trajectory = &cones->trajectory;
-	int coneIndex = schedule->coneIndex[index];
+	int cone = interpolation->cone[index];
 
-	memcpy(gradientX, &cones->basisGradientWaveforms[coneIndex*3*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
-	memcpy(gradientY, &cones->basisGradientWaveforms[(coneIndex*3+1)*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
-	memcpy(gradientZ, &cones->basisGradientWaveforms[(coneIndex*3+2)*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
+	memcpy(gradientX, &cones->basisGradientWaveforms[cone*3*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
+	memcpy(gradientY, &cones->basisGradientWaveforms[(cone*3+1)*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
+	memcpy(gradientZ, &cones->basisGradientWaveforms[(cone*3+2)*trajectory->waveformPoints], trajectory->waveformPoints*sizeof(float));
 
-	scalecomplex(gradientX, gradientY, schedule->scaleXY[index]*cos(schedule->phi[index]), schedule->scaleXY[index]*sin(schedule->phi[index]), trajectory->waveformPoints);
-	scalefloats(gradientZ, trajectory->waveformPoints, schedule->scaleZ[index]);
+	scalecomplex(gradientX, gradientY, interpolation->scaleXY[index]*cos(interpolation->phi[index]), interpolation->scaleXY[index]*sin(interpolation->phi[index]), trajectory->waveformPoints);
+	scalefloats(gradientZ, trajectory->waveformPoints, interpolation->scaleZ[index]);
 }
 
 struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int bases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage)
 {
 	struct Cones* cones = allocateCones(bases);
 	struct Trajectory *trajectory = &cones->trajectory;
+	initializeTrajectory(trajectory);
 	int s;
 	int d;
 
@@ -811,7 +802,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	trajectory->fieldOfView[2] = fieldOfViewZ;
 	if(filterFieldOfView>0)
 	{
-		trajectory->maxReadoutGradientAmplitude = 1/(samplingInterval*GYROMAGNETIC_RATIO*filterFieldOfView);
+		trajectory->maxReadoutGradientAmplitude = fminf(1/(samplingInterval*GYROMAGNETIC_RATIO*filterFieldOfView), maxGradientAmplitude);
 	} 
 	else 
 		trajectory->maxReadoutGradientAmplitude = maxGradientAmplitude;
@@ -820,9 +811,10 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	trajectory->maxGradientAmplitude = maxGradientAmplitude;
 	trajectory->maxSlewRate = maxSlewRate;
 	trajectory->samplingInterval = samplingInterval;
+	trajectory->dimensions = 3;
+	trajectory->bases = bases;
 
 	cones->rotatable = rotatable;
-	trajectory->bases = bases;
 	cones->interconeCompensation = interConeCompensation;
 
 	if(variableDensity)
@@ -834,16 +826,20 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 		trajectory->variableDensity = NULL;
 	generateConesBasis(cones);
 	//saveGradientWaveforms("grad.wav", cones->basisGradientWaveforms, 3, trajectory->bases, trajectory->waveformPoints, trajectory->readoutPoints, fmax(fieldOfViewXY,fieldOfViewZ), maxGradientAmplitude, 4, samplingInterval, "cones", LittleEndian);
-	makeConesSchedule(cones);
-	allocateTrajectory(trajectory, trajectory->readoutPoints, trajectory->waveformPoints, 3, bases, trajectory->readouts, storage);
+	makeConesInterpolation(cones);
+	trajectory->storage = storage;
 	if(storage==StoreBasis)
 	{
+		trajectory->gradientWaveforms = (float*)malloc(bases*3*trajectory->waveformPoints*sizeof(float));
+		trajectory->kSpaceCoordinates = (float*)malloc(bases*3*trajectory->readoutPoints*sizeof(float));
 		memcpy(trajectory->gradientWaveforms, cones->basisGradientWaveforms, bases*3*trajectory->waveformPoints*sizeof(float));
 		memcpy(trajectory->kSpaceCoordinates, cones->basisKspaceCoordinates, bases*3*trajectory->readoutPoints*sizeof(float));
 	}
 	else
 	{
-		for(s=0; s<cones->schedule->length; s++)
+		trajectory->gradientWaveforms = (float*)malloc(trajectory->readouts*3*trajectory->waveformPoints*sizeof(float));
+		trajectory->kSpaceCoordinates = (float*)malloc(trajectory->readouts*3*trajectory->readoutPoints*sizeof(float));
+		for(s=0; s<cones->interpolation.readouts; s++)
 		{
 			generateReadoutWaveforms(s, cones, &trajectory->gradientWaveforms[s*3*trajectory->waveformPoints], &trajectory->gradientWaveforms[(s*3+1)*trajectory->waveformPoints], &trajectory->gradientWaveforms[(s*3+2)*trajectory->waveformPoints]);
 			for(d=0; d<3; d++)
