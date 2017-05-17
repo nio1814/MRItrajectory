@@ -12,6 +12,3 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
 
 add_library(cones ${CONES_SOURCE})
-set_property(TARGET cones PROPERTY C_STANDARD 90)
-
-add_subdirectory(test)
