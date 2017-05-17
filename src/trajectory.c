@@ -12,6 +12,14 @@ const float GYROMAGNETIC_RATIO = 4257.59;
 const float REWIND_SAMPLING_INTERVAL = 1e-6;
 const int MAX_REWIND_POINTS = 4096;
 
+void initializeTrajectory(struct Trajectory *trajectory)
+{
+	trajectory->densityCompensation = NULL;
+	trajectory->kSpaceCoordinates = NULL;
+	trajectory->gradientWaveforms = NULL;
+	trajectory->gradientWaveformsShort = NULL;
+}
+
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution)
 {
 	*imageDimension = ceil(10.0*fieldOfView/(*spatialResolution));
@@ -68,7 +76,6 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int wa
 }
 
 void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int dimensions, float samplingInterval, float *kSpaceCoordinatesFinal, float maxGradientAmplitude, float maxSlewRate, float **gradientRewindX, float **gradientRewindY, float **gradientRewindZ, int *pointsRewind)
-
 {
 	int oversamplingRatio = roundToInteger(samplingInterval/REWIND_SAMPLING_INTERVAL);
 	float gain = 20;
@@ -192,36 +199,27 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 			(*gradientRewindZ)[n-1] = gradient[3*oversamplingRatio*n+2];
 	}
 
-	n = *pointsRewind;
+	n = *pointsRewind-1;
 
 	if(gradientRewindX)
 	{
-		a = (*gradientRewindX)[n-1]/samplingInterval;
+		a = (*gradientRewindX)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		{
-		   fprintf(stderr, "gx %f out of range", (*gradientRewindX)[n-1]);
-		   exit(EXIT_FAILURE);
-		}
+		   fprintf(stderr, "gx %f out of range", (*gradientRewindX)[n]);
 	}
 
 	if(gradientRewindY)
 	{
-		a = (*gradientRewindY)[n-1]/samplingInterval;
+		a = (*gradientRewindY)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		{
-		   fprintf(stderr, "gy %f out of range", (*gradientRewindY)[n-1]);
-		   exit(EXIT_FAILURE);
-		}
+		   fprintf(stderr, "gy %f out of range", (*gradientRewindY)[n]);
 	}
 
 	if(gradientRewindZ)
 	{
-		a = (*gradientRewindZ)[n-1]/samplingInterval;
+		a = (*gradientRewindZ)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		{
-		   fprintf(stderr, "gz %f out of range", (*gradientRewindZ)[n-1]);
-		   exit(EXIT_FAILURE);
-		}
+		   fprintf(stderr, "gz %f out of range", (*gradientRewindZ)[n]);
 	}
 
 	return;

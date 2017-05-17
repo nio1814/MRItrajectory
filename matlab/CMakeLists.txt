@@ -1,5 +1,5 @@
 find_package(Matlab REQUIRED COMPONENTS MEX_COMPILER)
-if(Matlab_FOUND)
+if(Matlab_FOUND AND NOT WIN32)
 	#set(MATLAB_MEX "${MATLAB_ROOT}/bin/mex")
 
 	set(CMAKE_C_COMPILER ${Matlab_MEX_COMPILER})
@@ -17,11 +17,11 @@ if(Matlab_FOUND)
 	set(CMAKE_CXX_COMPILE_OBJECT "<CMAKE_CXX_COMPILER> -c <FLAGS> <INCLUDES> <DEFINES> <SOURCE> -outdir <OBJECT_DIR>")
 	set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> <FLAGS> <LINK_FLAGS> <LINK_LIBRARIES> <OBJECTS> -outdir ${CMAKE_BINARY_DIR} -output <TARGET>")
 	set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <LINK_FLAGS> <LINK_LIBRARIES> <OBJECTS> -outdir ${CMAKE_BINARY_DIR} -output <TARGET>")
+
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+	set(CONES_SOURCE generateCones.cpp)
+
+	add_executable(generateCones ${CONES_SOURCE})
+	target_link_libraries(generateCones cones)
 endif()
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src)
-
-set(CONES_SOURCE generateCones.cpp)
-
-add_executable(generateCones ${CONES_SOURCE})
-target_link_libraries(generateCones cones)
