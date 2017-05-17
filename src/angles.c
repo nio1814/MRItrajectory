@@ -1,3 +1,13 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University. 
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+**************************************************************************/
 #include "angles.h"
 
 #include "arrayops.h"
@@ -10,7 +20,7 @@
 const int MAX_ANGLES = 1000;
 
 /*!
- * \brief shapeEllipse	Ellipse with diameters of X and Y
+ * \brief Ellipse with diameters of X and Y
  * Peder Larson and Paul Gurney, 6/28/2006
  * \param angle	Angle at which to calculate extent
  * \param axisLengths	Ellipse axis lengths
