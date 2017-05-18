@@ -9,7 +9,7 @@ typedef std::complex<float> complexFloat;
 class MRdata
 {
 public:
-	MRdata(std::vector<int> dimensions, int numImagingDimensions, std::vector<complexFloat> data);
+	MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data);
 private:
 	int m_numImagingDimensions;
 	std::vector<int> m_dimensions;
