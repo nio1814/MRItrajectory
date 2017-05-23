@@ -24,8 +24,19 @@ class Gridding
 public:
 	Gridding(const Trajectory *trajectory);
 
+	std::vector<int> imageDimensions();
+
 	MRdata* grid(const MRdata& ungriddedData);
+
+	void deapodize(MRdata& oversampledImage);
+
+	void kSpaceToImage(const MRdata& ungriddedData, MRdata* image);
 private:
+	int numDimensions();
+	void nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint);
+	float lookupKernelValue(float x);
+	std::vector<std::vector<float> > kernelNeighborhood(const std::vector<float> &ungriddedPoint, const std::vector<float> &griddedPoint);
+
 	std::vector<int> gridDimensions();
 
 	const Trajectory* m_trajectory;
@@ -33,6 +44,8 @@ private:
 	int m_kernelWidth;
 	std::vector<float> m_kernelLookupTable;
 	std::vector<float> m_deapodization;
+	std::vector<int> m_gridDimensions;
+	std::vector<float> m_normalizedToGridScale;
 };
 
 #endif // GRIDDING_H

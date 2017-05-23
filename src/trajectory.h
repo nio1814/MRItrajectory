@@ -1,3 +1,15 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University.
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+To distribute this file, substitute the full license for the above reference.
+
+**************************************************************************/
 #ifndef TRAJECTORY_H
 #define TRAJECTORY_H
 
@@ -48,6 +60,10 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 void gradientWaveformToShort(const float *gradientsFloat, int points, float maxGradientAmplitudeScanner, short* gradientsShort);
 
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
+
+void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float *coordinates);
+
+void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation);
 
 #endif
 

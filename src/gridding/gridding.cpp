@@ -12,15 +12,15 @@ To distribute this file, substitute the full license for the above reference.
 **************************************************************************/
 #include "gridding.h"
 
-#include "trajectory.h"
-
 extern "C" {
+#include "trajectory.h"
 #include "numericalrecipes.h"
 #include "arrayops.h"
 }
 
 Gridding::Gridding(const Trajectory *trajectory) :
-	m_trajectory(trajectory), m_oversamplingFactor(1.5)
+	m_trajectory(trajectory), m_oversamplingFactor(1.5),
+	m_kernelWidth(4)
 {
 	float beta = M_PI*sqrt(powf(m_kernelWidth/m_oversamplingFactor,2)*powf(m_oversamplingFactor-0.5,2)-0.8);
 
@@ -48,12 +48,23 @@ Gridding::Gridding(const Trajectory *trajectory) :
 	m_deapodization.clear();
 	scale = -1/(2*beta)*(exp(-beta)-exp(beta));
 
-	std::vector<int> gridDims = gridDimensions();
+	float minSpatialResolution = INFINITY;
+	for(int d=0; d<numDimensions(); d++)
+		minSpatialResolution = std::min(minSpatialResolution, m_trajectory->spatialResolution[d]);
+
+	for(int d=0; d<numDimensions(); d++)
+	{
+		int dimension = m_oversamplingFactor*m_trajectory->imageDimensions[d];
+		dimension += dimension%2;
+		m_gridDimensions.push_back(dimension);
+		m_normalizedToGridScale.push_back(m_trajectory->spatialResolution[d]/minSpatialResolution*m_gridDimensions[d]);
+	}
+
 	for(int d=0; d<m_trajectory->dimensions; d++)
 	{
-		for(int n=0; n<gridDims[d]; n++)
+		for(int n=0; n<m_gridDimensions[d]; n++)
 		{
-			float arg = M_PI*m_kernelWidth*(-gridDims[d]/2.0f + n)/gridDims[d];
+			float arg = M_PI*m_kernelWidth*(-m_gridDimensions[d]/2.0f + n)/m_gridDimensions[d];
 			arg *= arg;
 			arg -= beta*beta;
 
@@ -68,23 +79,147 @@ Gridding::Gridding(const Trajectory *trajectory) :
 	}
 }
 
+std::vector<int> Gridding::imageDimensions()
+{
+	std::vector<int> imageDims;
+	for(int d=0; d<m_trajectory->dimensions; d++)
+		imageDims.push_back(m_trajectory->imageDimensions[d]);
+
+	return imageDims;
+}
+
+void Gridding::nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint)
+{
+	for(int d=0; d<ungriddedPoint.size(); d++)
+		griddedPoint[d] = roundf(m_normalizedToGridScale[d]*ungriddedPoint[d])/m_normalizedToGridScale[d];
+}
+
+float Gridding::lookupKernelValue(float x)
+{
+	float kernelIndexDecimal = fabsf((x)/(float)m_kernelWidth/2*m_kernelLookupTable.size());
+	int kernelIndex = (int)kernelIndexDecimal;
+	float secondPointFraction = kernelIndexDecimal - kernelIndex;
+
+	return m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction;
+}
+
+std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<float> &ungriddedPoint, const std::vector<float> &griddedPoint)
+{
+	int lookupPoints = m_kernelLookupTable.size();
+	std::vector<float> kernelValues;
+
+	for(int d=0; d<numDimensions(); d++)
+	{
+		float offset = (griddedPoint[d]-ungriddedPoint[d])*m_normalizedToGridScale[d];
+		for(int n=0; n<m_kernelWidth; n++)
+		{
+			int m = n-m_kernelWidth/2+1;
+			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth/2*lookupPoints);
+			int kernelIndex = (int)kernelIndexDecimal;
+			float secondPointFraction = kernelIndexDecimal - kernelIndex;
+			kernelValues.push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
+
+		}
+	}
+}
+
+long multiToSingleIndex(const std::vector<int> &indices, const std::vector<int>& size)
+{
+	long index = indices[0];
+	long lowerDimensionSize = size[0];
+	for(int n=1; n<indices.size(); n++)
+	{
+		index += indices[n]*lowerDimensionSize;
+		lowerDimensionSize *= size[n];
+	}
+
+	return index;
+}
+
 MRdata *Gridding::grid(const MRdata &ungriddedData)
 {
+	std::vector<float> ungriddedPoint(3);
+	std::vector<float> griddedPoint(3);
 
+	int dimensionStart[3] = {0,0,0};
+	int dimensionEnd[3] = {1,1,1};
+
+	MRdata* griddedData = new MRdata(m_gridDimensions, numDimensions());
+
+	for(int n=0; n<ungriddedData.points(); n++)
+	{
+		complexFloat ungriddedDataValue = ungriddedData.signalValue(n);
+		int readoutPoint = n%m_trajectory->readoutPoints;
+		int readout = n/m_trajectory->readoutPoints;
+
+		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data());
+
+		nearestGriddedPoint(ungriddedPoint, griddedPoint);
+
+		for(int d=0; d<numDimensions(); d++)
+		{
+			dimensionStart[d] = std::max(0, (int)(griddedPoint[d]-m_kernelWidth/2+1));
+			dimensionEnd[d] = std::max((int)(griddedPoint[d]-m_kernelWidth/2), m_gridDimensions[d]);
+		}
+
+		std::vector<std::vector<float> > kernelValues = kernelNeighborhood(ungriddedPoint, griddedPoint);
+		std::vector<int> gridIndex(3);
+		for(int d=numDimensions(); d<3; d++)
+		{
+			std::vector<float> one;
+			one.push_back(1);
+			kernelValues.push_back(one);
+		}
+
+		std::vector<int> multiIndex(3);
+		for(int gz=dimensionStart[2]; gz<dimensionEnd[2]; gz++)
+		{
+			multiIndex[2] = gz;
+			float kernelZ = kernelValues[2][gz];
+			for(int gy=dimensionStart[1]; gy<dimensionEnd[1]; gy++)
+			{
+				multiIndex[1] = gy;
+				float kernelY = kernelValues[1][gy];
+				for(int gx=dimensionStart[0]; gx<dimensionEnd[0]; gx++)
+				{
+					multiIndex[0] = gx;
+					float kernelX = kernelValues[0][gx];
+					long griddedDataIndex = multiToSingleIndex(multiIndex, m_gridDimensions);
+					griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
+				}
+			}
+		}
+
+	}
+}
+
+void Gridding::deapodize(MRdata &oversampledImage)
+{
+	complexFloat* signal = oversampledImage.signal();
+	for (int n=0; n<oversampledImage.points(); n++)
+		signal[n] *= m_deapodization[n];
+}
+
+void Gridding::kSpaceToImage(const MRdata &ungriddedData, MRdata *image)
+{
+	image = grid(ungriddedData);
+
+	image->fftShift();
+	image->fftShift();
+
+	deapodize(*image);
+
+	image->crop(imageDimensions());
+}
+
+int Gridding::numDimensions()
+{
+	return m_trajectory->dimensions;
 }
 
 std::vector<int> Gridding::gridDimensions()
 {
-	std::vector<int> dims;
-
-	for(int d=0; d<m_trajectory->dimensions; d++)
-	{
-		int dimension = m_oversamplingFactor*m_trajectory->imageDimensions[d];
-		dimension += dimension%2;
-		dims.push_back(dimension);
-	}
-
-	return dims;
+	return m_gridDimensions;
 }
 
 

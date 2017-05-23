@@ -1,8 +1,12 @@
 #include "griddingtest.h"
 
 #include "mrdata.h"
-#include "trajectory.h"
 #include "gridding.h"
+
+extern "C"
+{
+#include "trajectory.h"
+}
 
 #include <QtTest/QtTest>
 
@@ -48,12 +52,12 @@ void GriddingTest::testForward()
 
 	qWarning() << "Oversampling Ratio:" << oversamplingRatio;
 
-	int readoutPoints = randomInteger(10,50);
-	qWarning() << "Readout Points:" << readoutPoints;
-	int readouts = randomInteger(5,50);
-	qWarning() << "Readouts:" << readouts;
-
 	Trajectory trajectory;
+	trajectory.readoutPoints = randomInteger(10,50);
+	qWarning() << "Readout Points:" << trajectory.readoutPoints;
+	trajectory.readouts = randomInteger(5,50);
+	qWarning() << "Readouts:" << trajectory.readouts;
+
 	trajectory.dimensions = fieldOfView.size();
 	float minResolution = INFINITY;
 	for (int d=0; d<trajectory.dimensions; d++)
@@ -66,17 +70,21 @@ void GriddingTest::testForward()
 		trajectory.imageDimensions[d] = 10*fieldOfView[d]/spatialResolution[d];
 	}
 
-	QVector<float> kx;
-	QVector<float> ky;
-	QVector<float> dcf;
+//	QVector<float> kx;
+//	QVector<float> ky;
+	QVector<float> k(trajectory.dimensions);
+//	QVector<float> dcf;
 	QVector<complexFloat> signal;
-	for(int r=0; r<readouts; r++)
+	for(int r=0; r<trajectory.readouts; r++)
 	{
-		for (int n=0; n<readoutPoints; n++)
+		for (int n=0; n<trajectory.readoutPoints; n++)
 		{
-			kx.append(randomNumber(-kSpaceExtent[0], kSpaceExtent[0]));
-			ky.append(randomNumber(-kSpaceExtent[1], kSpaceExtent[1]));
-			dcf.append(randomNumber(0, 1));
+			k.clear();
+			for(int d=0; d<trajectory.dimensions; d++)
+			{
+				k.append(randomNumber(-kSpaceExtent[0], kSpaceExtent[0]));
+			}
+			setTrajectoryPoint(n, r, &trajectory, k.data(), randomNumber(0, 1));
 			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
 		}
 	}
