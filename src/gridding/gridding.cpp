@@ -200,16 +200,18 @@ void Gridding::deapodize(MRdata &oversampledImage)
 		signal[n] *= m_deapodization[n];
 }
 
-void Gridding::kSpaceToImage(const MRdata &ungriddedData, MRdata *image)
+MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)
 {
-	image = grid(ungriddedData);
+	MRdata* image = grid(ungriddedData);
 
 	image->fftShift();
+	image->fft(FFTW_BACKWARD);
 	image->fftShift();
 
 	deapodize(*image);
-
 	image->crop(imageDimensions());
+
+	return image;
 }
 
 int Gridding::numDimensions()

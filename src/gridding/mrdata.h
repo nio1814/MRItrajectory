@@ -4,7 +4,15 @@
 #include <vector>
 #include <complex>
 
+#include <fftw3.h>
+
 typedef std::complex<float> complexFloat;
+
+struct FFTplan
+{
+	fftwf_plan plan;
+	bool inPlace;
+};
 
 class MRdata
 {
@@ -17,6 +25,8 @@ public:
 	complexFloat* signal();
 
 	void fftShift();
+	FFTplan planFFT(int direction, std::vector<int> outputDimensions);
+	void fft(int direction, std::vector<int> outputDimensions=std::vector<int>());
 	void crop(std::vector<int> newSize);
 private:
 	int m_numImagingDimensions;

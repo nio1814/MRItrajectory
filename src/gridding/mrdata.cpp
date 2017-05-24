@@ -12,6 +12,20 @@ To distribute this file, substitute the full license for the above reference.
 **************************************************************************/
 #include "mrdata.h"
 
+extern "C"
+{
+#include "arrayops.h"
+}
+
+size_t dimensionsToPoints(std::vector<int> dimensions)
+{
+	size_t points = 1;
+	for(int n=0; n<dimensions.size(); n++)
+		points *= dimensions[n];
+
+	return points;
+}
+
 MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data) : m_numImagingDimensions(numImagingDimensions)
 {
 	if(data.empty())
@@ -75,10 +89,76 @@ void MRdata::fftShift()
 			m_signal[indexShift+m] = m_signal[indexShift];
 			m_signal[index] = temp;
 		}
-//		blas_ccopy(b_N, &signal[indexShift+setshift], 1, temp, 1);
-//		blas_ccopy(b_N, &signal[index+setshift], 1, &signal[indexShift+setshift], 1);
-//		blas_ccopy(b_N, temp, 1, &signal[index+setshift], 1);
 	}
+}
+
+FFTplan MRdata::planFFT(int direction, std::vector<int> outputDimensions)
+{
+	bool inPlace = true;
+	for(int n=0; n<m_numImagingDimensions; n++)
+		if(m_dimensions[n]!=outputDimensions[n])
+			inPlace = false;
+
+	size_t pointsOutput = dimensionsToPoints(outputDimensions);
+
+	fftwf_iodim transformStrides[1];
+	transformStrides[0].n = 1;
+	transformStrides[0].is = points();
+	transformStrides[0].os = pointsOutput;
+
+	fftwf_iodim transformDimensions[3];
+	int n = m_numImagingDimensions-1;
+	transformDimensions[n].n = m_dimensions[m_numImagingDimensions-n-1];
+	transformDimensions[n].is = 1;
+	transformDimensions[n].os = 1;
+
+	for(int n=m_numImagingDimensions-2; n>=0; n--)
+	{
+		transformDimensions[n].n = m_dimensions[m_numImagingDimensions-n-1];
+		transformDimensions[n].is = m_dimensions[n]*transformDimensions[n+1].is;
+		transformDimensions[n].os = outputDimensions[n]*transformDimensions[n+1].os;
+	}
+
+	std::vector<complexFloat> signalIn(points());
+	std::vector<complexFloat> signalOut;
+	complexFloat* signalOutPointer;
+	if(inPlace)
+		signalOutPointer = signalIn.data();
+	else
+	{
+		signalOut.resize(pointsOutput);
+		signalOutPointer = signalOut.data();
+	}
+
+	FFTplan plan;
+	plan.plan = fftwf_plan_guru_dft(m_numImagingDimensions, transformDimensions, 1, transformStrides, (fftwf_complex*)signalIn.data(), (fftwf_complex*)signalOutPointer, direction, FFTW_ESTIMATE);
+	plan.inPlace = inPlace;
+
+	return plan;
+}
+
+void MRdata::fft(int direction, std::vector<int> outputDimensions)
+{
+	if(outputDimensions.empty())
+		outputDimensions = m_dimensions;
+	FFTplan plan = planFFT(direction, outputDimensions);
+
+	size_t pointsOutput = dimensionsToPoints(outputDimensions);
+
+	std::vector<complexFloat> signalNew;
+	complexFloat* signalNewPointer;
+	if(!plan.inPlace)
+		signalNew.resize(pointsOutput);
+	else
+		signalNewPointer = signalNew.data();
+
+	fftwf_execute_dft(plan.plan, (fftwf_complex*)m_signal.data(), (fftwf_complex*)signalNew.data());
+
+	if(!plan.inPlace)
+		m_signal = signalNew;
+	m_dimensions = outputDimensions;
+
+	scalefloats((float*)m_signal.data(), 2*points(), 1/sqrt(points()));
 }
 
 void MRdata::crop(std::vector<int> newSize)

@@ -1,3 +1,5 @@
+find_package(FFTW3 REQUIRED)
+
 set(GRIDDING_SOURCE
 	mrdata.cpp
 	gridding.cpp
@@ -9,7 +11,9 @@ set(GRIDDING_SOURCE
 )
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
+INCLUDE_DIRECTORIES(${FFTW3_INCLUDE_DIR})
 
 add_library(gridding ${GRIDDING_SOURCE})
+target_link_libraries(gridding ${FFTW3_LIBRARIES})
 
 add_subdirectory(test)

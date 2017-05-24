@@ -30,7 +30,7 @@ public:
 
 	void deapodize(MRdata& oversampledImage);
 
-	void kSpaceToImage(const MRdata& ungriddedData, MRdata* image);
+	MRdata *kSpaceToImage(const MRdata& ungriddedData);
 private:
 	int numDimensions();
 	void nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint);
