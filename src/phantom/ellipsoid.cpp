@@ -78,7 +78,7 @@ void Ellipsoid::relativePosition(const float* position, float* positionRelative)
 		float offset = position[d]-m_displacement[d];
 		positionRelative[d] = 0;
 		for(int n=0; n<3; n++)
-			positionRelative[d] += m_rotationMatrix[3*d+n]*offset;
+			positionRelative[d] += m_rotationMatrix[3*n+d]*offset;
 	}
 }
 

@@ -52,18 +52,20 @@ extern "C"
  */
 
 /** Creates a new instance of SheppLogan3D */
-Phantom::Phantom()
+Phantom::Phantom(std::vector<float> fieldOfView)
 {
-	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,     0.69,    0.92,     0.9,              0,      0,    0,      2.));
-	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,   0.6624,   0.874,    0.88,              0,      0,    0,    -0.8));
-	m_ellipsoids.push_back(Ellipsoid( -0.22,      0.,   -0.25,     0.41,    0.16,    0.21, (3*M_PI)/5.,      0,    0,    -0.2));
-	m_ellipsoids.push_back(Ellipsoid(0.22,      0.,   -0.25,     0.31,    0.11,    0.22, (2*M_PI)/5.,      0,    0,    -0.2));
-	m_ellipsoids.push_back(Ellipsoid(0,    0.35,   -0.25,     0.21,    0.25,     0.5,              0,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid(0,     0.1,   -0.25,    0.046,   0.046,   0.046,              0,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid(-0.08,   -0.65,   -0.25,    0.046,   0.023,    0.02,              0,      0,    0,     0.1));
-	m_ellipsoids.push_back(Ellipsoid(0.06,   -0.65,   -0.25,    0.046,   0.023,    0.02,              0,      0,    0,     0.1));
-	m_ellipsoids.push_back(Ellipsoid(0.06,  -0.105,   0.625,    0.056,    0.04,     0.1,     M_PI/2.,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid( 0.,     0.1,   0.625,    0.056,   0.056,     0.1,     M_PI/2.,      0,    0,    -0.2));
+	scalefloats(fieldOfView.data(), fieldOfView.size(), .5);
+//	m_ellipsoids.push_back(Ellipsoid(0, 0, 0, fieldOfView[0], fieldOfView[1], fieldOfView[2], 0, 0, 0, 1));
+	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,     0.69*fieldOfView[0],    0.92*fieldOfView[1],     0.9*fieldOfView[2],              0,      0,    0,      2.));
+	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,   0.6624*fieldOfView[0],   0.874*fieldOfView[1],    0.88*fieldOfView[2],              0,      0,    0,    -0.8));
+	m_ellipsoids.push_back(Ellipsoid(-0.22*fieldOfView[0],      0.,   -0.25*fieldOfView[2],     0.41*fieldOfView[0],    0.16*fieldOfView[1],    0.21*fieldOfView[2], (3*M_PI)/5.,      0,    0,    -0.2));
+	m_ellipsoids.push_back(Ellipsoid(0.22*fieldOfView[0],      0.,   -0.25*fieldOfView[2],     0.31*fieldOfView[0],    0.11*fieldOfView[1],    0.22*fieldOfView[2], (2*M_PI)/5.,      0,    0,    -0.2));
+	m_ellipsoids.push_back(Ellipsoid(0,    0.35*fieldOfView[1],   -0.25*fieldOfView[2],     0.21*fieldOfView[0],    0.25*fieldOfView[1],     0.5*fieldOfView[2],              0,      0,    0,     0.2));
+	m_ellipsoids.push_back(Ellipsoid(0,     0.1*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.046*fieldOfView[1],   0.046*fieldOfView[2],              0,      0,    0,     0.2));
+	m_ellipsoids.push_back(Ellipsoid(-0.08*fieldOfView[0],   -0.65*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.023*fieldOfView[1],    0.02*fieldOfView[2],              0,      0,    0,     0.1));
+	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],   -0.65*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.023*fieldOfView[1],    0.02*fieldOfView[2],              0,      0,    0,     0.1));
+	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],  -0.105*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],    0.04*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,     0.2));
+	m_ellipsoids.push_back(Ellipsoid(0.,     0.1*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],   0.056*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,    -0.2));
 
 
 		// number of ellipsoids
@@ -195,24 +197,21 @@ std::vector<float> Phantom::imageDomainSignal(const std::vector<float>& coordina
 	{
 
 		float position[3] = {x,y,z};
-
 		double signal = 0.0;
-
-		double sum = 0.0;
 
 		for(size_t i=0; i<m_ellipsoids.size(); i++){ // loop through each of the ellipsoids
 			Ellipsoid& ellipse = m_ellipsoids.at(i);
 //			 p = MAT.dot(RT[i],new double[] {x-d[i][0], y-d[i][1], z-d[i][2]});
 			float relativePosition[3];
 			ellipse.relativePosition(position, relativePosition);
+			float sum = 0.0;
 			 for(int d=0; d<3; d++)
 			 {
 				 float projection = relativePosition[d]/ellipse.m_principalAxes[d];
 				sum += projection*projection;
 //			 sum = powf(p[0]/abc[i][0],2) + powf(p[1]/abc[i][1],2) + powf(p[2]/abc[i][2],2);
-
-			 signal += (sum<=1.0) ? ellipse.m_intensity : 0;
 			 }
+			 signal += (sum<=1.0) ? ellipse.m_intensity : 0;
 		}
 
 		return signal;

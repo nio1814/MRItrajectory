@@ -11,7 +11,7 @@ typedef std::complex<float> complexFloat;
 class Phantom
 {
 public:
-	Phantom();
+	Phantom(std::vector<float> fieldOfView);
 	Phantom(std::vector<Ellipsoid> ellipsoids);
 
 	std::vector<float> imageDomainSignal(const std::vector<float>& coordinates);
