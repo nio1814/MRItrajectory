@@ -1,3 +1,15 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University.
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+To distribute this file, substitute the full license for the above reference.
+
+**************************************************************************/
 #ifndef ARRAYOPS_H
 #define ARRAYOPS_H
 
@@ -25,5 +37,6 @@ float dot(float* x, float *y, int npts);
 void swapValues(float *array, int index1, int index2);
 
 void scalecomplex(float *rdata, float *idata, float rmult, float imult, long npts);
+
 
 #endif // ARRAYOPS_H
