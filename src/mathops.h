@@ -18,4 +18,6 @@ void calculatePhase(float *realdata, float *imagdata, float *phasedata, long npt
 void calculateMagnitude(float *realdata, float *imagdata, float *magdata, long npts);
 void unwrapPhase(float *phasedata, float* uPhaseData, int numPoints, int frsize, float tol);
 
+void matrixMultiply(const float* left, int leftRows, int innerDimension, const float* right, int rightColumns, float *output);
+
 #endif // MATHOPS_H
