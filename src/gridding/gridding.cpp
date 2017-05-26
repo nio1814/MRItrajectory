@@ -91,7 +91,7 @@ std::vector<int> Gridding::imageDimensions()
 
 void Gridding::nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint)
 {
-	for(size_t d=0; d<ungriddedPoint.size(); d++)
+	for(int d=0; d<numDimensions(); d++)
 		griddedPoint[d] = roundf(m_normalizedToGridScale[d]*ungriddedPoint[d])/m_normalizedToGridScale[d];
 }
 
@@ -155,9 +155,15 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 
 	int dimensionStart[3] = {0,0,0};
 	int dimensionEnd[3] = {1,1,1};
+	int offset[3] = {0,0,0};
 
 	MRdata* griddedData = new MRdata(m_gridDimensions, numDimensions());
 
+	std::vector<int> gridDimensions3 = m_gridDimensions;
+	if(numDimensions()==2)
+		gridDimensions3.push_back(1);
+	std::vector<float> one;
+	one.push_back(1);
 	for(int n=0; n<ungriddedData.points(); n++)
 	{
 		complexFloat ungriddedDataValue = ungriddedData.signalValue(n);
@@ -170,16 +176,16 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 
 		for(int d=0; d<numDimensions(); d++)
 		{
-			dimensionStart[d] = std::max(0, (int)(griddedPoint[d]-m_kernelWidth/2+1));
-			dimensionEnd[d] = std::max((int)(griddedPoint[d]-m_kernelWidth/2), m_gridDimensions[d]);
+			int start = (int)(griddedPoint[d]-m_kernelWidth/2+1);
+			dimensionStart[d] = std::max(0, start);
+			offset[d] = dimensionStart[d]-start;
+			dimensionEnd[d] = std::min((int)(griddedPoint[d]+m_kernelWidth/2), m_gridDimensions[d]);
 		}
 
 		std::vector<std::vector<float> > kernelValues = kernelNeighborhood(ungriddedPoint, griddedPoint);
 		std::vector<int> gridIndex(3);
 		for(int d=numDimensions(); d<3; d++)
 		{
-			std::vector<float> one;
-			one.push_back(1);
 			kernelValues.push_back(one);
 		}
 
@@ -187,16 +193,16 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 		for(int gz=dimensionStart[2]; gz<dimensionEnd[2]; gz++)
 		{
 			multiIndex[2] = gz;
-			float kernelZ = kernelValues[2][gz];
+			float kernelZ = kernelValues[2][gz-dimensionStart[2]+offset[2]];
 			for(int gy=dimensionStart[1]; gy<dimensionEnd[1]; gy++)
 			{
 				multiIndex[1] = gy;
-				float kernelY = kernelValues[1][gy];
+				float kernelY = kernelValues[1][gy-dimensionStart[1]+offset[1]];
 				for(int gx=dimensionStart[0]; gx<dimensionEnd[0]; gx++)
 				{
 					multiIndex[0] = gx;
-					float kernelX = kernelValues[0][gx];
-					long griddedDataIndex = multiToSingleIndex(multiIndex, m_gridDimensions);
+					float kernelX = kernelValues[0][gx-dimensionStart[0]+offset[0]];
+					long griddedDataIndex = multiToSingleIndex(multiIndex, gridDimensions3);
 					griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 				}
 			}

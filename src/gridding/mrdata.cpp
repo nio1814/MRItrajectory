@@ -17,6 +17,8 @@ extern "C"
 #include "arrayops.h"
 }
 
+#include <string.h>
+
 size_t dimensionsToPoints(std::vector<int> dimensions)
 {
 	size_t points = 1;
@@ -179,7 +181,7 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 	}
 
 	memcpy(signalIn, m_signal.data(), points()*sizeof(fftwf_complex));
-//	fftwf_execute_dft(plan.plan, signalIn, signalOut);
+	fftwf_execute_dft(plan.plan, signalIn, signalOut);
 
 	memcpy(m_signal.data(), signalOut, pointsOutput*sizeof(fftwf_complex));
 
@@ -242,7 +244,7 @@ bool MRdata::writeToOctave(std::string filename) const
 	fprintf(file, "# Phantom Test\n");
 	fprintf(file, "# name: data\n");
 	fprintf(file, "# type: complex matrix\n");
-	fprintf(file, "# ndims: %d\n", m_dimensions.size());
+	fprintf(file, "# ndims: %ld\n", m_dimensions.size());
 	for(size_t d=0; d<m_dimensions.size(); d++)
 		fprintf(file, " %d", m_dimensions[d]);
 	fprintf(file, "\n");
