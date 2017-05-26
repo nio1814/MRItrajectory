@@ -119,20 +119,28 @@ FFTplan MRdata::planFFT(int direction, std::vector<int> outputDimensions)
 		transformDimensions[n].os = outputDimensions[n]*transformDimensions[n+1].os;
 	}
 
-	std::vector<complexFloat> signalIn(points());
-	std::vector<complexFloat> signalOut;
-	complexFloat* signalOutPointer;
+//	std::vector<complexFloat> signalIn(points());
+//	std::vector<complexFloat> signalOut;
+	fftwf_complex* signalIn = (fftwf_complex*)fftwf_malloc(points()*sizeof(fftwf_complex));
+	fftwf_complex* signalOut;
 	if(inPlace)
-		signalOutPointer = signalIn.data();
+//		signalOutPointer = signalIn.data();
+		signalOut = signalIn;
 	else
 	{
-		signalOut.resize(pointsOutput);
-		signalOutPointer = signalOut.data();
+//		signalOut.resize(pointsOutput);
+//		signalOutPointer = signalOut.data();
+		signalOut = (fftwf_complex*)fftwf_malloc(pointsOutput*sizeof(fftwf_complex));
 	}
 
 	FFTplan plan;
-	plan.plan = fftwf_plan_guru_dft(m_numImagingDimensions, transformDimensions, 1, transformStrides, (fftwf_complex*)signalIn.data(), (fftwf_complex*)signalOutPointer, direction, FFTW_ESTIMATE);
+//	plan.plan = fftwf_plan_guru_dft(m_numImagingDimensions, transformDimensions, 1, transformStrides, (fftwf_complex*)signalIn.data(), (fftwf_complex*)signalOutPointer, direction, FFTW_ESTIMATE);
+	plan.plan = fftwf_plan_guru_dft(m_numImagingDimensions, transformDimensions, 1, transformStrides, signalIn, signalOut, direction, FFTW_ESTIMATE);
 	plan.inPlace = inPlace;
+
+	fftwf_free(signalIn);
+	if(!inPlace)
+		fftwf_free(signalOut);
 
 	return plan;
 }
@@ -145,7 +153,7 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 
 	size_t pointsOutput = dimensionsToPoints(outputDimensions);
 
-	std::vector<complexFloat> signalNew;
+	/*std::vector<complexFloat> signalNew;
 	complexFloat* signalNewPointer = NULL;
 	if(plan.inPlace)
 		signalNewPointer = m_signal.data();
@@ -159,6 +167,26 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 
 	if(!plan.inPlace)
 		m_signal = signalNew;
+*/
+
+	fftwf_complex* signalIn = (fftwf_complex*)fftwf_malloc(points()*sizeof(fftwf_complex));
+	fftwf_complex* signalOut;
+	if(plan.inPlace)
+		signalOut = signalIn;
+	else
+	{
+		signalOut = (fftwf_complex*)fftwf_malloc(pointsOutput*sizeof(fftwf_complex));
+	}
+
+	memcpy(signalIn, m_signal.data(), points()*sizeof(fftwf_complex));
+//	fftwf_execute_dft(plan.plan, signalIn, signalOut);
+
+	memcpy(m_signal.data(), signalOut, pointsOutput*sizeof(fftwf_complex));
+
+	fftwf_free(signalIn);
+	if(!plan.inPlace)
+		fftwf_free(signalOut);
+
 	m_dimensions = outputDimensions;
 
 	scalefloats((float*)m_signal.data(), 2*points(), 1/sqrt(points()));
@@ -202,7 +230,7 @@ void MRdata::crop(std::vector<int> newSize)
 		m_dimensions[d] = newSize[d];
 }
 
-bool MRdata::writeToOctave(std::string filename)
+bool MRdata::writeToOctave(std::string filename) const
 {
 	FILE* file = fopen(filename.c_str(), "w");
 	if(!file)

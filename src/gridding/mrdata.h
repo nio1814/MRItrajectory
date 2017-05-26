@@ -29,7 +29,7 @@ public:
 	void fft(int direction, std::vector<int> outputDimensions=std::vector<int>());
 	void crop(std::vector<int> newSize);
 
-	bool writeToOctave(std::string filename);
+	bool writeToOctave(std::string filename) const;
 private:
 	std::vector<int> m_dimensions;
 	int m_numImagingDimensions;
