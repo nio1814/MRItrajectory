@@ -36,7 +36,7 @@ MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std:
 		m_signal = data;
 }
 
-long MRdata::points() const
+size_t MRdata::points() const
 {
 	long N = 0;
 	for(int d=0; d<m_numImagingDimensions; d++)
@@ -59,9 +59,14 @@ complexFloat MRdata::signalValue(int index) const
 	return m_signal[index];
 }
 
-complexFloat *MRdata::signal()
+complexFloat *MRdata::signalPointer()
 {
 	return m_signal.data();
+}
+
+std::vector<complexFloat> MRdata::signal()
+{
+	return m_signal;
 }
 
 void MRdata::fftShift()
@@ -88,8 +93,8 @@ void MRdata::fftShift()
 		for(int m=0; m<m_dimensions[0]/2; m++)
 		{
 			complexFloat temp = m_signal[indexShift+m];
-			m_signal[indexShift+m] = m_signal[indexShift];
-			m_signal[index] = temp;
+			m_signal[indexShift+m] = m_signal[index+m];
+			m_signal[index+m] = temp;
 		}
 	}
 }
@@ -242,9 +247,9 @@ bool MRdata::writeToOctave(std::string filename) const
 	}
 
 	fprintf(file, "# Phantom Test\n");
-	fprintf(file, "# name: data\n");
+	fprintf(file, "# name: %s\n", filename.c_str());
 	fprintf(file, "# type: complex matrix\n");
-	fprintf(file, "# ndims: %ld\n", m_dimensions.size());
+	fprintf(file, "# ndims: %u\n", m_dimensions.size());
 	for(size_t d=0; d<m_dimensions.size(); d++)
 		fprintf(file, " %d", m_dimensions[d]);
 	fprintf(file, "\n");

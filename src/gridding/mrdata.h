@@ -18,11 +18,12 @@ class MRdata
 {
 public:
 	MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data=std::vector<complexFloat>());
-	long points() const;
+	size_t points() const;
 
 	void setSignalValue(int index, const complexFloat& value);
 	complexFloat signalValue(int index) const;
-	complexFloat* signal();
+	complexFloat* signalPointer();
+	std::vector<complexFloat> signal();
 
 	void fftShift();
 	FFTplan planFFT(int direction, std::vector<int> outputDimensions);

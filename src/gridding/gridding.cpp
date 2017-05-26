@@ -164,7 +164,8 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 		gridDimensions3.push_back(1);
 	std::vector<float> one;
 	one.push_back(1);
-	for(int n=0; n<ungriddedData.points(); n++)
+
+	for(size_t n=0; n<ungriddedData.points(); n++)
 	{
 		complexFloat ungriddedDataValue = ungriddedData.signalValue(n);
 		int readoutPoint = n%m_trajectory->readoutPoints;
@@ -176,33 +177,31 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 
 		for(int d=0; d<numDimensions(); d++)
 		{
-			int start = (int)(griddedPoint[d]-m_kernelWidth/2+1);
+			int gridPointCenter = (int)((griddedPoint[d]+.5)*m_normalizedToGridScale[d]);
+			int start = gridPointCenter-m_kernelWidth/2+1;
 			dimensionStart[d] = std::max(0, start);
 			offset[d] = dimensionStart[d]-start;
-			dimensionEnd[d] = std::min((int)(griddedPoint[d]+m_kernelWidth/2), m_gridDimensions[d]);
+			dimensionEnd[d] = std::min(gridPointCenter+m_kernelWidth/2, m_gridDimensions[d]);
 		}
 
 		std::vector<std::vector<float> > kernelValues = kernelNeighborhood(ungriddedPoint, griddedPoint);
 		std::vector<int> gridIndex(3);
 		for(int d=numDimensions(); d<3; d++)
-		{
 			kernelValues.push_back(one);
-		}
 
-		std::vector<int> multiIndex(3);
 		for(int gz=dimensionStart[2]; gz<dimensionEnd[2]; gz++)
 		{
-			multiIndex[2] = gz;
+			gridIndex[2] = gz;
 			float kernelZ = kernelValues[2][gz-dimensionStart[2]+offset[2]];
 			for(int gy=dimensionStart[1]; gy<dimensionEnd[1]; gy++)
 			{
-				multiIndex[1] = gy;
+				gridIndex[1] = gy;
 				float kernelY = kernelValues[1][gy-dimensionStart[1]+offset[1]];
 				for(int gx=dimensionStart[0]; gx<dimensionEnd[0]; gx++)
 				{
-					multiIndex[0] = gx;
+					gridIndex[0] = gx;
 					float kernelX = kernelValues[0][gx-dimensionStart[0]+offset[0]];
-					long griddedDataIndex = multiToSingleIndex(multiIndex, gridDimensions3);
+					long griddedDataIndex = multiToSingleIndex(gridIndex, gridDimensions3);
 					griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 				}
 			}
@@ -214,10 +213,10 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 
 void Gridding::deapodize(MRdata &oversampledImage)
 {
-	complexFloat* signal = oversampledImage.signal();
+	complexFloat* signal = oversampledImage.signalPointer();
 
 	std::vector<int> gridIndex(numDimensions());
-	for (int n=0; n<oversampledImage.points(); n++)
+	for(size_t n=0; n<oversampledImage.points(); n++)
 	{
 		singleToMultiIndex(n, m_gridDimensions, gridIndex);
 		for(int d=0; d<numDimensions(); d++)
@@ -229,9 +228,8 @@ MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)
 {
 //	ungriddedData.writeToOctave("temp");
 	MRdata* image = grid(ungriddedData);
-//	image->writeToOctave("temp");
 	image->fftShift();
-
+	image->writeToOctave("temp");
 	image->fft(FFTW_BACKWARD);
 	image->fftShift();
 

@@ -10,3 +10,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_executable(gridding_test ${SOURCE})
 target_link_libraries(gridding_test gridding Qt5::Test)
+
+add_executable(mrdata_test mrdatatest.cpp)
+target_link_libraries(mrdata_test gridding Qt5::Test)
+
