@@ -179,7 +179,7 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 	}
 
 	memcpy(signalIn, m_signal.data(), points()*sizeof(fftwf_complex));
-//	fftwf_execute_dft(plan.plan, signalIn, signalOut);
+	fftwf_execute_dft(plan.plan, signalIn, signalOut);
 
 	memcpy(m_signal.data(), signalOut, pointsOutput*sizeof(fftwf_complex));
 

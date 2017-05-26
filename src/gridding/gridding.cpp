@@ -91,7 +91,7 @@ std::vector<int> Gridding::imageDimensions()
 
 void Gridding::nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint)
 {
-	for(size_t d=0; d<ungriddedPoint.size(); d++)
+	for(int d=0; d<numDimensions(); d++)
 		griddedPoint[d] = roundf(m_normalizedToGridScale[d]*ungriddedPoint[d])/m_normalizedToGridScale[d];
 }
 
@@ -158,6 +158,9 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 
 	MRdata* griddedData = new MRdata(m_gridDimensions, numDimensions());
 
+	std::vector<float> one;
+	one.push_back(1);
+
 	for(int n=0; n<ungriddedData.points(); n++)
 	{
 		complexFloat ungriddedDataValue = ungriddedData.signalValue(n);
@@ -177,26 +180,23 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 		std::vector<std::vector<float> > kernelValues = kernelNeighborhood(ungriddedPoint, griddedPoint);
 		std::vector<int> gridIndex(3);
 		for(int d=numDimensions(); d<3; d++)
-		{
-			std::vector<float> one;
-			one.push_back(1);
 			kernelValues.push_back(one);
-		}
 
-		std::vector<int> multiIndex(3);
 		for(int gz=dimensionStart[2]; gz<dimensionEnd[2]; gz++)
 		{
-			multiIndex[2] = gz;
+			gridIndex[2] = gz;
 			float kernelZ = kernelValues[2][gz];
 			for(int gy=dimensionStart[1]; gy<dimensionEnd[1]; gy++)
 			{
-				multiIndex[1] = gy;
+				gridIndex[1] = gy;
 				float kernelY = kernelValues[1][gy];
 				for(int gx=dimensionStart[0]; gx<dimensionEnd[0]; gx++)
 				{
-					multiIndex[0] = gx;
+					gridIndex[0] = gx;
 					float kernelX = kernelValues[0][gx];
-					long griddedDataIndex = multiToSingleIndex(multiIndex, m_gridDimensions);
+					int griddedDataIndex = multiToSingleIndex(gridIndex, m_gridDimensions);
+					if(griddedDataIndex>=griddedData->points())
+						printf("%d>=%d", griddedDataIndex, griddedDataIndex>=griddedData->points());
 					griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 				}
 			}
