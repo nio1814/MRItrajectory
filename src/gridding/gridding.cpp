@@ -60,6 +60,7 @@ Gridding::Gridding(const Trajectory *trajectory) :
 		m_normalizedToGridScale.push_back(m_trajectory->spatialResolution[d]/minSpatialResolution*m_gridDimensions[d]);
 	}
 
+	m_deapodization.resize(numDimensions());
 	for(int d=0; d<m_trajectory->dimensions; d++)
 	{
 		for(int n=0; n<m_gridDimensions[d]; n++)
@@ -74,7 +75,7 @@ Gridding::Gridding(const Trajectory *trajectory) :
 			else
 				value = sinf(sqrtf(arg))/sqrtf(arg);
 			value = scale/value;
-			m_deapodization.push_back(value);
+			m_deapodization[d].push_back(value);
 		}
 	}
 }
@@ -90,7 +91,7 @@ std::vector<int> Gridding::imageDimensions()
 
 void Gridding::nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint)
 {
-	for(int d=0; d<ungriddedPoint.size(); d++)
+	for(size_t d=0; d<ungriddedPoint.size(); d++)
 		griddedPoint[d] = roundf(m_normalizedToGridScale[d]*ungriddedPoint[d])/m_normalizedToGridScale[d];
 }
 
@@ -106,7 +107,7 @@ float Gridding::lookupKernelValue(float x)
 std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<float> &ungriddedPoint, const std::vector<float> &griddedPoint)
 {
 	int lookupPoints = m_kernelLookupTable.size();
-	std::vector<float> kernelValues;
+	std::vector<std::vector<float> > kernelValues(numDimensions());
 
 	for(int d=0; d<numDimensions(); d++)
 	{
@@ -117,23 +118,34 @@ std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<
 			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth/2*lookupPoints);
 			int kernelIndex = (int)kernelIndexDecimal;
 			float secondPointFraction = kernelIndexDecimal - kernelIndex;
-			kernelValues.push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
-
+			kernelValues[d].push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
 		}
 	}
+
+	return kernelValues;
 }
 
-long multiToSingleIndex(const std::vector<int> &indices, const std::vector<int>& size)
+size_t multiToSingleIndex(const std::vector<int> &indices, const std::vector<int>& size)
 {
 	long index = indices[0];
 	long lowerDimensionSize = size[0];
-	for(int n=1; n<indices.size(); n++)
+	for(size_t n=1; n<indices.size(); n++)
 	{
 		index += indices[n]*lowerDimensionSize;
 		lowerDimensionSize *= size[n];
 	}
 
 	return index;
+}
+
+void singleToMultiIndex(long index, const std::vector<int>& size, std::vector<int>& indices)
+{
+	int lowerDimensions = 1;
+	for(size_t n=0; n<size.size(); n++)
+	{
+		indices[n] = (n/lowerDimensions)%size[n];
+		lowerDimensions *= size[n];
+	}
 }
 
 MRdata *Gridding::grid(const MRdata &ungriddedData)
@@ -189,15 +201,22 @@ MRdata *Gridding::grid(const MRdata &ungriddedData)
 				}
 			}
 		}
-
 	}
+
+	return griddedData;
 }
 
 void Gridding::deapodize(MRdata &oversampledImage)
 {
 	complexFloat* signal = oversampledImage.signal();
+
+	std::vector<int> gridIndex(numDimensions());
 	for (int n=0; n<oversampledImage.points(); n++)
-		signal[n] *= m_deapodization[n];
+	{
+		singleToMultiIndex(n, m_gridDimensions, gridIndex);
+		for(int d=0; d<numDimensions(); d++)
+			signal[n] *= m_deapodization[d][gridIndex[d]];
+	}
 }
 
 MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)

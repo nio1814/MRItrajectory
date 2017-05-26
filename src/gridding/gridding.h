@@ -43,7 +43,7 @@ private:
 	float m_oversamplingFactor;
 	int m_kernelWidth;
 	std::vector<float> m_kernelLookupTable;
-	std::vector<float> m_deapodization;
+	std::vector<std::vector<float> > m_deapodization;
 	std::vector<int> m_gridDimensions;
 	std::vector<float> m_normalizedToGridScale;
 };

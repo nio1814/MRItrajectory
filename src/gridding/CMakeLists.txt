@@ -13,6 +13,8 @@ set(GRIDDING_SOURCE
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
 INCLUDE_DIRECTORIES(${FFTW3_INCLUDE_DIR})
 
+set(CMAKE_CXX_FLAGS "-Wall -Werror")
+
 add_library(gridding ${GRIDDING_SOURCE})
 target_link_libraries(gridding ${FFTW3_LIBRARIES})
 

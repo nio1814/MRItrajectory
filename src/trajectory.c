@@ -63,9 +63,13 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int wa
 	else
 		count = readouts;
 
-	trajectory->gradientWaveforms = (float*)malloc(dimensions*count*waveformPoints*sizeof(float));
-	trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
-	trajectory->densityCompensation = (float*)malloc(count*readoutPoints*sizeof(float));
+	if(waveformPoints)
+		trajectory->gradientWaveforms = (float*)malloc(dimensions*count*waveformPoints*sizeof(float));
+	if(readoutPoints)
+	{
+		trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
+		trajectory->densityCompensation = (float*)malloc(count*readoutPoints*sizeof(float));
+	}
 
 	trajectory->storage = storage;
 	trajectory->readouts = readouts;

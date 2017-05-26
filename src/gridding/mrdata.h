@@ -28,9 +28,11 @@ public:
 	FFTplan planFFT(int direction, std::vector<int> outputDimensions);
 	void fft(int direction, std::vector<int> outputDimensions=std::vector<int>());
 	void crop(std::vector<int> newSize);
+
+	bool writeToOctave(std::string filename);
 private:
-	int m_numImagingDimensions;
 	std::vector<int> m_dimensions;
+	int m_numImagingDimensions;
 	std::vector<complexFloat> m_signal;
 };
 

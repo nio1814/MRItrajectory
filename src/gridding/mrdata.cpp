@@ -20,13 +20,13 @@ extern "C"
 size_t dimensionsToPoints(std::vector<int> dimensions)
 {
 	size_t points = 1;
-	for(int n=0; n<dimensions.size(); n++)
+	for(size_t n=0; n<dimensions.size(); n++)
 		points *= dimensions[n];
 
 	return points;
 }
 
-MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data) : m_numImagingDimensions(numImagingDimensions)
+MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data) : m_dimensions(dimensions), m_numImagingDimensions(numImagingDimensions)
 {
 	if(data.empty())
 		m_signal.resize(points());
@@ -146,13 +146,16 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 	size_t pointsOutput = dimensionsToPoints(outputDimensions);
 
 	std::vector<complexFloat> signalNew;
-	complexFloat* signalNewPointer;
-	if(!plan.inPlace)
-		signalNew.resize(pointsOutput);
+	complexFloat* signalNewPointer = NULL;
+	if(plan.inPlace)
+		signalNewPointer = m_signal.data();
 	else
+	{
+		signalNew.resize(pointsOutput);
 		signalNewPointer = signalNew.data();
+	}
 
-	fftwf_execute_dft(plan.plan, (fftwf_complex*)m_signal.data(), (fftwf_complex*)signalNew.data());
+	fftwf_execute_dft(plan.plan, (fftwf_complex*)m_signal.data(), (fftwf_complex*)signalNewPointer);
 
 	if(!plan.inPlace)
 		m_signal = signalNew;
@@ -171,13 +174,11 @@ void MRdata::crop(std::vector<int> newSize)
 	int s;
 	int index;
 
-	int b_N = newSize[0];
-
 	int pointsCrop = 1;
 	for(n=0; n<m_numImagingDimensions; n++)
 		pointsCrop *= newSize[n];
 
-	std::vector<complexFloat> signalCropped;
+	std::vector<complexFloat> signalCropped(pointsCrop);
 
 	numCopies = pointsCrop/newSize[0];
 
@@ -199,5 +200,31 @@ void MRdata::crop(std::vector<int> newSize)
 	m_signal = signalCropped;
 	for(int d=0; d<m_numImagingDimensions; d++)
 		m_dimensions[d] = newSize[d];
+}
+
+bool MRdata::writeToOctave(std::string filename)
+{
+	FILE* file = fopen(filename.c_str(), "w");
+	if(!file)
+	{
+		fprintf(stderr, "Failed to open %s", filename.c_str());
+		return true;
+	}
+
+	fprintf(file, "# Phantom Test\n");
+	fprintf(file, "# name: data\n");
+	fprintf(file, "# type: complex matrix\n");
+	fprintf(file, "# ndims: %d\n", m_dimensions.size());
+	for(size_t d=0; d<m_dimensions.size(); d++)
+		fprintf(file, " %d", m_dimensions[d]);
+	fprintf(file, "\n");
+//	QString line = QString(" %1 %2 %3\n").arg(imageSize[0]).arg(imageSize[1]).arg(imageSize[2]);
+
+	for (size_t n=0; n<m_signal.size(); n++)
+		fprintf(file, " (%f,%f)\n", m_signal[n].real(), m_signal[n].imag());
+
+	fclose(file);
+
+	return false;
 }
 

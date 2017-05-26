@@ -57,11 +57,15 @@ void GriddingTest::testForward()
 	qWarning() << "Readout Points:" << trajectory.readoutPoints;
 	trajectory.readouts = randomInteger(5,50);
 	qWarning() << "Readouts:" << trajectory.readouts;
-
 	trajectory.dimensions = fieldOfView.size();
+	allocateTrajectory(&trajectory, trajectory.readoutPoints, 0, trajectory.dimensions, trajectory.readouts, trajectory.readouts, StoreAll);
 	float minResolution = INFINITY;
 	for (int d=0; d<trajectory.dimensions; d++)
+	{
+		trajectory.spatialResolution[d] = spatialResolution[d];
+		trajectory.fieldOfView[d] = fieldOfView[d];
 		minResolution = qMin(minResolution, spatialResolution[d]);
+	}
 
 	QVector<float> kSpaceExtent(trajectory.dimensions);
 	for (int d=0; d<trajectory.dimensions; d++)
@@ -93,8 +97,9 @@ void GriddingTest::testForward()
 	MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.dimensions, signal.toStdVector());
 
 	Gridding gridding(&trajectory);
-	MRdata *griddedKspaceData = gridding.grid(kSpaceData);
+	MRdata* image = gridding.kSpaceToImage(kSpaceData);
 
+	image->writeToOctave("gridtest.txt");
 }
 
 QTEST_APPLESS_MAIN(GriddingTest)
