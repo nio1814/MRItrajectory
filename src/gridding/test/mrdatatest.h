@@ -8,6 +8,7 @@ class MRdataTest : public QObject
 	Q_OBJECT
 private slots:
 	void testFFTshift();
+	void testCrop();
 };
 
 #endif // MRDATATEST_H

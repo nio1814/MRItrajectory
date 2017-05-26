@@ -29,4 +29,28 @@ void MRdataTest::testFFTshift()
 	QCOMPARE(dataSignal, signalShifted);
 }
 
+void MRdataTest::testCrop()
+{
+	QVector<int> dimensions = QVector<int>() << 4 << 4;
+	QVector<complexFloat> signal;
+	for(int n=0; n<16; n++)
+		signal.append(n);
+
+	QVector<complexFloat> signalCropped(4);
+	signalCropped[0] = signal[5];
+	signalCropped[1] = signal[6];
+	signalCropped[2] = signal[9];
+	signalCropped[3] = signal[10];
+
+	MRdata data(dimensions.toStdVector(), dimensions.size(), signal.toStdVector());
+
+	QVector<int> dimensionsCrop = QVector<int>() << 2 << 2;
+	data.writeToOctave("precrop");
+	data.crop(dimensionsCrop.toStdVector());
+	data.writeToOctave("postcrop");
+
+	QVector<complexFloat> dataSignal = QVector<complexFloat>::fromStdVector(data.signal());
+	QCOMPARE(dataSignal, signalCropped);
+}
+
 QTEST_APPLESS_MAIN(MRdataTest)

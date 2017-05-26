@@ -143,7 +143,7 @@ void singleToMultiIndex(long index, const std::vector<int>& size, std::vector<in
 	int lowerDimensions = 1;
 	for(size_t n=0; n<size.size(); n++)
 	{
-		indices[n] = (n/lowerDimensions)%size[n];
+		indices[n] = (index/lowerDimensions)%size[n];
 		lowerDimensions *= size[n];
 	}
 }
@@ -229,12 +229,12 @@ MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)
 //	ungriddedData.writeToOctave("temp");
 	MRdata* image = grid(ungriddedData);
 	image->fftShift();
-	image->writeToOctave("temp");
 	image->fft(FFTW_BACKWARD);
 	image->fftShift();
 
 	deapodize(*image);
 	image->crop(imageDimensions());
+	image->writeToOctave("temp");
 
 	return image;
 }

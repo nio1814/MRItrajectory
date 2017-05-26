@@ -229,7 +229,7 @@ void MRdata::crop(std::vector<int> newSize)
 			int indexCrop = (multiIndexCrop[2]*newSize[1] + multiIndexCrop[1])*newSize[0] + multiIndexCrop[0];
 
 			for(int m=0; m<newSize[0]; m++)
-				signalCropped[indexCrop] = m_signal[index];
+				signalCropped[indexCrop+m] = m_signal[index+m];
 	}
 
 	m_signal = signalCropped;
@@ -247,7 +247,13 @@ bool MRdata::writeToOctave(std::string filename) const
 	}
 
 	fprintf(file, "# Phantom Test\n");
-	fprintf(file, "# name: %s\n", filename.c_str());
+	int periodPosition = filename.find('.');
+	std::string name;
+	if(periodPosition>0)
+		name = filename.substr(0,periodPosition);
+	else
+		name = filename;
+	fprintf(file, "# name: %s\n", name.c_str());
 	fprintf(file, "# type: complex matrix\n");
 	fprintf(file, "# ndims: %u\n", m_dimensions.size());
 	for(size_t d=0; d<m_dimensions.size(); d++)
