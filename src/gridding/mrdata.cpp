@@ -253,25 +253,29 @@ void MRdata::pad(std::vector<int> newSize)
 	if(!doPad)
 		return;
 
+	std::vector<int> dimensionsOriginal = m_dimensions;
 	for(int d=m_numImagingDimensions; d<3; d++)
+	{
 		newSize.push_back(1);
+		dimensionsOriginal.push_back(1);
+	}
 
 	/* Make new signal */
 	std::vector<complexFloat> signalPad = std::vector<complexFloat>(pointsPad);
 
 	int nx = shift[0];
 
-	for(int nyOld=0; nyOld<m_dimensions[1]; nyOld++)
+	for(int nyOld=0; nyOld<dimensionsOriginal[1]; nyOld++)
 	{
 		int ny = nyOld + shift[1];
-			for(int nzOld=0; nzOld<m_dimensions[2]; nzOld++)
+			for(int nzOld=0; nzOld<dimensionsOriginal[2]; nzOld++)
 			{
 				int nz = nzOld + shift[2];
 
 				size_t n = (nz*newSize[1] + ny)*newSize[0] + nx;
-				int nOld = (nzOld*m_dimensions[1] + nyOld)*m_dimensions[0];
+				int nOld = (nzOld*dimensionsOriginal[1] + nyOld)*dimensionsOriginal[0];
 
-				for(int m=0; m<m_dimensions[0]; m++)
+				for(int m=0; m<dimensionsOriginal[0]; m++)
 //				blas_ccopy(b_N, &signal[nOld+s*npts], b_inc, &signalPad[n+s*pointsPad], b_inc);
 					signalPad[n+m] = m_signal[nOld+m];
 			}
@@ -299,7 +303,7 @@ bool MRdata::writeToOctave(std::string filename) const
 		name = filename;
 	fprintf(file, "# name: %s\n", name.c_str());
 	fprintf(file, "# type: complex matrix\n");
-	fprintf(file, "# ndims: %u\n", m_dimensions.size());
+	fprintf(file, "# ndims: %lu\n", m_dimensions.size());
 	for(size_t d=0; d<m_dimensions.size(); d++)
 		fprintf(file, " %d", m_dimensions[d]);
 	fprintf(file, "\n");

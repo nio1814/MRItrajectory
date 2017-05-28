@@ -230,7 +230,10 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 		}
 	}
 
-	return griddedData;
+	if(direction==Forward)
+		return griddedData;
+	else
+		return ungriddedData;
 }
 
 void Gridding::deapodize(MRdata &oversampledImage)
