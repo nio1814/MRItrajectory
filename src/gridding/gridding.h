@@ -22,16 +22,16 @@ struct Trajectory;
 class Gridding
 {
 public:
-	enum GridDirection{Forward, Inverse};
+	enum Direction{Forward, Inverse};
 	Gridding(const Trajectory *trajectory);
 
 	std::vector<int> imageDimensions();
 
-	MRdata* grid(const MRdata& ungriddedData);
+	MRdata* grid(MRdata& inputData, Direction direction);
 
 	void deapodize(MRdata& oversampledImage);
 
-	MRdata *kSpaceToImage(const MRdata& ungriddedData);
+	MRdata *kSpaceToImage(MRdata& ungriddedData);
 	MRdata* imageToKspace(const MRdata& image);
 
 private:

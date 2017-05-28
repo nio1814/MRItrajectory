@@ -39,6 +39,23 @@ int randomInteger(int minLimit, int maxLimit)
 	return rand()%range + minLimit;
 }
 
+float meanSquaredError(std::vector<complexFloat> data, std::vector<complexFloat> actual, bool normalize=true)
+{
+	float energyDifference = 0;
+	float energyActual = 0;
+	for(size_t n=0; n<actual.size(); n++)
+	{
+		energyDifference += abs(data[n]-actual[n]);
+		energyActual += (actual[n]*conj(actual[n])).real();
+	}
+
+	float mse = std::sqrt(energyDifference);
+	if(normalize)
+		mse /= std::sqrt(energyActual);
+
+	return mse;
+}
+
 void GriddingTest::testForward_data()
 {
 	QTest::addColumn<QVector<float> >("fieldOfView");
@@ -112,6 +129,14 @@ void GriddingTest::testForward()
 	MRdata* image = gridding.kSpaceToImage(kSpaceData);
 
 	image->writeToOctave("gridtest.txt");
+
+	MRdata* kSpaceDataForwardInverse = gridding.imageToKspace(*image);
+
+	QCOMPARE(kSpaceData.points(), kSpaceDataForwardInverse->points());
+
+	float error = meanSquaredError(kSpaceDataForwardInverse->signal(), kSpaceData.signal());
+
+	QVERIFY(error<.04);
 }
 
 QTEST_APPLESS_MAIN(GriddingTest)
