@@ -29,6 +29,7 @@ public:
 	FFTplan planFFT(int direction, std::vector<int> outputDimensions);
 	void fft(int direction, std::vector<int> outputDimensions=std::vector<int>());
 	void crop(std::vector<int> newSize);
+	void pad(std::vector<int> newSize);
 
 	bool writeToOctave(std::string filename) const;
 private:

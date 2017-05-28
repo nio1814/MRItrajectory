@@ -22,6 +22,7 @@ struct Trajectory;
 class Gridding
 {
 public:
+	enum GridDirection{Forward, Inverse};
 	Gridding(const Trajectory *trajectory);
 
 	std::vector<int> imageDimensions();
@@ -31,6 +32,8 @@ public:
 	void deapodize(MRdata& oversampledImage);
 
 	MRdata *kSpaceToImage(const MRdata& ungriddedData);
+	MRdata* imageToKspace(const MRdata& image);
+
 private:
 	int numDimensions();
 	void nearestGriddedPoint(const std::vector<float> &ungriddedPoint, std::vector<float> &griddedPoint);

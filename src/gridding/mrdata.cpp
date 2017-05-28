@@ -237,6 +237,50 @@ void MRdata::crop(std::vector<int> newSize)
 		m_dimensions[d] = newSize[d];
 }
 
+void MRdata::pad(std::vector<int> newSize)
+{
+	/* Calculate new total number of points */
+	size_t pointsPad = 1;
+	int shift[3] = {0,0,0};
+	bool doPad = true;	// perform padding
+	for(int d=0; d<m_numImagingDimensions; d++)
+	{
+		doPad += (m_dimensions[d]<newSize[d]);
+		pointsPad *= newSize[d];
+		shift[d] = std::ceil((newSize[d]-m_dimensions[d])/2.0f);
+	}
+
+	if(!doPad)
+		return;
+
+	for(int d=m_numImagingDimensions; d<3; d++)
+		newSize.push_back(1);
+
+	/* Make new signal */
+	std::vector<complexFloat> signalPad = std::vector<complexFloat>(pointsPad);
+
+	int nx = shift[0];
+
+	for(int nyOld=0; nyOld<m_dimensions[1]; nyOld++)
+	{
+		int ny = nyOld + shift[1];
+			for(int nzOld=0; nzOld<m_dimensions[2]; nzOld++)
+			{
+				int nz = nzOld + shift[2];
+
+				size_t n = (nz*newSize[1] + ny)*newSize[0] + nx;
+				int nOld = (nzOld*m_dimensions[1] + nyOld)*m_dimensions[0];
+
+				for(int m=0; m<m_dimensions[0]; m++)
+//				blas_ccopy(b_N, &signal[nOld+s*npts], b_inc, &signalPad[n+s*pointsPad], b_inc);
+					signalPad[n+m] = m_signal[nOld+m];
+			}
+	}
+
+	m_signal = signalPad;
+	m_dimensions = newSize;
+}
+
 bool MRdata::writeToOctave(std::string filename) const
 {
 	FILE* file = fopen(filename.c_str(), "w");

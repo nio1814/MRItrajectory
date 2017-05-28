@@ -226,7 +226,6 @@ void Gridding::deapodize(MRdata &oversampledImage)
 
 MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)
 {
-//	ungriddedData.writeToOctave("temp");
 	MRdata* image = grid(ungriddedData);
 	image->fftShift();
 	image->fft(FFTW_BACKWARD);
@@ -237,6 +236,21 @@ MRdata* Gridding::kSpaceToImage(const MRdata &ungriddedData)
 	image->writeToOctave("temp");
 
 	return image;
+}
+
+MRdata *Gridding::imageToKspace(const MRdata &image)
+{
+	MRdata griddedKspace = image;
+	griddedKspace.pad(m_gridDimensions);
+	deapodize(griddedKspace);
+
+	griddedKspace.fftShift();
+	griddedKspace.fft(FFTW_FORWARD);
+	griddedKspace.fftShift();
+
+	MRdata* ungriddedKspace = inverseGrid(griddedKspace);
+
+	return ungriddedKspace;
 }
 
 int Gridding::numDimensions()
