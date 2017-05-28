@@ -303,7 +303,7 @@ bool MRdata::writeToOctave(std::string filename) const
 		name = filename;
 	fprintf(file, "# name: %s\n", name.c_str());
 	fprintf(file, "# type: complex matrix\n");
-	fprintf(file, "# ndims: %lu\n", m_dimensions.size());
+	fprintf(file, "# ndims: %zu\n", m_dimensions.size());
 	for(size_t d=0; d<m_dimensions.size(); d++)
 		fprintf(file, " %d", m_dimensions[d]);
 	fprintf(file, "\n");

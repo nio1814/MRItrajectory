@@ -135,8 +135,8 @@ void GriddingTest::testForward()
 	QCOMPARE(kSpaceData.points(), kSpaceDataForwardInverse->points());
 
 	float error = meanSquaredError(kSpaceDataForwardInverse->signal(), kSpaceData.signal());
-
-	QVERIFY(error<.04);
+	QString message = QString("error %1").arg(error);
+	QVERIFY2(error<.04, message.toStdString().c_str());
 }
 
 QTEST_APPLESS_MAIN(GriddingTest)
