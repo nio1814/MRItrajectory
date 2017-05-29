@@ -65,7 +65,7 @@ Phantom::Phantom(std::vector<float> fieldOfView)
 	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],   -0.65*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.023*fieldOfView[1],    0.02*fieldOfView[2],              0,      0,    0,     0.1));
 	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],  -0.105*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],    0.04*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,     0.2));
 	m_ellipsoids.push_back(Ellipsoid(0.,     0.1*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],   0.056*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,    -0.2));
-
+}
 
 /**
  *  User may add new ellipsoids and change their properties with this constructor.
