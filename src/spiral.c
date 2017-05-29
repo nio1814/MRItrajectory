@@ -367,8 +367,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 		   float fieldOfViewFinal;
 		   if(variableDensity)
 		   {
-		   /*kr = kSpaceMaxRadial*variableDensity->kn[n];*/
-		   kr = variableDensity->step[n].kr;
+			kr = variableDensity->step[n].kr;
 			getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewFinal, 1);
 		   }
 		   else
@@ -419,7 +418,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 				kSpaceCoordinatesTest = NULL;
             }
 
-		  if(!generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, trajectory->readoutPoints, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
+		  if(!generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, readoutPointsDesired, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
             {
 
 				if(readoutPointsTest>readoutPointsTest)

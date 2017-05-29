@@ -16,3 +16,4 @@ add_library(trajectory ${TRAJECTORY_SOURCE})
 
 add_subdirectory(gridding)
 add_subdirectory(phantom)
+add_subdirectory(test)
