@@ -83,3 +83,17 @@ void unwrapPhase(float *phasedata, float* uPhaseData, int numPoints, int frsize,
 			
 	return;
 }
+
+void matrixMultiply(const float* left, int leftRows, int innerDimension, const float* right, int rightColumns, float *output)
+{
+	int m,n,p;
+	for(m=0; m<leftRows; m++)
+	{
+		for(n=0; n<rightColumns; n++)
+		{
+			output[m+leftRows*n] = 0;
+			for(p=0; p<innerDimension; p++)
+				output[m+leftRows*n] += left[m+leftRows*p]*right[p+leftRows*n];
+		}
+	}
+}
