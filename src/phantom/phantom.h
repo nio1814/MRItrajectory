@@ -1,10 +1,8 @@
 #ifndef PHANTOM_H
 #define PHANTOM_H
 
-#include "ellipsoid.h"
-#include "ellipse.h"
+#include "shape.h"
 
-#include <vector>
 #include <complex>
 
 typedef std::complex<float> complexFloat;
