@@ -7,8 +7,8 @@ class PhantomTest : public QObject
 {
 	Q_OBJECT
 private slots:
-	void test3D_data();
-	void test3D();
+	void testImage_data();
+	void testImage();
 };
 
 #endif // PHANTOMTEST_H

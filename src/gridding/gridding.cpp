@@ -288,4 +288,3 @@ std::vector<int> Gridding::gridDimensions()
 	return m_gridDimensions;
 }
 
-

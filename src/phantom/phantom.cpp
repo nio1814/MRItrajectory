@@ -1,5 +1,6 @@
 #include "phantom.h"
 
+#include "shape.h"
 extern "C"
 {
 #include "arrayops.h"
@@ -54,17 +55,33 @@ extern "C"
 /** Creates a new instance of SheppLogan3D */
 Phantom::Phantom(std::vector<float> fieldOfView)
 {
-	scalefloats(fieldOfView.data(), fieldOfView.size(), .5);
-	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,     0.69*fieldOfView[0],    0.92*fieldOfView[1],     0.9*fieldOfView[2],              0,      0,    0,      2.));
-	m_ellipsoids.push_back(Ellipsoid(0,       0,       0,   0.6624*fieldOfView[0],   0.874*fieldOfView[1],    0.88*fieldOfView[2],              0,      0,    0,    -0.8));
-	m_ellipsoids.push_back(Ellipsoid(-0.22*fieldOfView[0],      0.,   -0.25*fieldOfView[2],     0.41*fieldOfView[0],    0.16*fieldOfView[1],    0.21*fieldOfView[2], (3*M_PI)/5.,      0,    0,    -0.2));
-	m_ellipsoids.push_back(Ellipsoid(0.22*fieldOfView[0],      0.,   -0.25*fieldOfView[2],     0.31*fieldOfView[0],    0.11*fieldOfView[1],    0.22*fieldOfView[2], (2*M_PI)/5.,      0,    0,    -0.2));
-	m_ellipsoids.push_back(Ellipsoid(0,    0.35*fieldOfView[1],   -0.25*fieldOfView[2],     0.21*fieldOfView[0],    0.25*fieldOfView[1],     0.5*fieldOfView[2],              0,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid(0,     0.1*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.046*fieldOfView[1],   0.046*fieldOfView[2],              0,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid(-0.08*fieldOfView[0],   -0.65*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.023*fieldOfView[1],    0.02*fieldOfView[2],              0,      0,    0,     0.1));
-	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],   -0.65*fieldOfView[1],   -0.25*fieldOfView[2],    0.046*fieldOfView[0],   0.023*fieldOfView[1],    0.02*fieldOfView[2],              0,      0,    0,     0.1));
-	m_ellipsoids.push_back(Ellipsoid(0.06*fieldOfView[0],  -0.105*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],    0.04*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,     0.2));
-	m_ellipsoids.push_back(Ellipsoid(0.,     0.1*fieldOfView[1],   0.625*fieldOfView[2],    0.056*fieldOfView[0],   0.056*fieldOfView[1],     0.1*fieldOfView[2],     M_PI/2.,      0,    0,    -0.2));
+	float scale = 0;
+	for(size_t d=0; d<fieldOfView.size(); d++)
+		scale = std::max(fieldOfView[d], scale);
+	scale *= .5;
+
+	if(fieldOfView.size()==3)
+	{
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,       0,       0,     0.69*scale,    0.92*scale,     0.9*scale,              0,      0,    0,      2.));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,       0,       0,   0.6624*scale,   0.874*scale,    0.88*scale,              0,      0,    0,    -0.8));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, -0.22*scale,      0.,   -0.25*scale,     0.41*scale,    0.16*scale,    0.21*scale, (3*M_PI)/5.,      0,    0,    -0.2));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.22*scale,      0.,   -0.25*scale,     0.31*scale,    0.11*scale,    0.22*scale, (2*M_PI)/5.,      0,    0,    -0.2));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,    0.35*scale,   -0.25*scale,     0.21*scale,    0.25*scale,     0.5*scale,              0,      0,    0,     0.2));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,     0.1*scale,   -0.25*scale,    0.046*scale,   0.046*scale,   0.046*scale,              0,      0,    0,     0.2));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, -0.08*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,  -0.105*scale,   0.625*scale,    0.056*scale,    0.04*scale,     0.1*scale,     M_PI/2.,      0,    0,     0.2));
+		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.,     0.1*scale,   0.625*scale,    0.056*scale,   0.056*scale,     0.1*scale,     M_PI/2.,      0,    0,    -0.2));
+	}
+	else
+	{
+		m_shapes.push_back(Shape(Shape::Ellipse, 0,       0,        0.92*scale,    0.69*scale,     M_PI_2,       2));
+		m_shapes.push_back(Shape(Shape::Ellipse,        0, -0.0184*scale,        0.874*scale,   0.6624*scale,   M_PI_2,     -0.8));
+		m_shapes.push_back(Shape(Shape::Ellipse,     0.22*scale,      0.,        0.31,    0.11*scale,  (2*M_PI)/5.,     -0.2));
+		m_shapes.push_back(Shape(Shape::Ellipse,    -0.22*scale,      0.,        0.41*scale,    0.16,  (3*M_PI)/5.,     -0.2));
+		m_shapes.push_back(Shape(Shape::Ellipse,        0,    0.35*scale,        0.25*scale,    0.21*scale,     M_PI_2,     -0.2)); m_shapes.push_back(Shape(Shape::Ellipse,        0,     0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1)); m_shapes.push_back(Shape(Shape::Ellipse,       0.,    -0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1)); m_shapes.push_back(Shape(Shape::Ellipse,    -0.08*scale,   -0.605*scale,       0.046*scale,   0.023*scale,              0,      0.1));			   m_shapes.push_back(Shape(Shape::Ellipse,       0.,   -0.605*scale,       0.023*scale,   0.023*scale,              0,      0.1 ));	m_shapes.push_back(Shape(Shape::Ellipse,     0.06*scale,   -0.605*scale,       0.046*scale,   0.023*scale,    M_PI_2,      0.1 ));
+
+	}
 }
 
 /**
@@ -75,10 +92,10 @@ Phantom::Phantom(std::vector<float> fieldOfView)
  *  Please to the paper mentioned above for further information on the notations.
  *
  */
-Phantom::Phantom(std::vector<Ellipsoid> ellipsoids)
+Phantom::Phantom(std::vector<Shape> shapes)
 {
-	for(size_t n=0; n<m_ellipsoids.size(); n++)
-		m_ellipsoids.push_back(ellipsoids[n]);
+	for(size_t n=0; n<m_shapes.size(); n++)
+		m_shapes.push_back(shapes[n]);
 }
 
 
@@ -112,22 +129,26 @@ float Phantom::imageDomainSignal(float x, float y, float z)
 	float position[3] = {x,y,z};
 	double signal = 0.0;
 
-	for(size_t i=0; i<m_ellipsoids.size(); i++){ // loop through each of the ellipsoids
-		Ellipsoid& ellipse = m_ellipsoids.at(i);
+	for(size_t i=0; i<m_shapes.size(); i++){ // loop through each of the ellipsoids
+		Shape& shape = m_shapes.at(i);
 		float relativePosition[3];
-		ellipse.relativePosition(position, relativePosition);
+		shape.relativePosition(position, relativePosition);
 		float sum = 0.0;
-		 for(int d=0; d<3; d++)
+		 for(int d=0; d<shape.dimensions(); d++)
 		 {
-			 float projection = relativePosition[d]/ellipse.m_principalAxes[d];
+			 float projection = relativePosition[d]/shape.principalAxis(d);
 			sum += projection*projection;
 		 }
-		 signal += (sum<=1.0) ? ellipse.m_intensity : 0;
+		 signal += (sum<=1.0) ? shape.intensity() : 0;
 	}
 
 	return signal;
 }
 
+float Phantom::imageDomainSignal(float x, float y)
+{
+	return imageDomainSignal(x,y,0);
+}
  /**
   *  Given a list of (kx,ky,kz), the k-space signals at those locations are returned.
   *  The return array is of dimension kList.length by 2.
@@ -160,23 +181,23 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 	double arg = 0.0;
 
 	float coordinatesRotated[3];
-	for(size_t i=0; i<m_ellipsoids.size(); i++)
+	for(size_t i=0; i<m_shapes.size(); i++)
 	{
-		Ellipsoid& ellipsoid = m_ellipsoids.at(i);
-		ellipsoid.rotatedCoordinates(k, coordinatesRotated);
+		Shape& shape = m_shapes.at(i);
+		shape.rotatedCoordinates(k, coordinatesRotated);
 		float K = norm2(coordinatesRotated, 3);
 
 		 arg = 2.0 * M_PI * K;
 
 		 if(K==0.0){ // if K = 0
 
-			 if( norm2(ellipsoid.m_displacement,3)==0.0 ){ // if displacement vector is zero
+			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
-				 signal.real() +=(4./3.)*M_PI* ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2];
+				 signal.real() +=(4./3.)*M_PI* shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
 
 			 }else{ // displacement vector is not zero
-				 double kd = dot(k, ellipsoid.m_displacement, 3);
-				 double temp = (4./3.)*M_PI* ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2];
+				 double kd = dot(k, shape.displacement().data(), 3);
+				 double temp = (4./3.)*M_PI* shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
 				 signal.real() += temp * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
 			 }
@@ -184,15 +205,15 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 		 }else if (K<=0.002){  // if K<=0.002
 
 
-			 if( norm2(ellipsoid.m_displacement,3)==0.0 ){ // if displacement vector is zero
+			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
 				 double temp = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
-				 signal.real() += ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2]*temp;
+				 signal.real() += shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp;
 
 			 }else{  // if displacement vector is not zero
-				 double kd = dot(k, ellipsoid.m_displacement, 3);
+				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp1 = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
-				 double temp2 = ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2]*temp1;
+				 double temp2 = shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp1;
 
 				 signal.real() += temp2 * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp2 * sinf(2.0 * M_PI * kd);
@@ -201,29 +222,26 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 
 		 }else{ // K>0.002
 
-			 if( norm2(ellipsoid.m_displacement,3)==0.0 ){ // if displacement vector is zero
+			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
 				 double temp = sinf(arg)-arg*cosf(arg);
 						temp /= (2.0*powf(M_PI,2)*powf(K,3));
 
-				 signal.real() += ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2]*temp;
+				 signal.real() += shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp;
 
 			 }else{  // displacement vector is not zero
-				 double kd = dot(k, ellipsoid.m_displacement, 3);
+				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp = sinf(arg)-arg*cosf(arg);
 						temp /= (2.0*powf(M_PI,2)*powf(K,3));
 
-						temp *= ellipsoid.m_intensity*ellipsoid.m_principalAxes[0]*ellipsoid.m_principalAxes[1]*ellipsoid.m_principalAxes[2];
+						temp *= shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
 
 				 signal.real() += temp * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
 			 }
-
-
-		 }//end
-
+		 }
 	}
-
+  
 	return signal;
 }
 
