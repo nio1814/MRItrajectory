@@ -1,6 +1,6 @@
 set(SOURCE
 	phantom.cpp
-	ellipsoid.cpp
+	shape.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../arrayops.c
 	${CMAKE_CURRENT_SOURCE_DIR}/../mathops.c
 )

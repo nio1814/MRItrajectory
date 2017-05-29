@@ -29,9 +29,8 @@ void writeOctaveFileFloat(QString filename, const std::vector<float>& data, std:
 	file.close();
 }
 
-void PhantomTest::test3D_data()
+void PhantomTest::testImage_data()
 {
-
 	QTest::addColumn<std::vector<float> >("fieldOfView");
 	QTest::addColumn<std::vector<float> >("spatialResolution");
 
@@ -42,17 +41,18 @@ void PhantomTest::test3D_data()
 		fieldOfView[d] = 28;
 		spatialResolution[d] = 4;
 	}
-	QTest::newRow("Default") << fieldOfView << spatialResolution;
+	QTest::newRow("3D") << fieldOfView << spatialResolution;
 }
 
-void PhantomTest::test3D()
+void PhantomTest::testImage()
 {
 	QFETCH(std::vector<float>, fieldOfView);
 	QFETCH(std::vector<float>, spatialResolution);
 
-	std::vector<int> imageSize(3);
+	int dimensions = fieldOfView.size();
+	std::vector<int> imageSize(dimensions);
 	int points = 1;
-	for(int d=0; d<3; d++)
+	for(int d=0; d<dimensions; d++)
 	{
 		imageSize[d] = qCeil(10*fieldOfView[d]/spatialResolution[d]);
 		points *= imageSize[d];
@@ -61,16 +61,21 @@ void PhantomTest::test3D()
 	Phantom phantom(fieldOfView);
 
 	std::vector<float> image(points);
+	float z;
 	for(int n=0; n<points; n++)
 	{
 		float x = (n%imageSize[0]-imageSize[0]/2)*spatialResolution[0]/10;
 		float y = ((n/imageSize[0])%imageSize[1] - imageSize[1]/2)*spatialResolution[1]/10;
-		float z = (n/(imageSize[0]*imageSize[1]) - imageSize[2]/2)*spatialResolution[2]/10;
+		if(dimensions>2)
+			z = (n/(imageSize[0]*imageSize[1]) - imageSize[2]/2)*spatialResolution[2]/10;
 
-		if(!(n%333))
-			qWarning("%d %f %f %f", n, x, y, z);
+//		if(!(n%333))
+//			qWarning("%d %f %f %f", n, x, y, z);
 
-		image[n] = phantom.imageDomainSignal(x,y,z);
+		if(dimensions==3)
+			image[n] = phantom.imageDomainSignal(x,y,z);
+		else
+			image[n] = phantom.imageDomainSignal(x,y);
 	}
 
 	writeOctaveFileFloat("test.txt", image, imageSize);
