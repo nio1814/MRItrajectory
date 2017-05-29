@@ -45,5 +45,9 @@ int writeVariableDensity(const char* filename, const struct VariableDensity *v, 
 
 //void calcAngleCompb(struct Vd *v, float td, float fovx, float fovy, float res, int isConstAng);
 
+void getFieldOfView(const struct VariableDensity* variableDensity, float kr, const float *fieldOfViewInitial, float *fieldOfViewKr, int dimensions);
+
+void getFinalFieldOfView(const struct VariableDensity *variableDensity, const float *initialFieldOfView, float *finalFieldOfView, int dimensions);
+
 #endif
 
