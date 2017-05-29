@@ -1,3 +1,15 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University.
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+To distribute this file, substitute the full license for the above reference.
+
+**************************************************************************/
 #include "trajectory.h"
 
 #include "arrayops.h"
@@ -412,4 +424,9 @@ void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajec
 	for(d=0; d<trajectory->dimensions; d++)
 		trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint] = coordinates[d];
 	trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint] = densityCompensation;
+}
+
+float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval)
+{
+	return 1.0f/samplingInterval*GYROMAGNETIC_RATIO*fieldOfView;
 }

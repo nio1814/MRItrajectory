@@ -1,3 +1,15 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University.
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+To distribute this file, substitute the full license for the above reference.
+
+**************************************************************************/
 #include "cones.h"
 
 #include "trajectory.h"
@@ -64,13 +76,6 @@ float calculateGtwist(float kr, float kSpaceExtentRadial, float theta, float fie
 	gtwist = sqrt((gtwist>0)?gtwist:0);
 
 	return gtwist;
-}
-
-void getFieldOfView(const struct VariableDensity* variableDensity, float kr, const float *fieldOfViewInitial, float *fieldOfViewKr, int dimensions)
-{
-	float scale = getScale(variableDensity, kr);
-	memcpy(fieldOfViewKr, fieldOfViewInitial, dimensions*sizeof(float));
-	scalefloats(fieldOfViewKr, dimensions, scale);
 }
 
 int generateCone(float fieldOfViewRadial, float fieldOfViewCircumferential, const struct VariableDensity *variableDensity, float kSpaceExtentRadial, float interleaves, enum InterConeCompensation compensation, float theta, int maxPoints, float samplingInterval, int rotatable, float scaleXY, float scaleZ, float maxGradientAmplitude, float maxSlewRate, int *readoutPoints, float **kSpaceCoordinates, float **gradientWaveforms)
@@ -603,15 +608,6 @@ void makeConesInterpolation(struct Cones *cones)
 }
 
 
-
-void getFinalFieldOfView(const struct VariableDensity *variableDensity, const float *initialFieldOfView, float *finalFieldOfView, int dimensions)
-{
-	float scale = getFinalScale(variableDensity);
-	memcpy(finalFieldOfView, initialFieldOfView, dimensions*sizeof(float));
-	scalefloats(finalFieldOfView, dimensions, scale);
-}
-
-
 int generateConesBasis(struct Cones *cones)
 {
 	int status = 0;
@@ -802,7 +798,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	trajectory->fieldOfView[2] = fieldOfViewZ;
 	if(filterFieldOfView>0)
 	{
-		trajectory->maxReadoutGradientAmplitude = fminf(1/(samplingInterval*GYROMAGNETIC_RATIO*filterFieldOfView), maxGradientAmplitude);
+		trajectory->maxReadoutGradientAmplitude = fminf(calculateMaxReadoutGradientAmplitude(filterFieldOfView, samplingInterval), maxGradientAmplitude);
 	} 
 	else 
 		trajectory->maxReadoutGradientAmplitude = maxGradientAmplitude;

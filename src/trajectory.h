@@ -65,5 +65,7 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation);
 
+float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
+
 #endif
 

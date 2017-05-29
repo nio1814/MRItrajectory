@@ -1,8 +1,11 @@
 #include "variabledensity.h"
 
+#include "arrayops.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 void initializeVariableDensity(struct VariableDensity *v)
 {
@@ -126,4 +129,18 @@ int writeVariableDensity(const char* filename, const struct VariableDensity *v, 
 	fclose(file);
 
 	return 0;
+}
+
+void getFieldOfView(const struct VariableDensity* variableDensity, float kr, const float *fieldOfViewInitial, float *fieldOfViewKr, int dimensions)
+{
+	float scale = getScale(variableDensity, kr);
+	memcpy(fieldOfViewKr, fieldOfViewInitial, dimensions*sizeof(float));
+	scalefloats(fieldOfViewKr, dimensions, scale);
+}
+
+void getFinalFieldOfView(const struct VariableDensity *variableDensity, const float *initialFieldOfView, float *finalFieldOfView, int dimensions)
+{
+	float scale = getFinalScale(variableDensity);
+	memcpy(finalFieldOfView, initialFieldOfView, dimensions*sizeof(float));
+	scalefloats(finalFieldOfView, dimensions, scale);
 }
