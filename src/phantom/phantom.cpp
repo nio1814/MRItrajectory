@@ -239,12 +239,9 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 				 signal.real() += temp * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
 			 }
-
-
-		 }//end
-
+		 }
 	}
-
+  
 	return signal;
 }
 

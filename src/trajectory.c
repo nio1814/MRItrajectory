@@ -63,9 +63,13 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int wa
 	else
 		count = readouts;
 
-	trajectory->gradientWaveforms = (float*)malloc(dimensions*count*waveformPoints*sizeof(float));
-	trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
-	trajectory->densityCompensation = (float*)malloc(count*readoutPoints*sizeof(float));
+	if(waveformPoints)
+		trajectory->gradientWaveforms = (float*)malloc(dimensions*count*waveformPoints*sizeof(float));
+	if(readoutPoints)
+	{
+		trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
+		trajectory->densityCompensation = (float*)malloc(count*readoutPoints*sizeof(float));
+	}
 
 	trajectory->storage = storage;
 	trajectory->readouts = readouts;
@@ -388,4 +392,24 @@ int saveGradientWaveforms(const char *filename, const float* grad, short dimensi
 	}
 
 	return status;
+}
+
+int numTrajectoryWaveforms(const struct Trajectory *trajectory)
+{
+	return trajectory->storage==StoreBasis ? trajectory->bases : trajectory->readouts;
+}
+
+void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float* coordinates)
+{
+	int d;
+	for(d=0; d<trajectory->dimensions; d++)
+		coordinates[d] = trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint];
+}
+
+void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation)
+{
+	int d;
+	for(d=0; d<trajectory->dimensions; d++)
+		trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint] = coordinates[d];
+	trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint] = densityCompensation;
 }
