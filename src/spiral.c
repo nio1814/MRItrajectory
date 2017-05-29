@@ -110,7 +110,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
     n = 1;
     m = 1;
 
-	while((kr <= kSpaceMaxRadial) && valid)
+	while(kr <= kSpaceMaxRadial)
     {
         /*for(d=0; d<ndim; d++)
             km[d] = 1.5*k[n*ndim+d] - 0.5*k[(n-1)*ndim+d];*/
@@ -124,8 +124,9 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 
 	   /*kmr = norm2(km, ndim);
 	   knorm = kr/kSpaceMaxRadial;*/
-		  float fieldOfView;
-		getFieldOfView(variableDensity, kr, &fieldOfViewInitial, &fieldOfView, 1);
+		  float fieldOfView = fieldOfViewInitial;
+		  if(variableDensity)
+			getFieldOfView(variableDensity, kr, &fieldOfViewInitial, &fieldOfView, 1);
 	   float maxReadoutGradientAmplitude = fmin(calculateMaxReadoutGradientAmplitude(fieldOfView, samplingInterval), maxGradientAmplitude);
 
 	   float gtwist;
@@ -186,7 +187,8 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
             else
 				stepBack = 0;
 
-			if(gradientMagnitudeRange[stepSign[n]]>maxReadoutGradientAmplitude)
+		int stepIndex = (stepSign[n]+1)/2;
+			if(gradientMagnitudeRange[stepIndex]>maxReadoutGradientAmplitude)
 				stepBack = 1;
         }
         else
@@ -216,10 +218,10 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
             n -= 2;
         }
 		kr = norm2(&kDesign[n*2], 2);
-
-		valid = n<(maxPoints-1);
         m++;
     }
+
+	valid = n<(maxDesignPoints-1);
 
 	if(valid)
     {
@@ -248,7 +250,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 	free(kDesign);
 	free(stepSign);
 
-	return valid;
+	return !valid;
 }
 
 void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float *denscomp)
@@ -356,25 +358,37 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 		int interleavesLow = 1;
 		int interleavesHigh = 0;
 
-	   for(n=0; n<variableDensity->steps; n++)
+	int steps = 1;
+	if(variableDensity)
+		steps = variableDensity->steps;
+
+	   for(n=0; n<steps; n++)
 	   {
-		   /*kr = kSpaceMaxRadial*variableDensity->kn[n];*/
 		   float fieldOfViewFinal;
+		   if(variableDensity)
+		   {
+		   /*kr = kSpaceMaxRadial*variableDensity->kn[n];*/
 		   kr = variableDensity->step[n].kr;
 			getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewFinal, 1);
+		   }
+		   else
+		   {
+			   fieldOfViewFinal = fieldOfView;
+			   kr = kSpaceMaxRadial;
+		   }
+
 		   if(sptype==spFERMAT)
 			fieldOfViewFinal = calcFovFermatFloret(fieldOfViewFinal, kr, floretAngle);
 
 			interleavesHigh = fmax(interleavesHigh, 2.0f*M_PI*kr*fieldOfViewFinal);
 	   }
 
-	   if(kr<kSpaceMaxRadial)
+	   if(kr<kSpaceMaxRadial && variableDensity)
        {
-		   kr = kSpaceMaxRadial;
-		   float fieldOfViewAtKr;
-		   getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewAtKr, 1);
+		   float fieldOfViewAtKr = fieldOfView;
+			getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewAtKr, 1);
           if(sptype==spFERMAT)
-		   fieldOfViewAtKr = calcFovFermatFloret(fieldOfViewAtKr, kr, floretAngle);
+		   fieldOfViewAtKr = calcFovFermatFloret(fieldOfViewAtKr, kSpaceMaxRadial, floretAngle);
 
 		   interleavesHigh = fmax(interleavesHigh, 2.0f*M_PI*kr*fieldOfViewAtKr);
        }
@@ -405,10 +419,10 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 				kSpaceCoordinatesTest = NULL;
             }
 
-		  if(generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, trajectory->readoutPoints, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
+		  if(!generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, trajectory->readoutPoints, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
             {
 
-				if(readoutPointsTest>trajectory->readoutPoints)
+				if(readoutPointsTest>readoutPointsTest)
 					interleavesLow = interleavesTest;
                 else
                 {
