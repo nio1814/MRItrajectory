@@ -38,5 +38,4 @@ void swapValues(float *array, int index1, int index2);
 
 void scalecomplex(float *rdata, float *idata, float rmult, float imult, long npts);
 
-
 #endif // ARRAYOPS_H

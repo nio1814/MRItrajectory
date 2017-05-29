@@ -14,6 +14,7 @@ To distribute this file, substitute the full license for the above reference.
 
 #include "arrayops.h"
 #include "variabledensity.h"
+#include "mathops.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -250,7 +251,69 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 	return valid;
 }
 
-void generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float fovFilt, float maxGradientAmplitude, float maxSlewRate)
+void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float *denscomp)
+{
+	float *kr, *gradientMagnitude;
+	float* Gtwist;
+	float *denscomp_it, *denscomp_is;
+	float *kPhasexy, *kMagxy;
+	int n;
+
+	/* Calculate k-space and gradient magnitudes */
+	kr = (float*)malloc(rolen*sizeof(float));
+	gradientMagnitude = (float*)malloc(rolen*sizeof(float));
+	for(n=0; n<rolen; n++)
+	{
+        kr[n] = sqrt(kx[n]*kx[n] + ky[n]*ky[n]);
+        gradientMagnitude[n] = sqrt(gx[n]*gx[n] + gy[n]*gy[n]);
+	}
+
+	Gtwist = (float*)malloc(rolen*sizeof(float));
+	kPhasexy = (float*)malloc(rolen*sizeof(float));
+	kMagxy = (float*)malloc(rolen*sizeof(float));
+
+	calculatePhase(kx, ky, kPhasexy, rolen, 0, 1.0);
+	calculateMagnitude(kx, ky, kMagxy, rolen);
+	unwrapPhase(kPhasexy, Gtwist, rolen, rolen, M_PI);
+	for(n=0; n<rolen-1; n++)
+        Gtwist[n] = fmax((Gtwist[n+1]-Gtwist[n])/(kr[n+1]-kr[n])*kr[n], 0.0f);
+	
+	Gtwist[rolen-1] = Gtwist[rolen-2];
+
+	/*% Density compensation due to inter-trajectory spacing (ignoring NINT)
+	denscomp_it = abs(kcxy)./sqrt(1+Gtwist.^2);*/
+	denscomp_it = (float*)malloc(rolen*sizeof(float));
+	for(n=0; n<rolen; n++)
+    {
+        if(Gtwist[n]>=0)
+            denscomp_it[n] = kMagxy[n]/sqrt(1+Gtwist[n]*Gtwist[n]);
+        else
+            denscomp_it[n] = 0;
+    }
+
+	/*% Density compensation due to inter-sample spacing
+	denscomp_is = (gr+[gr(2:end); gr(end)])/2;*/
+	denscomp_is = (float*)malloc(rolen*sizeof(float));
+	addfloats(gradientMagnitude, &(gradientMagnitude[1]), denscomp_is, rolen-1);
+	denscomp_is[rolen-1] = 2*gradientMagnitude[rolen-1];
+	scalefloats(denscomp_is, rolen, 0.5);
+
+	multiplyfloats(denscomp_is, denscomp_it, denscomp, rolen);
+
+	/*Deallocate mem*/
+	free(kr);
+	free(gradientMagnitude);
+	free(Gtwist);
+	free(denscomp_it);
+	free(denscomp_is);
+	free(kPhasexy);
+	free(kMagxy);
+
+	return;
+}
+
+
+struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float fovFilt, float maxGradientAmplitude, float maxSlewRate)
 {
 	struct Trajectory *trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
 	adjustSpatialResolution(fieldOfView, trajectory->imageDimensions, &spatialResolution);
@@ -399,7 +462,7 @@ void generateSpirals(struct VariableDensity *variableDensity, float fieldOfView,
 		calcSpiralDcf(gx, gy, kx, ky, trajectory->readoutPoints, &trajectory->densityCompensation[n*trajectory->readoutPoints]);
     }
 
-    return;
+    return trajectory;
 }
 
 
