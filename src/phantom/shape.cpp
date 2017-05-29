@@ -59,8 +59,8 @@ Shape::Shape(Type type, float x, float y, float xAxisLength, float yAxisLength, 
 
 	m_rotationMatrix.resize(4);
 	m_rotationMatrix[0] = std::cos(theta);
-	m_rotationMatrix[1] = std::sin(theta);
-	m_rotationMatrix[2] = -std::sin(theta);
+	m_rotationMatrix[1] = -std::sin(theta);
+	m_rotationMatrix[2] = std::sin(theta);
 	m_rotationMatrix[3] = std::cos(theta);
 }
 

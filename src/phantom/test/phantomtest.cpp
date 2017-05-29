@@ -19,9 +19,10 @@ void writeOctaveFileFloat(QString filename, const std::vector<float>& data, std:
 	stream << "# Phantom Test\n";
 	stream << "# name: m\n";
 	stream << "# type: matrix\n";
-	stream << "# ndims: 3\n";
-	QString line = QString(" %1 %2 %3\n").arg(imageSize[0]).arg(imageSize[1]).arg(imageSize[2]);
-	stream << line;
+	stream << "# ndims: " << imageSize.size() << endl;
+	for(size_t d=0; d<imageSize.size(); d++)
+		stream << " " << imageSize[d];
+	endl(stream);
 
 	for (size_t n=0; n<data.size(); n++)
 		stream << " " << data[n] << endl;
@@ -42,6 +43,12 @@ void PhantomTest::testImage_data()
 		spatialResolution[d] = 4;
 	}
 	QTest::newRow("3D") << fieldOfView << spatialResolution;
+
+	fieldOfView.resize(2);
+	for(int d=0; d<2; d++)
+		spatialResolution[d] = 1;
+
+	QTest::newRow("2D") << fieldOfView << spatialResolution;
 }
 
 void PhantomTest::testImage()
