@@ -110,7 +110,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
     n = 1;
     m = 1;
 
-	while(kr <= kSpaceMaxRadial)
+	while(kr <= kSpaceMaxRadial && n<(maxDesignPoints-1))
     {
         /*for(d=0; d<ndim; d++)
             km[d] = 1.5*k[n*ndim+d] - 0.5*k[(n-1)*ndim+d];*/
@@ -169,10 +169,11 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 		float projectedGradient = dot(kSpaceDirection, gradient, 2);
 		float term = (maxGradientDelta*maxGradientDelta - (gradient[0]*gradient[0] + gradient[1]*gradient[1])) + projectedGradient*projectedGradient;
 
+		float gradientMagnitudeRange[2];
         if(term>=0)
         {
 			float s;
-			float gradientMagnitudeRange[2];
+
             for(d=0; d<2; d++)
             {
                 if(d==0)
@@ -182,7 +183,8 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 
 				gradientMagnitudeRange[d] = projectedGradient + s*sqrt(term);
             }
-	if(gradientMagnitudeRange[0]>gradientMagnitudeRange[1])
+			gradientMagnitudeRange[0] = fmax(gradientMagnitudeRange[0], 0);
+		if(gradientMagnitudeRange[0]>gradientMagnitudeRange[1])
 				stepBack = 1;
             else
 				stepBack = 0;
@@ -197,7 +199,6 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 		if(!stepBack)
         {
 			float gradientMagnitude;
-			float gradientMagnitudeRange[2];
 			if(stepSign[n]==1)
 				gradientMagnitude = gradientMagnitudeRange[1];
             else
