@@ -107,7 +107,7 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 	float *gradient = (float*)malloc(MAX_REWIND_POINTS*3*sizeof(float));
 	float *karr = (float*)malloc(MAX_REWIND_POINTS*sizeof(float));
 	float kSpaceCoordinates[3], kret[3], gradientNormalized[3], gtarg[3], deltaGradientvect[3], deltaGradient[3];
-	int keepgoing = 1;
+	int keepGoing = 1;
 	int n;
 	int copySize = dimensions*sizeof(float);
 	float a;
@@ -120,7 +120,7 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 
 	memcpy(kret, kSpaceCoordinates, copySize);
 
-	while(keepgoing==1 && n<(MAX_REWIND_POINTS-1))
+	while(keepGoing==1 && n<(MAX_REWIND_POINTS-1))
 	{
 		/*kret = k + GYROMAGNETIC_RATIO*0.5*g[n]/maxSlewRate;*/
 		memcpy(kret, &gradient[dimensions*n], copySize);
@@ -187,12 +187,12 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 
 		if(n > MAX_REWIND_POINTS)
 	   {
-			keepgoing = 0;
+			keepGoing = 0;
 		  fprintf(stderr, "goTok1: Error, rewinder length exceeded\n");
 	   }
 		else if ((norm2(kSpaceCoordinates,dimensions) < kacc) & (norm2(&gradient[dimensions*n], dimensions) < gacc) && !(n%oversamplingRatio))
 		/*else if ((norm2(k,dimensions) < kacc) & (norm2(g[n], dimensions) < gacc))*/
-			keepgoing = 0;
+			keepGoing = 0;
 	}
 
 //	ndes = n;
@@ -221,21 +221,21 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 	{
 		a = (*gradientRewindX)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		   fprintf(stderr, "gx %f out of range", (*gradientRewindX)[n]);
+		   fprintf(stderr, "gx %f out of range\n", (*gradientRewindX)[n]);
 	}
 
 	if(gradientRewindY)
 	{
 		a = (*gradientRewindY)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		   fprintf(stderr, "gy %f out of range", (*gradientRewindY)[n]);
+		   fprintf(stderr, "gy %f out of range\n", (*gradientRewindY)[n]);
 	}
 
 	if(gradientRewindZ)
 	{
 		a = (*gradientRewindZ)[n]/samplingInterval;
 		if(fabs(a)>maxSlewRate)
-		   fprintf(stderr, "gz %f out of range", (*gradientRewindZ)[n]);
+		   fprintf(stderr, "gz %f out of range\n", (*gradientRewindZ)[n]);
 	}
 
 	return;

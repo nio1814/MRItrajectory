@@ -56,7 +56,7 @@ void SpiralTest::testGenerate()
 			gradientMagnitude = qSqrt(gradientMagnitude);
 			if(n<spiral->readoutPoints)
 			{
-				sprintf(message, "|g| %f limit %f\n", gradientMagnitude, maxReadoutGradient);
+				sprintf(message, "|g[%d]| %f limit %f\n", n, gradientMagnitude, maxReadoutGradient);
 				QVERIFY2(gradientMagnitude < maxReadoutGradient+.01, message);
 				float kr = 0;
 				for(int d=0; d<2; d++)

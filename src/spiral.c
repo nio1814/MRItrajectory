@@ -70,33 +70,28 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
     /*float knorm;*/
 	/*int n;
     float *k;
-	int *stepSign;
     float gs;
     float gxy;
 
     float knext[3];
     float dk[3];
-    float u[3];
 	float projectedGradient;
     float uxym;
 	float gradientMagnitudeRange[2];
     float gm;
     float gscale;
-	float maxReadoutGradientAmplitude;
-    int d;
-    float gtwist;
     float term;
 	float fov;*/
 	int stepBack; /* 1 when backtracking */
 	int valid = 1;
     int m;
 
-	int maxDesignPoints = oversamplingRatio*maxPoints;
-	float* kDesign = (float*)calloc(2*maxDesignPoints, sizeof(float));
-	int* stepSign = (int*)malloc(maxDesignPoints*sizeof(int));
+	int maxPointsDesign = oversamplingRatio*maxPoints;
+	float* kDesign = (float*)calloc(2*maxPointsDesign, sizeof(float));
+	int* stepSign = (int*)malloc(maxPointsDesign*sizeof(int));
 
 	int n;
-	for(n=0; n<maxPoints; n++)
+	for(n=0; n<maxPointsDesign; n++)
 		stepSign[n] = 1;
 
 	kDesign[0] = gammaDeltaTime*maxGradientDelta;
@@ -110,7 +105,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
     n = 1;
     m = 1;
 
-	while(kr <= kSpaceMaxRadial && n<(maxDesignPoints-1))
+	while(kr <= kSpaceMaxRadial && n<(maxPointsDesign-1))
     {
         /*for(d=0; d<ndim; d++)
             km[d] = 1.5*k[n*ndim+d] - 0.5*k[(n-1)*ndim+d];*/
@@ -190,7 +185,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 				stepBack = 0;
 
 		int stepIndex = (stepSign[n]+1)/2;
-			if(gradientMagnitudeRange[stepIndex]>maxReadoutGradientAmplitude)
+			if(gradientMagnitudeRange[stepIndex]>.999*maxReadoutGradientAmplitude)
 				stepBack = 1;
         }
         else
@@ -222,7 +217,7 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
         m++;
     }
 
-	valid = n<(maxDesignPoints-1);
+	valid = n<(maxPointsDesign-1);
 
 	if(valid)
     {
