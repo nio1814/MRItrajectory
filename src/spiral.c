@@ -58,33 +58,8 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 
 	float kSpaceMaxRadial = 5/spatialResolution;
 
-	/*float phi = 0;
-	float deltaPhi;
-    float phiNext;
-
-
-    float kr;
-    float dkr;
-    float dkr1, dkr2;
-	float deltaPhiDeltaKr;*/
-    /*float knorm;*/
-	/*int n;
-    float *k;
-    float gs;
-    float gxy;
-
-    float knext[3];
-    float dk[3];
-	float projectedGradient;
-    float uxym;
-	float gradientMagnitudeRange[2];
-    float gm;
-    float gscale;
-    float term;
-	float fov;*/
-	int stepBack; /* 1 when backtracking */
+	int stepBack; 
 	int valid = 1;
-    int m;
 
 	int maxPointsDesign = oversamplingRatio*maxPoints;
 	float* kDesign = (float*)calloc(2*maxPointsDesign, sizeof(float));
@@ -99,26 +74,11 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 
 	float kr = kDesign[2];
 
-//	dkr1 = kDesign[0];
-//	dkr2 = kDesign[2] - kDesign[0];
-
     n = 1;
-    m = 1;
 
 	while(kr <= kSpaceMaxRadial && n<(maxPointsDesign-1))
     {
-        /*for(d=0; d<ndim; d++)
-            km[d] = 1.5*k[n*ndim+d] - 0.5*k[(n-1)*ndim+d];*/
 		  float deltaKr = norm2(&kDesign[n*2], 2) - norm2(&kDesign[(n-1)*2], 2);
-//		  if(n>=2)
-//			dkr2 = norm2(&k[(n-1)*ndim], ndim) - norm2(&k[(n-2)*ndim], ndim);
-//		  else
-//			  dkr2 = 0;
-	/*`	dkr = 2*dkr1 - dkr2;*/
-//		dkr = dkr1;
-
-	   /*kmr = norm2(km, ndim);
-	   knorm = kr/kSpaceMaxRadial;*/
 		  float fieldOfView = fieldOfViewInitial;
 		  if(variableDensity)
 			getFieldOfView(variableDensity, kr, &fieldOfViewInitial, &fieldOfView, 1);
@@ -135,14 +95,12 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
 
 		float phi = atan2(kDesign[n*2+1], kDesign[n*2]);
 		float deltaPhiDeltaKr = gtwist/kr;
-        /*dkr = kmr-kr;*/
 		float deltaPhi = deltaPhiDeltaKr*deltaKr;
 		float phiNext = phi+deltaPhi;
 
 		float kDesignNext[2];
 		kDesignNext[0] = cos(phiNext);
 		kDesignNext[1] = sin(phiNext);
-        /*scalefloats(knext, ndim, kmr);*/
 		scalefloats(kDesignNext, 2, kr+deltaKr);
 
 		float deltaK[2];
@@ -214,7 +172,6 @@ int generateSpiral(float fieldOfViewInitial, float spatialResolution, struct Var
             n -= 2;
         }
 		kr = norm2(&kDesign[n*2], 2);
-        m++;
     }
 
 	valid = n<(maxPointsDesign-1);
@@ -315,34 +272,12 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 {
 	struct Trajectory *trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
 	adjustSpatialResolution(fieldOfView, trajectory->imageDimensions, &spatialResolution);
-//    float *g = NULL;
-//    float *gbasis;
-//    float *gx1, *gx2, *gy1, *gy2, *gz1, *gz2;
-//    float *k = NULL;
-//    float *kx, *ky;
 	float kr;
-//    float *grew[3] = {NULL,NULL,NULL};
-//    float *g3 = NULL;
-//    float fovtemp;
 	float kSpaceMaxRadial = 5/spatialResolution;
-//	float maxReadoutGradientAmplitude;
 
-//    int Ndes = Tdes/dt;
-//    float kstart;
-//    int nstart;
 	int n;
-//    int m;
-//    int nrew = 200;
-
-//    int glentemp;
 	int readoutPointsTest;
-//    int ndim = 2;
-//    int ndimOut;
-//    int d;
 
-//    float phi;
-
-    /* calculate maximum readout gradient */
     if(fovFilt)
 		trajectory->maxReadoutGradientAmplitude = fmin(calculateMaxReadoutGradientAmplitude(fovFilt, samplingInterval), maxGradientAmplitude);
     else
@@ -351,8 +286,8 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	int readoutPointsDesired = readoutDuration/samplingInterval;
 	readoutPointsDesired += readoutPointsDesired%2;
 
-		int interleavesLow = 1;
-		int interleavesHigh = 0;
+	int interleavesLow = 1;
+	int interleavesHigh = 0;
 
 	int steps = 1;
 	if(variableDensity)

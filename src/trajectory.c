@@ -208,11 +208,11 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 
 	for(n=1; n<=*pointsRewind; n++)
 	{
-		(*gradientRewindX)[n-1] = gradient[3*oversamplingRatio*n];
+		(*gradientRewindX)[n-1] = gradient[dimensions*oversamplingRatio*n];
 		if(gradientRewindY)
-			(*gradientRewindY)[n-1] = gradient[3*oversamplingRatio*n+1];
+			(*gradientRewindY)[n-1] = gradient[dimensions*oversamplingRatio*n+1];
 		if(gradientRewindZ)
-			(*gradientRewindZ)[n-1] = gradient[3*oversamplingRatio*n+2];
+			(*gradientRewindZ)[n-1] = gradient[dimensions*oversamplingRatio*n+2];
 	}
 
 	n = *pointsRewind-1;
