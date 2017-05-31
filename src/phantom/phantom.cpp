@@ -58,7 +58,7 @@ Phantom::Phantom(std::vector<float> fieldOfView)
 	float scale = 0;
 	for(size_t d=0; d<fieldOfView.size(); d++)
 		scale = std::max(fieldOfView[d], scale);
-	scale *= .5;
+//	scale *= .5;
 
 	if(fieldOfView.size()==3)
 	{
@@ -136,7 +136,7 @@ float Phantom::imageDomainSignal(float x, float y, float z)
 		float sum = 0.0;
 		 for(int d=0; d<shape.dimensions(); d++)
 		 {
-			 float projection = relativePosition[d]/shape.principalAxis(d);
+			 float projection = .5*relativePosition[d]/shape.principalAxis(d);
 			sum += projection*projection;
 		 }
 		 signal += (sum<=1.0) ? shape.intensity() : 0;
@@ -175,66 +175,67 @@ float Phantom::imageDomainSignal(float x, float y)
 complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 {
 	float k[3] = {kx,ky,kz};
+	float kRotated[3];
+	float kProjected[3];
 
 	complexFloat signal; // {Re, Im} , real and imaginary signals
 
 	double arg = 0.0;
-
-	float coordinatesRotated[3];
 	for(size_t i=0; i<m_shapes.size(); i++)
 	{
 		Shape& shape = m_shapes.at(i);
-		shape.rotatedCoordinates(k, coordinatesRotated);
-		float K = norm2(coordinatesRotated, 3);
+		float principalAxesProduct = norm2(shape.principalAxes().data(), 3);
+
+		shape.rotatedCoordinates(k, kRotated);
+		multiplyfloats(shape.principalAxes().data(), kRotated, kProjected, 3);
+		float K = norm2(kProjected, 3);
 
 		 arg = 2.0 * M_PI * K;
 
-		 if(K==0.0){ // if K = 0
-
-			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
-
-				 signal.real() +=(4./3.)*M_PI* shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
-
-			 }else{ // displacement vector is not zero
+		 if(K==0.0)
+		 { // if K = 0
+			 if( norm2(shape.displacement().data(),3)==0.0 )
+			 { // if displacement vector is zero
+				 signal.real() += (4./3.)*M_PI* shape.intensity()*principalAxesProduct;
+			 }
+			 else
+			 { // displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
-				 double temp = (4./3.)*M_PI* shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
+				 double temp = (4./3.)*M_PI* shape.intensity()*principalAxesProduct;
 				 signal.real() += temp * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
 			 }
 
 		 }else if (K<=0.002){  // if K<=0.002
-
-
 			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
 				 double temp = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
-				 signal.real() += shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp;
+				 signal.real() += shape.intensity()*principalAxesProduct*temp;
 
 			 }else{  // if displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp1 = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
-				 double temp2 = shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp1;
+				 double temp2 = shape.intensity()*principalAxesProduct*temp1;
 
 				 signal.real() += temp2 * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp2 * sinf(2.0 * M_PI * kd);
 			 }
-
-
-		 }else{ // K>0.002
-
+		 }
+		 else
+		 { // K>0.002
 			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
 				 double temp = sinf(arg)-arg*cosf(arg);
 						temp /= (2.0*powf(M_PI,2)*powf(K,3));
 
-				 signal.real() += shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2)*temp;
+				 signal.real() += shape.intensity()*principalAxesProduct*temp;
 
 			 }else{  // displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp = sinf(arg)-arg*cosf(arg);
 						temp /= (2.0*powf(M_PI,2)*powf(K,3));
 
-						temp *= shape.intensity()*shape.principalAxis(0)*shape.principalAxis(1)*shape.principalAxis(2);
+						temp *= shape.intensity()*principalAxesProduct;
 
 				 signal.real() += temp * cosf(2.0 * M_PI * kd);
 				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);

@@ -128,6 +128,15 @@ void PhantomTest::testFourier_data()
 	}
 
 	QTest::newRow("2D") << fieldOfView << spatialResolution;
+
+	fieldOfView.clear();
+	spatialResolution.clear();
+	for(int d=0; d<3; d++)
+	{
+		fieldOfView.push_back(28);
+		spatialResolution.push_back(4);
+	}
+	QTest::newRow("3D") << fieldOfView << spatialResolution;
 }
 
 void PhantomTest::testFourier()
