@@ -1,8 +1,13 @@
 # MRI Trajectory
 
-### Reference Articles
- - Addy, N.O., Ingle, R.R., Wu, H.H., Hu, B.S. and Nishimura, D.G. (2015), High-resolution variable-density 3D cones coronary MRA. Magn. Reson. Med., 74: 614–621. [doi:10.1002/mrm.25803](http://onlinelibrary.wiley.com/doi/10.1002/mrm.25803/full)
- - Addy, N.O., Ingle, R.R., Luo, J., Baron, C.A., Yang, P.C., Hu, B.S. and Nishimura, D.G. (2017), 3D image-based navigators for coronary MR angiography. Magn. Reson. Med., 77: 1874–1883. [doi:10.1002/mrm.26269](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26269/abstract)
+## Reference Articles
+
+## Spirals
+ - Meyer, C.H., Hu, B.S., Nishimura, D.G. and Macovski, A. (1992), Fast Spiral Coronary Artery Imaging. Magn. Reson. Med., 28: 202–213. doi:10.1002/mrm.1910280204
+
+### 3D Cones
+ - **Addy, N.O.**, Ingle, R.R., Wu, H.H., Hu, B.S. and Nishimura, D.G. (2015), High-resolution variable-density 3D cones coronary MRA. Magn. Reson. Med., 74: 614–621. [doi:10.1002/mrm.25803](http://onlinelibrary.wiley.com/doi/10.1002/mrm.25803/full)
+ - **Addy, N.O.**, Ingle, R.R., Luo, J., Baron, C.A., Yang, P.C., Hu, B.S. and Nishimura, D.G. (2017), 3D image-based navigators for coronary MR angiography. Magn. Reson. Med., 77: 1874–1883. [doi:10.1002/mrm.26269](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26269/abstract)
 
 ## Welcome to GitHub Pages
 
@@ -16,12 +21,10 @@ Markdown is a lightweight and easy-to-use syntax for styling your writing. It in
 ```markdown
 Syntax highlighted code block
 
-## Header 2
-
 1. Numbered
 2. List
 
-**Bold** and _Italic_ and `Code` text
+ _Italic_ and `Code` text
 
 ![Image](src)
 ```
