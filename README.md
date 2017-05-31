@@ -2,7 +2,7 @@
 
 ## Reference Articles
 
-## Spirals
+### Spirals
  - Meyer, C.H., Hu, B.S., Nishimura, D.G. and Macovski, A. (1992), Fast Spiral Coronary Artery Imaging. Magn. Reson. Med., 28: 202–213. doi:10.1002/mrm.1910280204
 
 ### 3D Cones
