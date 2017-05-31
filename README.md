@@ -4,6 +4,7 @@
 
 ### Spirals
  - Meyer, C.H., Hu, B.S., Nishimura, D.G. and Macovski, A. (1992), Fast Spiral Coronary Artery Imaging. Magn. Reson. Med., 28: 202–213. doi:10.1002/mrm.1910280204
+ - Pipe, J. G. and Zwart, N. R. (2014), Spiral trajectory design: A flexible numerical algorithm and base analytical equations. Magn. Reson. Med, 71: 278–285. doi:10.1002/mrm.24675
 
 ### 3D Cones
  - **Addy, N.O.**, Ingle, R.R., Wu, H.H., Hu, B.S. and Nishimura, D.G. (2015), High-resolution variable-density 3D cones coronary MRA. Magn. Reson. Med., 74: 614–621. [doi:10.1002/mrm.25803](http://onlinelibrary.wiley.com/doi/10.1002/mrm.25803/full)
