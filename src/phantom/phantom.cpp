@@ -245,3 +245,76 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 	return signal;
 }
 
+complexFloat Phantom::fourierDomainSignal(float kx, float ky)
+{
+	float k[2] = {kx,ky};
+	float kRotated[2];
+	float kProjected[2];
+
+	complexFloat signal; // {Re, Im} , real and imaginary signals
+
+	double K = 0.0;
+	double K2 = 0.0;
+	double K4 = 0.0;
+
+	for(size_t i=0; i<m_shapes.size(); i++)
+	{
+		Shape& shape = m_shapes.at(i);
+		float principalAxesProduct = shape.principalAxis(0)*shape.principalAxis(1);
+
+//		 K = norm2( MAT.multiply(dot(RT[i],k), ab[i]) );
+		shape.rotatedCoordinates(k, kRotated);
+		multiplyfloats(shape.principalAxes().data(), kRotated, kProjected, 2);
+		K = norm2(kProjected, 2);
+
+		 if(K==0.0){ // if K = 0
+			 signal += M_PI* shape.intensity()*principalAxesProduct;
+
+		 }else if (K<=0.002){  // if K<=0.002
+			 if(norm2(shape.displacement().data(),2)==0.0)
+			 {
+					K2 = K*K;
+					K4 = K2*K2;
+
+					double BJ = 1. - 4.934802200544679*K2 + 8.117424252833533*K4;
+
+					signal += M_PI* shape.intensity()*principalAxesProduct*BJ;
+
+			 }else{
+					K2 = K*K;
+					K4 = K2*K2;
+
+					double BJ = 1. - 4.934802200544679*K2 + 8.117424252833533*K4;
+
+					double kd = dot(k, shape.displacement().data(), 2);
+					double arg2 = 2.0 * M_PI * kd;
+
+					double temp = M_PI* shape.intensity()*principalAxesProduct;
+					signal.real() += temp * std::cos(arg2)*BJ;
+					signal.imag() -= temp * std::sin(arg2)*BJ;
+			 }
+		 }
+		 else
+		 { // K>0.002
+ if(norm2(shape.displacement().data(),2)==0.0)
+			 {
+				double arg = M_PI * K;
+				double BJ = j1(2.0*arg)/arg;
+				signal.real() += M_PI* shape.intensity()*principalAxesProduct*BJ;
+			 }
+			 else
+			 {
+				double arg = M_PI * K;
+				double BJ = j1(2.0*arg)/arg;
+				double kd = dot(k, shape.displacement().data(), 2);
+				double arg2 = 2.0 * M_PI * kd;
+
+				double temp = M_PI* shape.intensity()*principalAxesProduct;
+				signal.real() += temp * std::cos(arg2)*BJ;
+				signal.imag() -= temp * std::sin(arg2)*BJ;
+			 }
+		 }
+	}
+
+	return signal;
+}

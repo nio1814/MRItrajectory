@@ -16,6 +16,7 @@ public:
 	void rotatedCoordinates(const float *coordinates, float* coordinatesRotated);
 
 	float principalAxis(int axis);
+	std::vector<float> principalAxes();
 	std::vector<float> displacement();
 	float intensity();
 
