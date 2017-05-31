@@ -9,6 +9,7 @@ class SpiralTest : public QObject
 private slots:
 	void testGenerate_data();
 	void testGenerate();
+	void testPhantom();
 };
 
 #endif // SPIRALTEST_H

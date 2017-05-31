@@ -29,7 +29,7 @@ To distribute this file, substitute the full license for the above reference.
 
 enum SpiralDirection{spOUT, spINOUT};
 enum spMETHOD{spmVDS, spmMINTIME};
-enum SpiralType{spARCH, spFERMAT};
+enum SpiralType{Archimedean, spFERMAT};
 
 /**
  \brief	Calculate the sampling density compensation weights based on curvature and spacing of samples
