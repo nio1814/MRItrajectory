@@ -67,7 +67,7 @@ void PhantomTest::testImage_data()
 		fieldOfView[d] = 28;
 		spatialResolution[d] = 4;
 	}
-//	QTest::newRow("3D") << fieldOfView << spatialResolution;
+	QTest::newRow("3D") << fieldOfView << spatialResolution;
 
 	fieldOfView.resize(2);
 	for(int d=0; d<2; d++)
