@@ -9,6 +9,8 @@ class PhantomTest : public QObject
 private slots:
 	void testImage_data();
 	void testImage();
+	void testFourier_data();
+	void testFourier();
 };
 
 #endif // PHANTOMTEST_H

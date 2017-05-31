@@ -98,6 +98,11 @@ float Shape::principalAxis(int axis)
 	return m_principalAxes[axis];
 }
 
+std::vector<float> Shape::principalAxes()
+{
+	return m_principalAxes;
+}
+
 std::vector<float> Shape::displacement()
 {
 	return m_displacement;
