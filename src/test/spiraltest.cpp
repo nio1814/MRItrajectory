@@ -102,7 +102,7 @@ void SpiralTest::testPhantom()
 		for(int r=0; r<spiral->readouts; r++)
 		{
 			float k[2];
-			trajectoryCoordinates(n, r, spiral, k);
+			trajectoryCoordinates(n, r, spiral, k, NULL);
 			int m = spiral->readoutPoints*r + n;
 			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
 		}

@@ -411,11 +411,13 @@ int numTrajectoryWaveforms(const struct Trajectory *trajectory)
 	return trajectory->storage==StoreBasis ? trajectory->bases : trajectory->readouts;
 }
 
-void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float* coordinates)
+void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float* coordinates, float* densityCompensation)
 {
 	int d;
 	for(d=0; d<trajectory->dimensions; d++)
 		coordinates[d] = trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint];
+	if(densityCompensation)
+		*densityCompensation = trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint];
 }
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation)

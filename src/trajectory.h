@@ -61,7 +61,7 @@ void gradientWaveformToShort(const float *gradientsFloat, int points, float maxG
 
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
 
-void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float *coordinates);
+void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float *coordinates, float *densityCompensation);
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation);
 
