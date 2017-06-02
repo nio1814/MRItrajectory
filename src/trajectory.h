@@ -59,6 +59,8 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 
 void gradientWaveformToShort(const float *gradientsFloat, int points, float maxGradientAmplitudeScanner, short* gradientsShort);
 
+int saveTrajectory(const char* filename, const struct Trajectory* trajectory);
+
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
 
 void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float *coordinates, float *densityCompensation);
