@@ -183,14 +183,15 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 	for(size_t n=0; n<ungriddedData->points(); n++)
 	{
 		complexFloat ungriddedDataValue;
-		if(Forward)
+		if(direction==Forward)
 			ungriddedDataValue = ungriddedData->signalValue(n);
 		else
 			ungriddedDataValue = 0;
 		int readoutPoint = n%m_trajectory->readoutPoints;
 		int readout = n/m_trajectory->readoutPoints;
 
-		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data());
+		float densityCompensation;
+		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data(), &densityCompensation);
 
 		nearestGriddedPoint(ungriddedPoint, griddedPoint);
 
@@ -236,6 +237,47 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 		return ungriddedData;
 }
 
+MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
+{
+	std::vector<int> imageDimensions(m_trajectory->imageDimensions, &m_trajectory->imageDimensions[m_trajectory->dimensions]);
+	MRdata* griddedData = new MRdata(imageDimensions, numDimensions());
+	float imageScale = 1.0f/std::sqrt(griddedData->points());
+
+	std::vector<int> imageCenter;
+	std::vector<float> axisScale;
+	for(int d=0; d<numDimensions(); d++)
+	{
+		axisScale.push_back(m_normalizedToGridScale[d]/m_gridDimensions[d]);
+		imageCenter.push_back(imageDimensions[d]/2);
+	}
+
+	float k[3];
+	std::vector<int> r(3);
+	for(size_t u=0; u<ungriddedData.points(); u++)
+	{
+		int readoutPoint = u%m_trajectory->readoutPoints;
+		int readout = u/m_trajectory->readoutPoints;
+		float densityCompensation;
+		trajectoryCoordinates(readoutPoint, readout, m_trajectory, k, &densityCompensation);
+		complexFloat ungriddedValue = densityCompensation*ungriddedData.signalValue(u);
+		for(size_t g=0; g<griddedData->points(); g++)
+		{
+			singleToMultiIndex(g, imageDimensions, r);
+			float exponentArgument = 0;
+			for(int d=0; d<numDimensions(); d++)
+			{
+				int p = r[d]-imageCenter[d];
+				exponentArgument += k[d]*p*axisScale[d];
+			}
+			exponentArgument *= 2*M_PI;
+			complexFloat griddedValue = complexFloat(std::cos(exponentArgument), std::sin(exponentArgument))*ungriddedValue*imageScale;
+			griddedData->setSignalValue(g, griddedValue);
+		}
+	}
+
+	return griddedData;
+}
+
 void Gridding::deapodize(MRdata &oversampledImage)
 {
 	complexFloat* signal = oversampledImage.signalPointer();
@@ -252,13 +294,13 @@ void Gridding::deapodize(MRdata &oversampledImage)
 MRdata* Gridding::kSpaceToImage(MRdata &ungriddedData)
 {
 	MRdata* image = grid(ungriddedData, Forward);
+	image->writeToOctave("temp");
 	image->fftShift();
 	image->fft(FFTW_BACKWARD);
 	image->fftShift();
 
 	deapodize(*image);
 	image->crop(imageDimensions());
-	image->writeToOctave("temp");
 
 	return image;
 }

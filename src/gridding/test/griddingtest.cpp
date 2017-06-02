@@ -128,14 +128,25 @@ void GriddingTest::testForward()
 	Gridding gridding(&trajectory);
 	MRdata* image = gridding.kSpaceToImage(kSpaceData);
 
-	image->writeToOctave("gridtest.txt");
+	image->writeToOctave("grid.txt");
+
+	MRdata* conjugatePhaseImage = gridding.conjugatePhaseForward(kSpaceData);
+
+	conjugatePhaseImage->writeToOctave("conjugatephase.txt");
+
+	float error = meanSquaredError(image->signal(), conjugatePhaseImage->signal());
+
+	QString message = QString("error %1").arg(error);
+
+	QVERIFY2(error<.04, message.toStdString().c_str());
 
 	MRdata* kSpaceDataForwardInverse = gridding.imageToKspace(*image);
 
 	QCOMPARE(kSpaceData.points(), kSpaceDataForwardInverse->points());
 
-	float error = meanSquaredError(kSpaceDataForwardInverse->signal(), kSpaceData.signal());
-	QString message = QString("error %1").arg(error);
+	error = meanSquaredError(kSpaceDataForwardInverse->signal(), kSpaceData.signal());
+
+	message = QString("error %1").arg(error);
 	QVERIFY2(error<.04, message.toStdString().c_str());
 }
 

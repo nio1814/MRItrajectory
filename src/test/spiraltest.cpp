@@ -6,6 +6,9 @@ extern "C" {
 #include "spiral.h"
 }
 
+#include "phantom.h"
+#include "gridding.h"
+
 void SpiralTest::testGenerate_data()
 {
 	QTest::addColumn<double>("fieldOfView");
@@ -27,7 +30,7 @@ void SpiralTest::testGenerate()
 	QFETCH(double, maxGradient);
 	QFETCH(double, maxSlew);
 
-	Trajectory* spiral = generateSpirals(NULL, fieldOfView, spatialResolution, duration, samplingInterval, 0, spARCH, 0, fieldOfView, maxGradient, maxSlew);
+	Trajectory* spiral = generateSpirals(NULL, fieldOfView, spatialResolution, duration, samplingInterval, 0, Archimedean , 0, fieldOfView, maxGradient, maxSlew);
 
 	qWarning() << "Verifying parameters";
 	float threshold = .01;
@@ -77,6 +80,37 @@ void SpiralTest::testGenerate()
 
 	sprintf(message, "max|k| %f expected %f", krMax, 5/spiral->spatialResolution[0]);
 	QVERIFY2(krMax>=5/spiral->spatialResolution[0], message);
+}
+
+void SpiralTest::testPhantom()
+{
+	std::vector<float> fieldOfView;
+	for(int d=0; d<2; d++)
+	{
+		fieldOfView.push_back(28);
+	}
+	Trajectory* spiral = generateSpirals(NULL, fieldOfView[0], 2, 5e-3, 4e-6, 0, Archimedean , 0, fieldOfView[0], 4, 15000);
+
+	std::vector<int> acquisitionSize;
+	acquisitionSize.push_back(spiral->readoutPoints);
+	acquisitionSize.push_back(spiral->readouts);
+
+	Phantom phantom(fieldOfView);
+	MRdata kSpaceData(acquisitionSize, 2);
+	for(int n=0; n<spiral->readoutPoints; n++)
+	{
+		for(int r=0; r<spiral->readouts; r++)
+		{
+			float k[2];
+			trajectoryCoordinates(n, r, spiral, k, NULL);
+			int m = spiral->readoutPoints*r + n;
+			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
+		}
+	}
+
+	Gridding gridding(spiral);
+	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+	image->writeToOctave("spiral.txt");
 }
 
 QTEST_MAIN(SpiralTest)

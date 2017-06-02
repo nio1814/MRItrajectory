@@ -201,31 +201,25 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 
 void MRdata::crop(std::vector<int> newSize)
 {
-	int n;
-
-	int numCopies;
-	int multiIndexCrop[3] = {0,0,0};
-	int indexOriginal[3] = {0,0,0};
-	int s;
-	int index;
-
 	int pointsCrop = 1;
-	for(n=0; n<m_numImagingDimensions; n++)
+	for(size_t n=0; n<newSize.size(); n++)
 		pointsCrop *= newSize[n];
 
 	std::vector<complexFloat> signalCropped(pointsCrop);
 
-	numCopies = pointsCrop/newSize[0];
+	int numCopies = pointsCrop/newSize[0];
 
-	for(n=0; n<numCopies; n++)
+	int multiIndexCrop[3] = {0,0,0};
+	int indexOriginal[3] = {0,0,0};
+	for(int n=0; n<numCopies; n++)
 	{
 		multiIndexCrop[1] = n%newSize[1];
 		multiIndexCrop[2] = n/newSize[1];
 
-		for(s=0; s<m_numImagingDimensions; s++)
+		for(int s=0; s<m_numImagingDimensions; s++)
 			indexOriginal[s] = multiIndexCrop[s] - (newSize[s]-m_dimensions[s])/2;
 
-			index = (indexOriginal[2]*m_dimensions[1] + indexOriginal[1])*m_dimensions[0] + indexOriginal[0];
+			int index = (indexOriginal[2]*m_dimensions[1] + indexOriginal[1])*m_dimensions[0] + indexOriginal[0];
 			int indexCrop = (multiIndexCrop[2]*newSize[1] + multiIndexCrop[1])*newSize[0] + multiIndexCrop[0];
 
 			for(int m=0; m<newSize[0]; m++)

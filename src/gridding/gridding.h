@@ -28,6 +28,7 @@ public:
 	std::vector<int> imageDimensions();
 
 	MRdata* grid(MRdata& inputData, Direction direction);
+	MRdata* conjugatePhaseForward(const MRdata& ungriddedData);
 
 	void deapodize(MRdata& oversampledImage);
 
