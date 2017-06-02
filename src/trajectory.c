@@ -319,6 +319,63 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 	return traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
 }
 
+void writeArray(void* array, unsigned long points, int pointSize, FILE* file)
+{
+	if(array)
+	{
+		fwrite(&points, sizeof(unsigned long), 1, file);
+		fwrite(array, pointSize, points, file);
+	}
+	else
+	{
+		points = 0;
+		fwrite(&points, sizeof(unsigned long), 1, file);
+	}
+}
+
+int saveTrajectory(const char* filename, const struct Trajectory* trajectory)
+{
+	int version = 1;
+	int storedWaveforms;
+	FILE* file;
+
+	file = fopen(filename, "wb");
+	if(!file)
+	{
+	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);
+	   return 1;
+	}
+	fwrite(&version, sizeof(int), 1, file);
+	fwrite(&trajectory->dimensions, sizeof(int), 1, file);
+	fwrite(trajectory->imageDimensions, sizeof(int), trajectory->dimensions, file);
+	fwrite(trajectory->spatialResolution, sizeof(float), trajectory->dimensions, file);
+	fwrite(trajectory->fieldOfView, sizeof(float), trajectory->dimensions, file);
+	fwrite(&trajectory->readouts, sizeof(int), 1, file);
+	fwrite(&trajectory->bases, sizeof(int), 1, file);
+	fwrite(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
+	fwrite(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
+	fwrite(&trajectory->maxSlewRate, sizeof(float), 1, file);
+	fwrite(&trajectory->waveformPoints, sizeof(int), 1, file);
+	fwrite(&trajectory->readoutPoints, sizeof(int), 1, file);
+	fwrite(&trajectory->samplingInterval, sizeof(float), 1, file);
+
+	fwrite(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
+	if(trajectory->storage==StoreBasis)
+		storedWaveforms = trajectory->bases;
+	else
+		storedWaveforms = trajectory->readouts;
+
+	writeArray(trajectory->gradientWaveforms, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(float), file);
+	writeArray(trajectory->gradientWaveformsShort, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(short), file);
+	writeArray(trajectory->kSpaceCoordinates, storedWaveforms*trajectory->dimensions*trajectory->readoutPoints, sizeof(float), file);
+	writeArray(trajectory->densityCompensation, storedWaveforms*trajectory->readoutPoints, sizeof(float), file);
+
+
+	fclose(file);
+
+	return 0;
+}
+
 #define SAVE_GRADIENT_DESCRIPTION_LENGTH 256
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian)
 {
