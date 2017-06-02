@@ -58,7 +58,7 @@ Phantom::Phantom(std::vector<float> fieldOfView)
 	float scale = 0;
 	for(size_t d=0; d<fieldOfView.size(); d++)
 		scale = std::max(fieldOfView[d], scale);
-//	scale *= .5;
+	scale *= .5;
 
 	if(fieldOfView.size()==3)
 	{
@@ -136,7 +136,7 @@ float Phantom::imageDomainSignal(float x, float y, float z)
 		float sum = 0.0;
 		 for(int d=0; d<shape.dimensions(); d++)
 		 {
-			 float projection = .5*relativePosition[d]/shape.principalAxis(d);
+			 float projection = relativePosition[d]/shape.principalAxis(d);
 			sum += projection*projection;
 		 }
 		 signal += (sum<=1.0) ? shape.intensity() : 0;

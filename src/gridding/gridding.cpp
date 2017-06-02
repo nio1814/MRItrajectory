@@ -275,7 +275,7 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 			}
 			exponentArgument *= 2*M_PI;
 			complexFloat griddedValue = complexFloat(std::cos(exponentArgument), std::sin(exponentArgument))*ungriddedValue*imageScale;
-			griddedData->setSignalValue(g, griddedValue);
+			griddedData->addSignalValue(g, griddedValue);
 		}
 	}
 

@@ -271,6 +271,8 @@ void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float 
 struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float fovFilt, float maxGradientAmplitude, float maxSlewRate)
 {
 	struct Trajectory *trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
+	initializeTrajectory(trajectory);
+
 	adjustSpatialResolution(fieldOfView, trajectory->imageDimensions, &spatialResolution);
 	float kr;
 	float kSpaceMaxRadial = 5/spatialResolution;

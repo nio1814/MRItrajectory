@@ -105,8 +105,11 @@ void SpiralTest::testPhantom()
 			trajectoryCoordinates(n, r, spiral, k, NULL);
 			int m = spiral->readoutPoints*r + n;
 			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
+//			kSpaceData.setSignalValue(m, 1);
 		}
 	}
+
+	saveTrajectory("spiral.trj", spiral);
 
 	Gridding gridding(spiral);
 	MRdata* image = gridding.kSpaceToImage(kSpaceData);

@@ -159,10 +159,10 @@ void PhantomTest::testFourier()
 	float kz;
 	for(int n=0; n<points; n++)
 	{
-		float kx = 5*(n%imageSize[0]-imageSize[0]/2)/(spatialResolution[0]*imageSize[0]);
-		float ky = 5*((n/imageSize[0])%imageSize[1] - imageSize[1]/2)/(spatialResolution[1]*imageSize[1]);
+		float kx = 10*(n%imageSize[0]-imageSize[0]/2)/(spatialResolution[0]*imageSize[0]);
+		float ky = 10*((n/imageSize[0])%imageSize[1] - imageSize[1]/2)/(spatialResolution[1]*imageSize[1]);
 		if(dimensions>2)
-			kz = (n/(imageSize[0]*imageSize[1]) - imageSize[2]/2)/(spatialResolution[2]*imageSize[2]);
+			kz = 10*(n/(imageSize[0]*imageSize[1]) - imageSize[2]/2)/(spatialResolution[2]*imageSize[2]);
 
 		if(dimensions==3)
 			kSpace[n] = phantom.fourierDomainSignal(kx,ky,kz);
