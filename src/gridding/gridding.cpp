@@ -225,12 +225,14 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 					float kernelX = kernelValues[0][gx-dimensionStart[0]+offset[0]];
 					long griddedDataIndex = multiToSingleIndex(gridIndex, gridDimensions3);
 					if(direction==Forward)
-						griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
+						griddedData->addSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 					else
 						ungriddedDataValue += kernelX*kernelY*kernelZ*griddedData->signalValue(griddedDataIndex);
 				}
 			}
 		}
+		if(direction==Inverse)
+			ungriddedData->setSignalValue(n, ungriddedDataValue);
 	}
 
 	if(direction==Forward)
@@ -249,7 +251,7 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 	std::vector<float> axisScale;
 	for(int d=0; d<numDimensions(); d++)
 	{
-		axisScale.push_back(m_normalizedToGridScale[d]/m_gridDimensions[d]);
+		axisScale.push_back(m_normalizedToGridScale[d]/m_gridDimensions[d]*m_coordinateScale);
 		imageCenter.push_back(imageDimensions[d]/2);
 	}
 

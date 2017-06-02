@@ -99,7 +99,7 @@ void GriddingTest::testForward()
 	QVector<float> kSpaceExtent(trajectory.dimensions);
 	for (int d=0; d<trajectory.dimensions; d++)
 	{
-		kSpaceExtent[d] = .5*minResolution/spatialResolution[d];
+		kSpaceExtent[d] = 5/spatialResolution[d];
 		trajectory.imageDimensions[d] = 10*fieldOfView[d]/spatialResolution[d];
 	}
 

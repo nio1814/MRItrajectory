@@ -21,6 +21,7 @@ public:
 	size_t points() const;
 
 	void setSignalValue(int index, const complexFloat& value);
+	void addSignalValue(size_t index, const complexFloat& value);
 	complexFloat signalValue(int index) const;
 	complexFloat* signalPointer();
 	std::vector<complexFloat> signal();
