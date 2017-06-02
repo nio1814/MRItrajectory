@@ -51,7 +51,7 @@ Gridding::Gridding(const Trajectory *trajectory) :
 	float minSpatialResolution = INFINITY;
 	for(int d=0; d<numDimensions(); d++)
 		minSpatialResolution = std::min(minSpatialResolution, m_trajectory->spatialResolution[d]);
-
+	m_coordinateScale = .5*minSpatialResolution/5;
 	for(int d=0; d<numDimensions(); d++)
 	{
 		int dimension = m_oversamplingFactor*m_trajectory->imageDimensions[d];
@@ -192,6 +192,8 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 
 		float densityCompensation;
 		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data(), &densityCompensation);
+		scalefloats(ungriddedPoint.data(), numDimensions(), m_coordinateScale);
+		ungriddedDataValue *= densityCompensation;
 
 		nearestGriddedPoint(ungriddedPoint, griddedPoint);
 

@@ -115,7 +115,7 @@ void GriddingTest::testForward()
 			k.clear();
 			for(int d=0; d<trajectory.dimensions; d++)
 			{
-				k.append(randomNumber(-kSpaceExtent[0], kSpaceExtent[0]));
+				k.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
 			}
 			setTrajectoryPoint(n, r, &trajectory, k.data(), randomNumber(0, 1));
 			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));

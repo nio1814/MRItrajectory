@@ -109,7 +109,8 @@ void SpiralTest::testPhantom()
 	}
 
 	Gridding gridding(spiral);
-	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+//	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+	MRdata* image = gridding.conjugatePhaseForward(kSpaceData);
 	image->writeToOctave("spiral.txt");
 }
 

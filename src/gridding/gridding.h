@@ -50,6 +50,7 @@ private:
 	std::vector<std::vector<float> > m_deapodization;
 	std::vector<int> m_gridDimensions;
 	std::vector<float> m_normalizedToGridScale;
+	float m_coordinateScale;
 };
 
 #endif // GRIDDING_H
