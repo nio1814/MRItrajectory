@@ -18,17 +18,18 @@ extern "C" {
 #include "arrayops.h"
 }
 
-Gridding::Gridding(const Trajectory *trajectory) :
-	m_trajectory(trajectory), m_oversamplingFactor(1.5),
-	m_kernelWidth(4)
+Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int kernelWidth) :
+	m_trajectory(trajectory), m_oversamplingFactor(oversamplingRatio),
+	m_kernelWidth(kernelWidth)
 {
 	float beta = M_PI*sqrt(powf(m_kernelWidth/m_oversamplingFactor,2)*powf(m_oversamplingFactor-0.5,2)-0.8);
 
-	float kb1 = -0.4491*m_oversamplingFactor - .0298;
-	float kb2 = 0.2522*m_oversamplingFactor - .0378;
-	float maxError = pow(10.0, kb1*m_kernelWidth+kb2);
+//	float kb1 = -0.4491*m_oversamplingFactor - .0298;
+//	float kb2 = 0.2522*m_oversamplingFactor - .0378;
+//	float maxError = pow(10.0, kb1*m_kernelWidth+kb2);
 
-	int numKernelPoints = sqrt(0.37/maxError)/m_oversamplingFactor;
+//	int numKernelPoints = sqrt(0.37/maxError)/m_oversamplingFactor;
+	int numKernelPoints = 100;
 	int numKernelPointsHalf = ceil(0.5*numKernelPoints*m_kernelWidth);
 
 	float scale = 1/besseli(0, beta);

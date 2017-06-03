@@ -19,11 +19,14 @@ To distribute this file, substitute the full license for the above reference.
 
 struct Trajectory;
 
+class GriddingTest;
+
 class Gridding
 {
+	friend class GriddingTest;
 public:
 	enum Direction{Forward, Inverse};
-	Gridding(const Trajectory *trajectory);
+	Gridding(const Trajectory *trajectory, float oversamplingRatio=1.5, int kernelWidth=4);
 
 	std::vector<int> imageDimensions();
 
