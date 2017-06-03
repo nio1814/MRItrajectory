@@ -49,6 +49,9 @@ struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaS
 
 	allocateTrajectory(trajectory, trajectory->readoutPoints, trajectory->waveformPoints, 2, 1, trajectory->readouts, StoreAll);
 
+	float* nullGradientWaveform = (float*)calloc(trajectory->waveformPoints, sizeof(float));
+	rotateBasis(gradientWaveform, nullGradientWaveform, trajectory, angleRange);
+
 	trajectory->maxGradientAmplitude = gmax;
 	trajectory->maxSlewRate = maxSlewRate;
 	trajectory->samplingInterval = Ts;

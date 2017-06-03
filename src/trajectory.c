@@ -567,3 +567,25 @@ float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInte
 {
 	return 1.0f/samplingInterval*GYROMAGNETIC_RATIO*fieldOfView;
 }
+
+void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
+{
+	int n;
+	for(n=0; n<trajectory->readouts; n++)
+	{
+		float phi = n*angleRange/trajectory->readouts;
+
+		float* gx = &trajectory->gradientWaveforms[2*n*trajectory->waveformPoints];
+		float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->waveformPoints];
+
+		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
+		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
+
+		memcpy(gx, gxBasis, trajectory->waveformPoints*sizeof(float));
+		memcpy(gy, gyBasis, trajectory->waveformPoints*sizeof(float));
+		scalecomplex(gx, gy, cos(phi), sin(phi), trajectory->waveformPoints);
+
+		gradientToKspace(gx, kx, trajectory->samplingInterval, trajectory->readoutPoints);
+		gradientToKspace(gy, ky, trajectory->samplingInterval, trajectory->readoutPoints);
+	}
+}

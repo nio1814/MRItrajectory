@@ -69,5 +69,7 @@ void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajec
 
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
 
+void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange);
+
 #endif
 
