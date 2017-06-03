@@ -115,7 +115,7 @@ std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<
 		for(int n=0; n<m_kernelWidth; n++)
 		{
 			int m = n-m_kernelWidth/2+1;
-			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth/2*lookupPoints);
+			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth*2*lookupPoints);
 			int kernelIndex = (int)kernelIndexDecimal;
 			float secondPointFraction = kernelIndexDecimal - kernelIndex;
 			kernelValues[d].push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
