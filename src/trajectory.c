@@ -319,6 +319,78 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 	return traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
 }
 
+void writeArray(void* array, unsigned long points, int pointSize, FILE* file)
+{
+	if(array)
+	{
+		fwrite(&points, sizeof(unsigned long), 1, file);
+		fwrite(array, pointSize, points, file);
+	}
+	else
+	{
+		points = 0;
+		fwrite(&points, sizeof(unsigned long), 1, file);
+	}
+}
+
+void readArray(void** array, int pointSize, FILE* file, enum Endian endian)
+{
+	unsigned long points;
+	fread(&points, sizeof(unsigned long), 1, file);
+	if(points)
+	{
+		*array = malloc(points*pointSize);
+		fread(*array, pointSize, points, file);
+		if(needEndianSwap(endian))
+			swapArrayEndian(*array, points, pointSize);
+	}
+	else
+		*array = NULL;
+}
+
+int saveTrajectory(const char* filename, const struct Trajectory* trajectory)
+{
+	int version = 1;
+	int storedWaveforms;
+	FILE* file;
+
+	file = fopen(filename, "wb");
+	if(!file)
+	{
+	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);
+	   return 1;
+	}
+	fwrite(&version, sizeof(int), 1, file);
+	fwrite(&trajectory->dimensions, sizeof(int), 1, file);
+	fwrite(trajectory->imageDimensions, sizeof(int), trajectory->dimensions, file);
+	fwrite(trajectory->spatialResolution, sizeof(float), trajectory->dimensions, file);
+	fwrite(trajectory->fieldOfView, sizeof(float), trajectory->dimensions, file);
+	fwrite(&trajectory->readouts, sizeof(int), 1, file);
+	fwrite(&trajectory->bases, sizeof(int), 1, file);
+	fwrite(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
+	fwrite(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
+	fwrite(&trajectory->maxSlewRate, sizeof(float), 1, file);
+	fwrite(&trajectory->waveformPoints, sizeof(int), 1, file);
+	fwrite(&trajectory->readoutPoints, sizeof(int), 1, file);
+	fwrite(&trajectory->samplingInterval, sizeof(float), 1, file);
+
+	fwrite(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
+	if(trajectory->storage==StoreBasis)
+		storedWaveforms = trajectory->bases;
+	else
+		storedWaveforms = trajectory->readouts;
+
+	writeArray(trajectory->gradientWaveforms, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(float), file);
+	writeArray(trajectory->gradientWaveformsShort, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(short), file);
+	writeArray(trajectory->kSpaceCoordinates, storedWaveforms*trajectory->dimensions*trajectory->readoutPoints, sizeof(float), file);
+	writeArray(trajectory->densityCompensation, storedWaveforms*trajectory->readoutPoints, sizeof(float), file);
+
+
+	fclose(file);
+
+	return 0;
+}
+
 #define SAVE_GRADIENT_DESCRIPTION_LENGTH 256
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian)
 {
@@ -404,6 +476,69 @@ int saveGradientWaveforms(const char *filename, const float* grad, short dimensi
 	}
 
 	return status;
+}
+
+/*!
+ * \brief loadTrajectory
+ * \param filename
+ * \param trajectory
+ * \param endian	Endian mode of stored file
+ * \return	1 if error
+ */
+int loadTrajectory(const char *filename, struct Trajectory *trajectory, enum Endian endian)
+{
+	int version;
+	FILE* file;
+	int swapEndian = needEndianSwap(endian);
+
+	file = fopen(filename, "rb");
+	if(!file)
+	{
+	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);
+	   return 1;
+	}
+
+	fread(&version, sizeof(int), 1, file);
+	fread(&trajectory->dimensions, sizeof(int), 1, file);
+	if(swapEndian)
+		swapArrayEndian(&trajectory->dimensions, 1, sizeof(int));
+	fread(trajectory->imageDimensions, sizeof(int), trajectory->dimensions, file);
+	fread(trajectory->spatialResolution, sizeof(float), trajectory->dimensions, file);
+	fread(trajectory->fieldOfView, sizeof(float), trajectory->dimensions, file);
+	fread(&trajectory->readouts, sizeof(int), 1, file);
+	fread(&trajectory->bases, sizeof(int), 1, file);
+	fread(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
+	fread(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
+	fread(&trajectory->maxSlewRate, sizeof(float), 1, file);
+	fread(&trajectory->waveformPoints, sizeof(int), 1, file);
+	fread(&trajectory->readoutPoints, sizeof(int), 1, file);
+	fread(&trajectory->samplingInterval, sizeof(float), 1, file);
+	fread(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
+
+	if(swapEndian)
+	{
+		swapArrayEndian(trajectory->imageDimensions, trajectory->dimensions, sizeof(int));
+		swapArrayEndian(trajectory->spatialResolution, trajectory->dimensions, sizeof(float));
+		swapArrayEndian(trajectory->fieldOfView, trajectory->dimensions, sizeof(float));
+		swapArrayEndian(&trajectory->readouts, 1, sizeof(int));
+		swapArrayEndian(&trajectory->bases, 1, sizeof(int));
+		swapArrayEndian(&trajectory->maxGradientAmplitude, 1, sizeof(float));
+		swapArrayEndian(&trajectory->maxReadoutGradientAmplitude, 1, sizeof(float));
+		swapArrayEndian(&trajectory->maxSlewRate, 1, sizeof(float));
+		swapArrayEndian(&trajectory->waveformPoints, 1, sizeof(int));
+		swapArrayEndian(&trajectory->readoutPoints, 1, sizeof(int));
+		swapArrayEndian(&trajectory->samplingInterval, 1, sizeof(float));
+		swapArrayEndian(&trajectory->storage, 1, sizeof(enum WaveformStorageType));
+	}
+
+	readArray((void**)&trajectory->gradientWaveforms, sizeof(float), file, endian);
+	readArray((void**)&trajectory->gradientWaveformsShort, sizeof(short), file, endian);
+	readArray((void**)&trajectory->kSpaceCoordinates, sizeof(float), file, endian);
+	readArray((void**)&trajectory->densityCompensation,  sizeof(float), file, endian);
+
+	fclose(file);
+
+	return 0;
 }
 
 int numTrajectoryWaveforms(const struct Trajectory *trajectory)

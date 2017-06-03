@@ -19,11 +19,14 @@ To distribute this file, substitute the full license for the above reference.
 
 struct Trajectory;
 
+class GriddingTest;
+
 class Gridding
 {
+	friend class GriddingTest;
 public:
 	enum Direction{Forward, Inverse};
-	Gridding(const Trajectory *trajectory);
+	Gridding(const Trajectory *trajectory, float oversamplingRatio=1.5, int kernelWidth=4);
 
 	std::vector<int> imageDimensions();
 
@@ -50,6 +53,7 @@ private:
 	std::vector<std::vector<float> > m_deapodization;
 	std::vector<int> m_gridDimensions;
 	std::vector<float> m_normalizedToGridScale;
+	float m_coordinateScale;
 };
 
 #endif // GRIDDING_H

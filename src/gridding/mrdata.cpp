@@ -54,6 +54,11 @@ void MRdata::setSignalValue(int index, const complexFloat &value)
 	m_signal[index]	= value;
 }
 
+void MRdata::addSignalValue(size_t index, const complexFloat &value)
+{
+	m_signal[index] += value;
+}
+
 complexFloat MRdata::signalValue(int index) const
 {
 	return m_signal[index];

@@ -56,6 +56,43 @@ float meanSquaredError(std::vector<complexFloat> data, std::vector<complexFloat>
 	return mse;
 }
 
+void GriddingTest::kernelTest_data()
+{
+	QTest::addColumn<QVector<float> >("fieldOfView");
+	QTest::addColumn<QVector<float> >("spatialResolution");
+	QTest::addColumn<float>("oversamplingRatio");
+
+	QVector<float> fieldOfView(2);
+	QVector<float> spatialResolution(2);
+
+	fieldOfView = QVector<float>() << randomNumber(10, 48);
+	fieldOfView << fieldOfView;
+	spatialResolution = QVector<float>() << randomNumber(.8, 4.0);
+	spatialResolution << spatialResolution;
+
+	QTest::newRow("Isotropic") << fieldOfView << spatialResolution << randomNumber(1.0, 3.0);
+}
+
+void GriddingTest::kernelTest()
+{
+	QFETCH(QVector<float>, fieldOfView);
+	QFETCH(QVector<float>, spatialResolution);
+	QFETCH(float, oversamplingRatio);
+
+	Trajectory trajectory;
+	trajectory.dimensions = fieldOfView.size();
+	for(int d=0; d<trajectory.dimensions; d++)
+	{
+		trajectory.spatialResolution[d] = spatialResolution[d];
+		trajectory.fieldOfView[d] = fieldOfView[d];
+	}
+
+	Gridding gridding(&trajectory, oversamplingRatio);
+
+	qInfo() << "Lookup table";
+	qInfo() << QVector<float>::fromStdVector(gridding.m_kernelLookupTable).toList();
+}
+
 void GriddingTest::testForward_data()
 {
 	QTest::addColumn<QVector<float> >("fieldOfView");
@@ -99,7 +136,7 @@ void GriddingTest::testForward()
 	QVector<float> kSpaceExtent(trajectory.dimensions);
 	for (int d=0; d<trajectory.dimensions; d++)
 	{
-		kSpaceExtent[d] = .5*minResolution/spatialResolution[d];
+		kSpaceExtent[d] = 5/spatialResolution[d];
 		trajectory.imageDimensions[d] = 10*fieldOfView[d]/spatialResolution[d];
 	}
 
@@ -115,7 +152,7 @@ void GriddingTest::testForward()
 			k.clear();
 			for(int d=0; d<trajectory.dimensions; d++)
 			{
-				k.append(randomNumber(-kSpaceExtent[0], kSpaceExtent[0]));
+				k.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
 			}
 			setTrajectoryPoint(n, r, &trajectory, k.data(), randomNumber(0, 1));
 			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
@@ -125,7 +162,7 @@ void GriddingTest::testForward()
 	QVector<int> trajectorySize = QVector<int>() << trajectory.readoutPoints << trajectory.readouts;
 	MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.dimensions, signal.toStdVector());
 
-	Gridding gridding(&trajectory);
+	Gridding gridding(&trajectory, oversamplingRatio);
 	MRdata* image = gridding.kSpaceToImage(kSpaceData);
 
 	image->writeToOctave("grid.txt");

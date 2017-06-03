@@ -7,6 +7,8 @@ class GriddingTest : public QObject
 {
 	Q_OBJECT
 private slots:
+	void kernelTest_data();
+	void kernelTest();
 	void testForward_data();
 	void testForward();
 };

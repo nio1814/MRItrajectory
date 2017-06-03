@@ -18,17 +18,18 @@ extern "C" {
 #include "arrayops.h"
 }
 
-Gridding::Gridding(const Trajectory *trajectory) :
-	m_trajectory(trajectory), m_oversamplingFactor(1.5),
-	m_kernelWidth(4)
+Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int kernelWidth) :
+	m_trajectory(trajectory), m_oversamplingFactor(oversamplingRatio),
+	m_kernelWidth(kernelWidth)
 {
 	float beta = M_PI*sqrt(powf(m_kernelWidth/m_oversamplingFactor,2)*powf(m_oversamplingFactor-0.5,2)-0.8);
 
-	float kb1 = -0.4491*m_oversamplingFactor - .0298;
-	float kb2 = 0.2522*m_oversamplingFactor - .0378;
-	float maxError = pow(10.0, kb1*m_kernelWidth+kb2);
+//	float kb1 = -0.4491*m_oversamplingFactor - .0298;
+//	float kb2 = 0.2522*m_oversamplingFactor - .0378;
+//	float maxError = pow(10.0, kb1*m_kernelWidth+kb2);
 
-	int numKernelPoints = sqrt(0.37/maxError)/m_oversamplingFactor;
+//	int numKernelPoints = sqrt(0.37/maxError)/m_oversamplingFactor;
+	int numKernelPoints = 100;
 	int numKernelPointsHalf = ceil(0.5*numKernelPoints*m_kernelWidth);
 
 	float scale = 1/besseli(0, beta);
@@ -51,7 +52,7 @@ Gridding::Gridding(const Trajectory *trajectory) :
 	float minSpatialResolution = INFINITY;
 	for(int d=0; d<numDimensions(); d++)
 		minSpatialResolution = std::min(minSpatialResolution, m_trajectory->spatialResolution[d]);
-
+	m_coordinateScale = .5*minSpatialResolution/5;
 	for(int d=0; d<numDimensions(); d++)
 	{
 		int dimension = m_oversamplingFactor*m_trajectory->imageDimensions[d];
@@ -115,7 +116,7 @@ std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<
 		for(int n=0; n<m_kernelWidth; n++)
 		{
 			int m = n-m_kernelWidth/2+1;
-			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth/2*lookupPoints);
+			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth*2*lookupPoints);
 			int kernelIndex = (int)kernelIndexDecimal;
 			float secondPointFraction = kernelIndexDecimal - kernelIndex;
 			kernelValues[d].push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
@@ -192,6 +193,8 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 
 		float densityCompensation;
 		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data(), &densityCompensation);
+		scalefloats(ungriddedPoint.data(), numDimensions(), m_coordinateScale);
+		ungriddedDataValue *= densityCompensation;
 
 		nearestGriddedPoint(ungriddedPoint, griddedPoint);
 
@@ -223,12 +226,14 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 					float kernelX = kernelValues[0][gx-dimensionStart[0]+offset[0]];
 					long griddedDataIndex = multiToSingleIndex(gridIndex, gridDimensions3);
 					if(direction==Forward)
-						griddedData->setSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
+						griddedData->addSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 					else
 						ungriddedDataValue += kernelX*kernelY*kernelZ*griddedData->signalValue(griddedDataIndex);
 				}
 			}
 		}
+		if(direction==Inverse)
+			ungriddedData->setSignalValue(n, ungriddedDataValue);
 	}
 
 	if(direction==Forward)
@@ -247,7 +252,7 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 	std::vector<float> axisScale;
 	for(int d=0; d<numDimensions(); d++)
 	{
-		axisScale.push_back(m_normalizedToGridScale[d]/m_gridDimensions[d]);
+		axisScale.push_back(m_normalizedToGridScale[d]/m_gridDimensions[d]*m_coordinateScale);
 		imageCenter.push_back(imageDimensions[d]/2);
 	}
 
@@ -271,7 +276,7 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 			}
 			exponentArgument *= 2*M_PI;
 			complexFloat griddedValue = complexFloat(std::cos(exponentArgument), std::sin(exponentArgument))*ungriddedValue*imageScale;
-			griddedData->setSignalValue(g, griddedValue);
+			griddedData->addSignalValue(g, griddedValue);
 		}
 	}
 
