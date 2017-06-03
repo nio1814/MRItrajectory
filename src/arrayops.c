@@ -44,6 +44,19 @@ float sumfloats(float* arr, int npts)
 	return sumVal;
 }
 
+void cumsum(float* arr, float* arrOut, int numPts)
+{
+	int i;
+	float sum = 0.0f;
+
+	for(i=0; i<numPts; i++)
+	{
+		sum += arr[i];
+		arrOut[i] = sum;
+	}
+
+	return;
+}
 
 void scalefloats(float *data, long npts, float multiplier)
 {
@@ -74,6 +87,16 @@ void subtractArray(float* arr1, float* arr2, float* arrOut, int numPts)
 
 	for(i=0; i<numPts; i++)
 		arrOut[i] = arr1[i]-arr2[i];
+
+	return;
+}
+
+void diffArray(float* arr, float* arrOut, int numPts)
+{
+	int i;
+
+	for(i=0; i<(numPts-1); i++)
+		arrOut[i] = arr[i+1]-arr[i];
 
 	return;
 }
