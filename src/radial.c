@@ -42,6 +42,11 @@ struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaS
 	trajectory->readoutPoints = ceil(10*fmax(fovx/resx, fovy/resy));
 	trajectory->readoutPoints += trajectory->readoutPoints%2;
 	float spatialResolutionMin = fmin(resx, resy);
+
+	trajectory->maxGradientAmplitude = gmax;
+	trajectory->maxSlewRate = maxSlewRate;
+	trajectory->samplingInterval = Ts;
+
 	float *gradientWaveform;
 //	int ndep;
 	int nramp;
@@ -52,9 +57,12 @@ struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaS
 	float* nullGradientWaveform = (float*)calloc(trajectory->waveformPoints, sizeof(float));
 	rotateBasis(gradientWaveform, nullGradientWaveform, trajectory, angleRange);
 
-	trajectory->maxGradientAmplitude = gmax;
-	trajectory->maxSlewRate = maxSlewRate;
-	trajectory->samplingInterval = Ts;
+	int r;
+	for(r=0; r<trajectory->readouts; r++)
+	{
+		for(n=0; n<trajectory->readoutPoints; n++)
+			trajectory->densityCompensation[r*trajectory->readoutPoints+n] = trajectory->kSpaceCoordinates[n]*trajectory->kSpaceCoordinates[n];
+	}
 
 	return trajectory;
 }
