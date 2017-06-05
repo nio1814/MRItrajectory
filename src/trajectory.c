@@ -570,6 +570,9 @@ float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInte
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
 {
+	float* kxFull = (float*)malloc(trajectory->waveformPoints*sizeof(float));
+	float* kyFull = (float*)malloc(trajectory->waveformPoints*sizeof(float));
+
 	int n;
 	for(n=0; n<trajectory->readouts; n++)
 	{
@@ -578,14 +581,17 @@ void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, 
 		float* gx = &trajectory->gradientWaveforms[2*n*trajectory->waveformPoints];
 		float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->waveformPoints];
 
-		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
-		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
-
 		memcpy(gx, gxBasis, trajectory->waveformPoints*sizeof(float));
 		memcpy(gy, gyBasis, trajectory->waveformPoints*sizeof(float));
 		scalecomplex(gx, gy, cos(phi), sin(phi), trajectory->waveformPoints);
 
-		gradientToKspace(gx, kx, trajectory->samplingInterval, trajectory->readoutPoints);
-		gradientToKspace(gy, ky, trajectory->samplingInterval, trajectory->readoutPoints);
+		gradientToKspace(gx, kxFull, trajectory->samplingInterval, trajectory->waveformPoints);
+		gradientToKspace(gy, kyFull, trajectory->samplingInterval, trajectory->waveformPoints);
+
+		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
+		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
+
+		memcpy(kx, &kxFull[trajectory->preReadoutPoints], trajectory->readoutPoints*sizeof(float));
+		memcpy(ky, &kyFull[trajectory->preReadoutPoints], trajectory->readoutPoints*sizeof(float));
 	}
 }

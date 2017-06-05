@@ -35,6 +35,7 @@ struct Trajectory
 	float maxReadoutGradientAmplitude;
 	float maxSlewRate;
 	int waveformPoints;
+	int preReadoutPoints;
 	int readoutPoints;
 	float samplingInterval;
 	float *densityCompensation;

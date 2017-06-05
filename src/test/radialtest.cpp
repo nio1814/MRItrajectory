@@ -33,6 +33,8 @@ void RadialTest::testGenerate()
 
 	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, maxGradient, maxSlew, samplingInterval);
 
+	saveTrajectory("radial.trj", radial);
+
 	qWarning() << "Verifying parameters";
 	float threshold = .01;
 	for(int d=0; d<2; d++)
