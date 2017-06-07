@@ -204,7 +204,7 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 			int start = gridPointCenter-m_kernelWidth/2+1;
 			dimensionStart[d] = std::max(0, start);
 			offset[d] = dimensionStart[d]-start;
-			dimensionEnd[d] = std::min(gridPointCenter+m_kernelWidth/2, m_gridDimensions[d]);
+			dimensionEnd[d] = std::min(start+m_kernelWidth, m_gridDimensions[d]);
 		}
 
 		std::vector<std::vector<float> > kernelValues = kernelNeighborhood(ungriddedPoint, griddedPoint);

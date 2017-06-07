@@ -5,6 +5,10 @@ extern "C" {
 #include "trajectory.h"
 }
 
+#include "mrdata.h"
+#include "gridding.h"
+#include "phantom.h"
+
 #include <QtTest/QtTest>
 
 void RadialTest::testGenerate_data()
@@ -84,6 +88,45 @@ void RadialTest::testGenerate()
 
 	sprintf(message, "max|k| %f expected %f", krMax, 5/radial->spatialResolution[0]);
 	QVERIFY2(krMax>=5/radial->spatialResolution[0], message);
+}
+
+void RadialTest::testPhantom()
+{
+	std::vector<float> fieldOfView;
+	std::vector<float> spatialResolution;
+	for(int d=0; d<2; d++)
+	{
+		fieldOfView.push_back(28);
+		spatialResolution.push_back(2);
+	}
+
+	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
+
+	std::vector<int> acquisitionSize;
+	acquisitionSize.push_back(radial->readoutPoints);
+	acquisitionSize.push_back(radial->readouts);
+
+	Phantom phantom(fieldOfView);
+	MRdata kSpaceData(acquisitionSize, 2);
+	for(int n=0; n<radial->readoutPoints; n++)
+	{
+		for(int r=0; r<radial->readouts; r++)
+		{
+			float k[2];
+			trajectoryCoordinates(n, r, radial, k, NULL);
+			int m = radial->readoutPoints*r + n;
+//			if(n<69)
+			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
+//			kSpaceData.setSignalValue(m, 1);
+		}
+	}
+
+	saveTrajectory("radial.trj", radial);
+
+	Gridding gridding(radial);
+	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+//	MRdata* image = gridding.conjugatePhaseForward(kSpaceData);
+	image->writeToOctave("radial.txt");
 }
 
 

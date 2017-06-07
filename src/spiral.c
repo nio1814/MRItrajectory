@@ -388,7 +388,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	trajectory->maxGradientAmplitude = maxGradientAmplitude;
 	trajectory->maxSlewRate = maxSlewRate;
 	trajectory->preReadoutPoints = 0;
-	rotateBasis(&gradientReadoutWaveformsBasis[0], &gradientReadoutWaveformsBasis[1], trajectory, 2*M_PI);
+	rotateBasis(gradientWaveformsBasis[0], gradientWaveformsBasis[1], trajectory, 2*M_PI);
 
 	for(n=0; n<trajectory->readouts; n++)
 	{

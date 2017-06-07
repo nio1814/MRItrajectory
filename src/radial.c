@@ -61,7 +61,7 @@ struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaS
 	for(r=0; r<trajectory->readouts; r++)
 	{
 		for(n=0; n<trajectory->readoutPoints; n++)
-			trajectory->densityCompensation[r*trajectory->readoutPoints+n] = trajectory->kSpaceCoordinates[n]*trajectory->kSpaceCoordinates[n];
+			trajectory->densityCompensation[r*trajectory->readoutPoints+n] = fabs(trajectory->kSpaceCoordinates[n]);
 	}
 
 	return trajectory;

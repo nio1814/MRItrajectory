@@ -22,6 +22,8 @@ extern "C"
 
 #include <QtTest/QtTest>
 
+Q_DECLARE_METATYPE(complexFloat)
+
 /*!
  * \brief Generate a random number
  * \param minLimit	Minimum possible number
@@ -97,6 +99,11 @@ void GriddingTest::testForward_data()
 {
 	QTest::addColumn<QVector<float> >("fieldOfView");
 	QTest::addColumn<QVector<float> >("spatialResolution");
+	QTest::addColumn<int>("readouts");
+	QTest::addColumn<int>("readoutPoints");
+	QTest::addColumn<QVector<float> >("kSpaceCoordinates");
+	QTest::addColumn<QVector<float> >("densityCompensation");
+	QTest::addColumn<QVector<complexFloat> >("signal");
 	QTest::addColumn<float>("oversamplingRatio");
 
 	QVector<float> fieldOfView(2);
@@ -107,21 +114,67 @@ void GriddingTest::testForward_data()
 	spatialResolution = QVector<float>() << randomNumber(.8, 4.0);
 	spatialResolution << spatialResolution;
 
-	QTest::newRow("Isotropic") << fieldOfView << spatialResolution << randomNumber(1.0, 3.0);
+	float kSpaceExtent[3];
+	int dimensions = 2;
+	for (int d=0; d<dimensions; d++)
+		kSpaceExtent[d] = 5/spatialResolution[d];
+
+	QVector<float> kSpaceCoordinates;
+	QVector<float> densityCompensation;
+	QVector<complexFloat> signal;
+
+	int readoutPoints = randomInteger(10,50);
+	int readouts = randomInteger(5,50);
+	for(int r=0; r<readouts; r++)
+	{
+		for (int n=0; n<readoutPoints; n++)
+		{
+			for(int d=0; d<dimensions; d++)
+			{
+				kSpaceCoordinates.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
+			}
+			densityCompensation.append(randomNumber(0,1));			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
+		}
+	}
+
+//	QTest::newRow("Isotropic Random") << fieldOfView << spatialResolution << readoutPoints << readouts << kSpaceCoordinates << densityCompensation << signal << randomNumber(1.0, 3.0);
+
+	for(int d=0; d<2; d++)
+	{
+		fieldOfView[d] = 28;
+		spatialResolution[d] = 2;
+	}
+
+	signal.clear();
+	signal.append(complexFloat(1,0));
+
+	kSpaceCoordinates.clear();
+	kSpaceCoordinates.append(0);
+	kSpaceCoordinates.append(0);
+
+	densityCompensation.clear();
+	densityCompensation.append(1);
+
+	QTest::newRow("DC") << fieldOfView << spatialResolution << 1 << 1 << kSpaceCoordinates << densityCompensation << signal << 2.0f;
 }
 
 void GriddingTest::testForward()
 {
 	QFETCH(QVector<float>, fieldOfView);
 	QFETCH(QVector<float>, spatialResolution);
+	QFETCH(int, readouts);
+	QFETCH(int, readoutPoints);
+	QFETCH(QVector<float>, kSpaceCoordinates);
+	QFETCH(QVector<float>, densityCompensation);
+	QFETCH(QVector<complexFloat>, signal);
 	QFETCH(float, oversamplingRatio);
 
 	qWarning() << "Oversampling Ratio:" << oversamplingRatio;
 
 	Trajectory trajectory;
-	trajectory.readoutPoints = randomInteger(10,50);
+	trajectory.readoutPoints = readoutPoints;
 	qWarning() << "Readout Points:" << trajectory.readoutPoints;
-	trajectory.readouts = randomInteger(5,50);
+	trajectory.readouts = readouts;
 	qWarning() << "Readouts:" << trajectory.readouts;
 	trajectory.dimensions = fieldOfView.size();
 	allocateTrajectory(&trajectory, trajectory.readoutPoints, 0, trajectory.dimensions, trajectory.readouts, trajectory.readouts, StoreAll);
@@ -131,36 +184,23 @@ void GriddingTest::testForward()
 		trajectory.spatialResolution[d] = spatialResolution[d];
 		trajectory.fieldOfView[d] = fieldOfView[d];
 		minResolution = qMin(minResolution, spatialResolution[d]);
-	}
-
-	QVector<float> kSpaceExtent(trajectory.dimensions);
-	for (int d=0; d<trajectory.dimensions; d++)
-	{
-		kSpaceExtent[d] = 5/spatialResolution[d];
 		trajectory.imageDimensions[d] = 10*fieldOfView[d]/spatialResolution[d];
 	}
 
-//	QVector<float> kx;
-//	QVector<float> ky;
-	QVector<float> k(trajectory.dimensions);
-//	QVector<float> dcf;
-	QVector<complexFloat> signal;
 	for(int r=0; r<trajectory.readouts; r++)
 	{
 		for (int n=0; n<trajectory.readoutPoints; n++)
 		{
-			k.clear();
-			for(int d=0; d<trajectory.dimensions; d++)
-			{
-				k.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
-			}
-			setTrajectoryPoint(n, r, &trajectory, k.data(), randomNumber(0, 1));
-			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
+			int m = r*readoutPoints+n;
+			float k[2] = {kSpaceCoordinates[2*m], kSpaceCoordinates[2*m+1]};
+			setTrajectoryPoint(n, r, &trajectory, k, randomNumber(0, 1));
 		}
 	}
 
 	QVector<int> trajectorySize = QVector<int>() << trajectory.readoutPoints << trajectory.readouts;
 	MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.dimensions, signal.toStdVector());
+
+	kSpaceData.writeToOctave("gridkspace.txt");
 
 	Gridding gridding(&trajectory, oversamplingRatio);
 	MRdata* image = gridding.kSpaceToImage(kSpaceData);
