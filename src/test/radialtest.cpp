@@ -124,7 +124,7 @@ void RadialTest::testPhantom()
 	saveTrajectory("radial.trj", radial);
 
 	Gridding gridding(radial);
-	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+	MRdata* image = gridding.kSpaceToImage(kSpaceData)[0];
 //	MRdata* image = gridding.conjugatePhaseForward(kSpaceData);
 	image->writeToOctave("radial.txt");
 }

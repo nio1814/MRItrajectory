@@ -47,7 +47,9 @@ float meanSquaredError(std::vector<complexFloat> data, std::vector<complexFloat>
 	float energyActual = 0;
 	for(size_t n=0; n<actual.size(); n++)
 	{
-		energyDifference += abs(data[n]-actual[n]);
+		complexFloat difference = data[n]-actual[n];
+
+		energyDifference += (difference*conj(difference)).real();
 		energyActual += (actual[n]*conj(actual[n])).real();
 	}
 
@@ -133,11 +135,12 @@ void GriddingTest::testForward_data()
 			{
 				kSpaceCoordinates.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
 			}
-			densityCompensation.append(randomNumber(0,1));			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
+			densityCompensation.append(randomNumber(0,1));
+			signal.append(complexFloat(randomNumber(-1, 1), randomNumber(-1, 1)));
 		}
 	}
 
-//	QTest::newRow("Isotropic Random") << fieldOfView << spatialResolution << readoutPoints << readouts << kSpaceCoordinates << densityCompensation << signal << randomNumber(1.0, 3.0);
+	QTest::newRow("Isotropic Random") << fieldOfView << spatialResolution << readoutPoints << readouts << kSpaceCoordinates << densityCompensation << signal << randomNumber(1.0, 3.0);
 
 	for(int d=0; d<2; d++)
 	{
@@ -156,6 +159,11 @@ void GriddingTest::testForward_data()
 	densityCompensation.append(1);
 
 	QTest::newRow("DC") << fieldOfView << spatialResolution << 1 << 1 << kSpaceCoordinates << densityCompensation << signal << 2.0f;
+
+	signal.append(complexFloat(1,0));
+	kSpaceCoordinates.append(1);
+	kSpaceCoordinates.append(0);
+	densityCompensation.append(1);
 }
 
 void GriddingTest::testForward()
@@ -200,11 +208,15 @@ void GriddingTest::testForward()
 	QVector<int> trajectorySize = QVector<int>() << trajectory.readoutPoints << trajectory.readouts;
 	MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.dimensions, signal.toStdVector());
 
-	kSpaceData.writeToOctave("gridkspace.txt");
+	kSpaceData.writeToOctave("kspace.txt");
 
 	Gridding gridding(&trajectory, oversamplingRatio);
-	MRdata* image = gridding.kSpaceToImage(kSpaceData);
+	std::vector<MRdata*> griddedData = gridding.kSpaceToImage(kSpaceData, true);
 
+	MRdata* griddedKspace = griddedData[0];
+	griddedKspace->writeToOctave("griddedkspace.txt");
+
+	MRdata* image = griddedData[1];
 	image->writeToOctave("grid.txt");
 
 	MRdata* conjugatePhaseImage = gridding.conjugatePhaseForward(kSpaceData);
@@ -215,7 +227,8 @@ void GriddingTest::testForward()
 
 	QString message = QString("error %1").arg(error);
 
-	QVERIFY2(error<.04, message.toStdString().c_str());
+	qInfo() << "Image error " << error;
+	QVERIFY(error<.04);
 
 	MRdata* kSpaceDataForwardInverse = gridding.imageToKspace(*image);
 

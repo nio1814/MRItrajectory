@@ -17,6 +17,7 @@ struct FFTplan
 class MRdata
 {
 public:
+	MRdata(const MRdata* from);
 	MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data=std::vector<complexFloat>());
 	size_t points() const;
 

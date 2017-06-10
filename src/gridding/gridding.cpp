@@ -24,27 +24,21 @@ Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int ke
 {
 	float beta = M_PI*sqrt(powf(m_kernelWidth/m_oversamplingFactor,2)*powf(m_oversamplingFactor-0.5,2)-0.8);
 
-//	float kb1 = -0.4491*m_oversamplingFactor - .0298;
-//	float kb2 = 0.2522*m_oversamplingFactor - .0378;
-//	float maxError = pow(10.0, kb1*m_kernelWidth+kb2);
 
-//	int numKernelPoints = sqrt(0.37/maxError)/m_oversamplingFactor;
-	int numKernelPoints = 100;
-	int numKernelPointsHalf = ceil(0.5*numKernelPoints*m_kernelWidth);
+	int numKernelPoints = 30*m_kernelWidth;
 
 	float scale = 1/besseli(0, beta);
 	float kernelSum = 0;
-	for(int n=0; n<numKernelPointsHalf; n++)
+	for(int n=0; n<=numKernelPoints; n++)
 	{
-		float x = n/(float)numKernelPoints;
+		float x = 2*n/(float)numKernelPoints;
 		float value = besseli(0, beta*sqrt(1-pow(2*x/m_kernelWidth,2)))*scale;
 		kernelSum += 2*value;
 		m_kernelLookupTable.push_back(value);
 	}
 	kernelSum -= m_kernelLookupTable[0];
-	kernelSum /= numKernelPoints*sqrt(m_oversamplingFactor);
-	scalefloats(m_kernelLookupTable.data(), m_kernelLookupTable.size(), 1/kernelSum);
-
+	kernelSum /= .5*numKernelPoints*sqrt(m_oversamplingFactor);
+	scalefloats(m_kernelLookupTable.data(), m_kernelLookupTable.size()-1, 1/kernelSum);
 
 	m_deapodization.clear();
 	scale = -1/(2*beta)*(exp(-beta)-exp(beta));
@@ -107,16 +101,18 @@ float Gridding::lookupKernelValue(float x)
 
 std::vector<std::vector<float> > Gridding::kernelNeighborhood(const std::vector<float> &ungriddedPoint, const std::vector<float> &griddedPoint)
 {
-	int lookupPoints = m_kernelLookupTable.size();
+	int lookupPoints = m_kernelLookupTable.size()-1;
 	std::vector<std::vector<float> > kernelValues(numDimensions());
 
 	for(int d=0; d<numDimensions(); d++)
 	{
-		float offset = (griddedPoint[d]-ungriddedPoint[d])*m_normalizedToGridScale[d];
+		float offset = (griddedPoint[d]-ungriddedPoint[d])*m_normalizedToGridScale[d]-1;
+		offset += ungriddedPoint[d]>=griddedPoint[d] ? 1 : 0;
 		for(int n=0; n<m_kernelWidth; n++)
 		{
 			int m = n-m_kernelWidth/2+1;
-			float kernelIndexDecimal = fabsf((m+offset)/(float)m_kernelWidth*2*lookupPoints);
+			float kernelOffset = m+offset;
+			float kernelIndexDecimal = fabsf(kernelOffset/(float)m_kernelWidth*2*(lookupPoints-1));
 			int kernelIndex = (int)kernelIndexDecimal;
 			float secondPointFraction = kernelIndexDecimal - kernelIndex;
 			kernelValues[d].push_back(m_kernelLookupTable[kernelIndex]*(1-secondPointFraction) + m_kernelLookupTable[kernelIndex+1]*secondPointFraction);
@@ -200,8 +196,9 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 
 		for(int d=0; d<numDimensions(); d++)
 		{
-			int gridPointCenter = (int)((griddedPoint[d]+.5)*m_normalizedToGridScale[d]);
-			int start = gridPointCenter-m_kernelWidth/2+1;
+			int gridPointCenter = round((griddedPoint[d]+.5)*m_normalizedToGridScale[d]);
+			int start = gridPointCenter-m_kernelWidth/2;
+			start += ungriddedPoint[d]>=griddedPoint[d] ? 1 : 0;
 			dimensionStart[d] = std::max(0, start);
 			offset[d] = dimensionStart[d]-start;
 			dimensionEnd[d] = std::min(start+m_kernelWidth, m_gridDimensions[d]);
@@ -296,9 +293,18 @@ void Gridding::deapodize(MRdata &oversampledImage)
 	}
 }
 
-MRdata* Gridding::kSpaceToImage(MRdata &ungriddedData)
+std::vector<MRdata *> Gridding::kSpaceToImage(MRdata &ungriddedData, bool returnGriddedKspace)
 {
-	MRdata* image = grid(ungriddedData, Forward);
+	std::vector<MRdata*> output;
+	MRdata* griddedKspace = grid(ungriddedData, Forward);
+	MRdata* image;
+	if(returnGriddedKspace)
+	{
+		output.push_back(griddedKspace);
+		image = new MRdata(griddedKspace);
+	} else {
+		image = griddedKspace;
+	}
 	image->writeToOctave("temp");
 	image->fftShift();
 	image->fft(FFTW_BACKWARD);
@@ -307,7 +313,9 @@ MRdata* Gridding::kSpaceToImage(MRdata &ungriddedData)
 	deapodize(*image);
 	image->crop(imageDimensions());
 
-	return image;
+	output.push_back(image);
+
+	return output;
 }
 
 MRdata *Gridding::imageToKspace(const MRdata &image)
