@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 
 #define MAX_LOBES 50
 #define LENGTH_LUT	1024
@@ -92,18 +93,32 @@ __inline double Plut(double k, double Pr)
 	return val;
 }
 
-void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int numAxes, int numLobes, float FOV, float kmax, int numCt, int numIter, float **W)
+size_t multiToSingleIndex(int* indices, int* size, int dimensions)
+{
+	size_t index = indices[0];
+	size_t lowerDimensionSize = size[0];
+	int n;
+	for(n=1; n<dimensions; n++)
+	{
+		index += indices[n]*lowerDimensionSize;
+		lowerDimensionSize *= size[n];
+	}
+
+	return index;
+}
+
+void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, int numIntl, int numAxes, int numLobes, float FOV, float kmax, int numCt, int numIter, float *W)
 {
 	float kCenter[3];
 	float kOther[3];
 	float kNormFactor;
-	float maxw;
 
 	long nptsTotal;
 	long countPtsTotal = 0;
-	long n, m, p;
+	int n;
+	int m, p;
 	long nn, mm, pp;
-	int mmStart, mmEnd;
+	int mmEnd;
 	int nnStart, nnEnd;
 	int ppStart, ppEnd;
 	int ax;
@@ -118,19 +133,17 @@ void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int
 	int it;
 	int doLUT = 1;
 
-	float **WP;	/* convoluion result */
-	int **nbPts;	/* points within kernel radius */
+	float *WP;	/* convoluion result */
+	int *numNeighborPoints;	/* points within kernel radius */
 
 	short***** ctList;
-	int ***ctListLength;
+	int *pointsInCompartment;
 	int idxCt, idxCto;
 	int idxCtoStart;
 	int ct[3] = {0,0,0};
 	int numCts[3] = {1,1,1};
 	long maxCtLength = 0;
 	int maxCtOffset;
-
-	char filename[128];
 
 	nptsTotal = numIntl*(N-padfront);
 	F = FOV*2*kmax;	/* parameter for kernel width */
@@ -168,15 +181,27 @@ void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int
 
 	maxCtOffset = (int)(Pr*numCt+1);
 
-	WP = matrix2f(numIntl, N);
-	setValMatrix2f(W, numIntl, N, 1.0);
+//	WP = matrix2f(numIntl, N);
+	int trajectoryPoints = numIntl*N;
+	WP = (float*)malloc(trajectoryPoints*sizeof(float));
+//	setValMatrix2f(W, numIntl, N, 1.0);
+	for(n=0; n<trajectoryPoints; n++)
+		WP[n] = 1;
 
-	nbPts = (int**)matrix2(numIntl, N, 'i');
-	setValMatrix2(nbPts, numIntl, N, 0, 'i');
+//	numNeighborPoints = (int**)matrix2(numIntl, N, 'i');
+	numNeighborPoints = (int*)malloc(trajectoryPoints*sizeof(int));
+//	setValMatrix2(numNeighborPoints, numIntl, N, 0, 'i');
+	for(n=0; n<trajectoryPoints; n++)
+		numNeighborPoints[n] = 1;
 
-	if(DBG_DCFJ) printf("Counting points in compartments\n");
+	if(DBG_DCFJ)
+		printf("Counting points in compartments\n");
+	int totalCompartments = 1;
 	for(ax=0; ax<numAxes; ax++)
+	{
 		numCts[ax] = numCt;
+		totalCompartments *= numCt;
+	}
 
 	if(Nall==NULL)
 	{
@@ -185,130 +210,169 @@ void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int
 			Nall[intlc] = N;
 	}
 
-	ctListLength = (int***)matrix3(numCts[0], numCts[1], numCts[2], 'i');
-	setValMatrix3((void***)ctListLength, numCts[0], numCts[1], numCts[2], 0, 'i');
+//	pointsInCompartment = (int***)matrix3(numCts[0], numCts[1], numCts[2], 'i');
+	pointsInCompartment = (int*)malloc(totalCompartments*sizeof(int));
+//	setValMatrix3((void***)pointsInCompartment, numCts[0], numCts[1], numCts[2], 0, 'i');
+	for(n=0; n<totalCompartments; n++)
+		pointsInCompartment[n] = 0;
+
 	for(intlc=0; intlc<numIntl; intlc++)
 	{
 		for(n=padfront; n<Nall[intlc]; n++)
 		{
+			float kSpaceCoordinates[3];
+			trajectoryCoordinates(n, intlc, trajectory, kSpaceCoordinates, NULL);
 			for(ax=0; ax<numAxes; ax++)
 			{
-				ct[ax] = floor(ktraj[ax][intlc][n]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
+				ct[ax] = floor(kSpaceCoordinates[ax]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
 				if((ct[ax]<0) || (ct[ax]>numCts[ax]))
 				{
 					fprintf(stderr, "Assigned compartment out of range\n");
 					fprintf(stderr, "\tAxis %d, Cone %d, point %d\n", ax, intlc, n);
 					fprintf(stderr, "\tct = (%d,%d,%d)\n", ct[0], ct[1], ct[2]);
 
-					fprintf(stderr, "\tk = (%f", ktraj[0][intlc][n]);
+					fprintf(stderr, "\tk = (%f", kSpaceCoordinates[0]);
 					if(numAxes>1)
-						fprintf(stderr, ",%f", ktraj[1][intlc][n]);
+						fprintf(stderr, ",%f", kSpaceCoordinates[1]);
 					if(numAxes>2)
-						fprintf(stderr, "\%f", ktraj[2][intlc][n]);
+						fprintf(stderr, "\%f", kSpaceCoordinates[2]);
 					fprintf(stderr, ")\n");
 					exit(EXIT_FAILURE);
 				}
 			}
-			ctListLength[ct[0]][ct[1]][ct[2]]++;
-			maxCtLength = max(ctListLength[ct[0]][ct[1]][ct[2]], maxCtLength);
+//			pointsInCompartment[ct[0]][ct[1]][ct[2]]++;
+			int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+			pointsInCompartment[compartmentIndex]++;
+			maxCtLength = fmax(pointsInCompartment[compartmentIndex], maxCtLength);
 			countPtsTotal++;
 		}
 	}
 
-	printf("Total acquisition points:\t%d\n", countPtsTotal);
-	printf("Maximum points in a compartment:\t%d\n", maxCtLength);
+	printf("Total acquisition points:\t%ld\n", countPtsTotal);
+	printf("Maximum points in a compartment:\t%ld\n", maxCtLength);
 
 	ctList = (short*****)malloc(numCts[0]*sizeof(short****));
 	for(m=0; m<numCts[0]; m++)
 	{
 		ctList[m] = (short****)malloc(numCts[1]*sizeof(short***));
+		ct[0] = m;
 		for(n=0; n<numCts[1]; n++)
 		{
 			ctList[m][n] = (short***)malloc(numCts[2]*sizeof(short**));
+			ct[1] = n;
 			for(p=0; p<numCts[2]; p++)
 			{
-				if(ctListLength[m][n][p])
+				ct[2] = p;
+				int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+				if(pointsInCompartment[compartmentIndex])
 				{
-					ctList[m][n][p] = (short**)malloc(ctListLength[m][n][p]*sizeof(short*));
-					for(idxCt=0; idxCt<ctListLength[m][n][p]; idxCt++)
+					ctList[m][n][p] = (short**)malloc(pointsInCompartment[compartmentIndex]*sizeof(short*));
+					for(idxCt=0; idxCt<pointsInCompartment[compartmentIndex]; idxCt++)
 						ctList[m][n][p][idxCt] = (short*)malloc(2*sizeof(short));
 				}
 			}
 		}
 	}
 
-	printf("Assigning points to compartments %dx%dx%d\n",numCts[0],numCts[1],numCts[2]);
-	setValMatrix3((void***)ctListLength, numCts[0], numCts[1], numCts[2], 0, 'i');
+	printf("Assigning points to compartments %dx%dx%d\n",numCts[0], numCts[1], numCts[2]);
+//	setValMatrix3((void***)pointsInCompartment, numCts[0], numCts[1], numCts[2], 0, 'i');
+	for(n=0; n<totalCompartments; n++)
+		pointsInCompartment[n] = 0;
+
 	for(intlc=0; intlc<numIntl; intlc++)
 	{
 		for(n=padfront; n<Nall[intlc]; n++)
 		{
+			float kSpaceCoordinates[3];
+			trajectoryCoordinates(n, intlc, trajectory, kSpaceCoordinates, NULL);
+
 			/* Get compartment number */
 			for(ax=0; ax<numAxes; ax++)
-				ct[ax] = floor(ktraj[ax][intlc][n]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
+				ct[ax] = floor(kSpaceCoordinates[ax]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
 
-			ctList[ct[0]][ct[1]][ct[2]][ctListLength[ct[0]][ct[1]][ct[2]]][0] = intlc;
-			ctList[ct[0]][ct[1]][ct[2]][ctListLength[ct[0]][ct[1]][ct[2]]][1] = n;
-			ctListLength[ct[0]][ct[1]][ct[2]]++;
+			int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+
+			ctList[ct[0]][ct[1]][ct[2]][pointsInCompartment[compartmentIndex]][0] = intlc;
+			ctList[ct[0]][ct[1]][ct[2]][pointsInCompartment[compartmentIndex]][1] = n;
+			pointsInCompartment[compartmentIndex]++;
 		}
 	}
 
-	/*writeMatrix3((const void***)ctListLength, numCts[0], numCts[1], numCts[2], 'i', "ctlength");*/
+	/*writeMatrix3((const void***)pointsInCompartment, numCts[0], numCts[1], numCts[2], 'i', "ctlength");*/
 
 	countPtsTotal = 0;
+	int compartmentIndicesOther[3];
 	for(it=0; it<numIter; it++)
 	{
-		setValMatrix2f(WP, numIntl, N, 0.0);
+//		setValMatrix2f(WP, numIntl, N, 0.0);
+		for(n=0; n<trajectoryPoints; n++)
+			WP[n] = 0;
 		for(m=0; m<numCts[0]; m++)
 		{
+			ct[0] = m;
 			if(numAxes==2 && DBG_DCFJ)
 				printf("ct[%d]\t%.1f%%\n", m, countPtsTotal/(.01*nptsTotal*numIter));
 			for(n=0; n<numCts[1]; n++)
 			{
+				ct[1] = n;
 				if(numAxes==3 && DBG_DCFJ)
 					printf("ct[%d][%d]\t%.1f%%\n", m, n, countPtsTotal/(.01*nptsTotal*numIter));
 				for(p=0; p<numCts[2]; p++)
 				{
-					for(idxCt=0; idxCt<ctListLength[m][n][p]; idxCt++)
+					ct[2] = p;
+					int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+					for(idxCt=0; idxCt<pointsInCompartment[compartmentIndex]; idxCt++)
 					{
 						countPtsTotal++;
 
 						nc = ctList[m][n][p][idxCt][1];
 						intlc = ctList[m][n][p][idxCt][0];
+						size_t indexCurrent = intlc*trajectory->readoutPoints + nc;
+
+						float kSpaceCoordinates[3];
+						trajectoryCoordinates(nc, intlc, trajectory, kSpaceCoordinates, NULL);
 
 						for(ax=0; ax<numAxes; ax++)
-							kCenter[ax] = ktraj[ax][intlc][nc];
+							kCenter[ax] = kSpaceCoordinates[ax];
 
-						mmEnd = min(m+maxCtOffset+1, numCts[0]);
+						mmEnd = fmin(m+maxCtOffset+1, numCts[0]);
 						for(mm=m; mm<mmEnd; mm++)
 						{
+							compartmentIndicesOther[0] = mm;
 							if(mm==m)
 								nnStart = n;
 							else
-								nnStart = max(0,n-maxCtOffset);
-							nnEnd = min(n+maxCtOffset+1, numCts[1]);
+								nnStart = fmax(0,n-maxCtOffset);
+							nnEnd = fmin(n+maxCtOffset+1, numCts[1]);
 							for(nn=nnStart; nn<nnEnd; nn++)
 							{
+								compartmentIndicesOther[1] = nn;
 								if((nn==n) && (mm==m))
 									ppStart = p;
 								else
-									ppStart = max(0, p-maxCtOffset);
-								ppEnd = min(p+maxCtOffset+1, numCts[2]);
+									ppStart = fmax(0, p-maxCtOffset);
+								ppEnd = fmin(p+maxCtOffset+1, numCts[2]);
 								for(pp=ppStart; pp<ppEnd; pp++)
 								{
+									compartmentIndicesOther[2] = pp;
 									if((mm==m) && (nn==n) && (pp==p))
 										idxCtoStart = idxCt;
 									else
 										idxCtoStart = 0;
-									for(idxCto=idxCtoStart; idxCto<ctListLength[mm][nn][pp]; idxCto++)
+									size_t compartmentIndexOther = multiToSingleIndex(compartmentIndicesOther, numCts, numAxes);
+									for(idxCto=idxCtoStart; idxCto<pointsInCompartment[compartmentIndexOther]; idxCto++)
 									{
 										no = ctList[mm][nn][pp][idxCto][1];
 										intlo = ctList[mm][nn][pp][idxCto][0];
+										size_t indexOther = intlo*trajectory->readoutPoints + no;
+
+										float kSpaceCoordinates[3];
+										trajectoryCoordinates(no, intlo, trajectory, kSpaceCoordinates, NULL);
 
 										kDistSq = 0;
 										for(ax=0; ax<numAxes; ax++)
 										{
-											kOther[ax] = ktraj[ax][intlo][no];
+											kOther[ax] = kSpaceCoordinates[ax];
 											kDistSq += (kOther[ax]-kCenter[ax])*(kOther[ax]-kCenter[ax]);
 										}
 
@@ -316,25 +380,25 @@ void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int
 										{
 											/* WP[intlc][nc] += PI*PI*F*F*F*F/16*W[intlc][nc];
 											//WP[intlc][nc] += 4.5986019e+012*W[intlc][nc]; */
-											WP[intlc][nc] += W[intlc][nc];
+											WP[indexCurrent] += W[indexCurrent];
 											/*WP[intlc][nc] += 1.0f;*/
-											nbPts[intlc][nc]++;
+											numNeighborPoints[indexCurrent]++;
 										}
 										else
 										{
 											if(kDistSq<(Pr*Pr))
 											{
 												kDist = sqrt(kDistSq);
-												nbPts[intlc][nc]++;
-												nbPts[intlo][no]++;
+												numNeighborPoints[indexCurrent]++;
+												numNeighborPoints[indexOther]++;
 												/*if(kDist<4e-5)
 													//Pcurrent = 4.5986019e+012;
 													Pcurrent = 1;
 												else*/
 													Pcurrent = P(kDist, F);
-												/* printf("[%d][%d][%d][%d/%d] - [%d][%d][%d][%d/%d]:\t(%d,%d) - (%d,%d):\t%f\n", m,n,p,idxCt+1,ctListLength[m][n][p], mm,nn,pp,idxCto+1,ctListLength[mm][nn][pp],nc,intlc,no,intlo,Pcurrent);*/
-												WP[intlc][nc] += Pcurrent*W[intlo][no];
-												WP[intlo][no] += Pcurrent*W[intlc][nc];
+												/* printf("[%d][%d][%d][%d/%d] - [%d][%d][%d][%d/%d]:\t(%d,%d) - (%d,%d):\t%f\n", m,n,p,idxCt+1,pointsInCompartment[m][n][p], mm,nn,pp,idxCto+1,pointsInCompartment[mm][nn][pp],nc,intlc,no,intlo,Pcurrent);*/
+												WP[indexCurrent] += Pcurrent*W[indexOther];
+												WP[indexOther] += Pcurrent*W[indexCurrent];
 												/*WP[intlc][nc] += 1.0f;
 												WP[intlo][no] += 1.0f;*/
 											}
@@ -347,18 +411,10 @@ void jdcf(const float ***ktraj, int N, int padfront, int* Nall, int numIntl, int
 				}
 			}
 		}
-		dividePtMatrix2f(W, (const float**)WP, numIntl, N);
-		/*sprintf(filename, "data/W%d", it+1);
-		writeMatrix2f((const float**)W, numIntl, N, filename);
-		sprintf(filename, "data/WP%d", it+1);
-		writeMatrix2f((const float**)WP, numIntl, N, filename);
-		/*maxw = maxVal2f((const float**)W, numIntl, N);
-		scaleMatrix2f(W, numIntl, N, 1/maxw);
-		maxw = maxVal2f((const float**)W, numIntl, N);*/
+//		dividePtMatrix2f(W, (const float**)WP, numIntl, N);
+		for(n=0; n<trajectoryPoints; n++)
+			W[n] /= WP[n];
 	}
-
-	/*writeMatrix3((const void***)ctListLength, numCt, numCt, numCts[2], 'i', "ctlistlength");
-	writeMatrix2((const void**)nbPts, numIntl, N, 'i', "nbpts");*/
 
 	return;
 }
