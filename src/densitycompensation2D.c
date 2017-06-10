@@ -107,11 +107,13 @@ size_t multiToSingleIndex(int* indices, int* size, int dimensions)
 	return index;
 }
 
-void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, int numIntl, int numAxes, int numLobes, float FOV, float kmax, int numCt, int numIter, float *W)
+void convolutionDensityCompensation(const struct Trajectory *trajectory, int padfront, int* Nall, int numLobes, int numIter, float *W)
 {
+	int numCt = 40;
+
 	float kCenter[3];
 	float kOther[3];
-	float kNormFactor;
+//	float kNormalizationFactor;
 
 	long nptsTotal;
 	long countPtsTotal = 0;
@@ -145,11 +147,19 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 	long maxCtLength = 0;
 	int maxCtOffset;
 
-	nptsTotal = numIntl*(N-padfront);
-	F = FOV*2*kmax;	/* parameter for kernel width */
-	kNormFactor = 1;	/* assuming data already normalized */
+	nptsTotal = trajectory->readouts*(trajectory->readoutPoints-padfront);
+	float fieldOfViewMax = 0;
+	float kMax = 0;
+	for(n=0; n<trajectory->dimensions; n++)
+	{
+		fieldOfViewMax = fmax(trajectory->fieldOfView[n], fieldOfViewMax);
+		kMax = fmax(5/trajectory->spatialResolution[n], kMax);
+	}
 
-	switch(numAxes)
+	F = fieldOfViewMax*2*kMax;	/* parameter for kernel width */
+	float kNormalizationFactor = .5/kMax;
+
+	switch(trajectory->dimensions)
 	{
 		case 1:
 			for(n=0; n<MAX_LOBES; n++)
@@ -181,23 +191,23 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 
 	maxCtOffset = (int)(Pr*numCt+1);
 
-//	WP = matrix2f(numIntl, N);
-	int trajectoryPoints = numIntl*N;
+//	WP = matrix2f(trajectory->readouts, N);
+	int trajectoryPoints = trajectory->readouts*trajectory->readoutPoints;
 	WP = (float*)malloc(trajectoryPoints*sizeof(float));
-//	setValMatrix2f(W, numIntl, N, 1.0);
+//	setValMatrix2f(W, trajectory->readouts, N, 1.0);
 	for(n=0; n<trajectoryPoints; n++)
 		WP[n] = 1;
 
-//	numNeighborPoints = (int**)matrix2(numIntl, N, 'i');
+//	numNeighborPoints = (int**)matrix2(trajectory->readouts, N, 'i');
 	numNeighborPoints = (int*)malloc(trajectoryPoints*sizeof(int));
-//	setValMatrix2(numNeighborPoints, numIntl, N, 0, 'i');
+//	setValMatrix2(numNeighborPoints, trajectory->readouts, N, 0, 'i');
 	for(n=0; n<trajectoryPoints; n++)
 		numNeighborPoints[n] = 1;
 
 	if(DBG_DCFJ)
 		printf("Counting points in compartments\n");
 	int totalCompartments = 1;
-	for(ax=0; ax<numAxes; ax++)
+	for(ax=0; ax<trajectory->dimensions; ax++)
 	{
 		numCts[ax] = numCt;
 		totalCompartments *= numCt;
@@ -205,9 +215,9 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 
 	if(Nall==NULL)
 	{
-		Nall = (int*)malloc(numIntl*sizeof(int));
-		for(intlc=0; intlc<numIntl; intlc++)
-			Nall[intlc] = N;
+		Nall = (int*)malloc(trajectory->readouts*sizeof(int));
+		for(intlc=0; intlc<trajectory->readouts; intlc++)
+			Nall[intlc] = trajectory->readoutPoints;
 	}
 
 //	pointsInCompartment = (int***)matrix3(numCts[0], numCts[1], numCts[2], 'i');
@@ -216,32 +226,32 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 	for(n=0; n<totalCompartments; n++)
 		pointsInCompartment[n] = 0;
 
-	for(intlc=0; intlc<numIntl; intlc++)
+	for(intlc=0; intlc<trajectory->readouts; intlc++)
 	{
 		for(n=padfront; n<Nall[intlc]; n++)
 		{
 			float kSpaceCoordinates[3];
 			trajectoryCoordinates(n, intlc, trajectory, kSpaceCoordinates, NULL);
-			for(ax=0; ax<numAxes; ax++)
+			for(ax=0; ax<trajectory->dimensions; ax++)
 			{
-				ct[ax] = floor(kSpaceCoordinates[ax]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
+				ct[ax] = round(kSpaceCoordinates[ax]*kNormalizationFactor*numCts[ax]+numCts[ax]/2.0);
 				if((ct[ax]<0) || (ct[ax]>numCts[ax]))
 				{
 					fprintf(stderr, "Assigned compartment out of range\n");
-					fprintf(stderr, "\tAxis %d, Cone %d, point %d\n", ax, intlc, n);
+					fprintf(stderr, "\tAxis %d, readout %d, point %d\n", ax, intlc, n);
 					fprintf(stderr, "\tct = (%d,%d,%d)\n", ct[0], ct[1], ct[2]);
 
 					fprintf(stderr, "\tk = (%f", kSpaceCoordinates[0]);
-					if(numAxes>1)
+					if(trajectory->dimensions>1)
 						fprintf(stderr, ",%f", kSpaceCoordinates[1]);
-					if(numAxes>2)
+					if(trajectory->dimensions>2)
 						fprintf(stderr, "\%f", kSpaceCoordinates[2]);
 					fprintf(stderr, ")\n");
 					exit(EXIT_FAILURE);
 				}
 			}
 //			pointsInCompartment[ct[0]][ct[1]][ct[2]]++;
-			int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+			int compartmentIndex = multiToSingleIndex(ct, numCts, trajectory->dimensions);
 			pointsInCompartment[compartmentIndex]++;
 			maxCtLength = fmax(pointsInCompartment[compartmentIndex], maxCtLength);
 			countPtsTotal++;
@@ -263,7 +273,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 			for(p=0; p<numCts[2]; p++)
 			{
 				ct[2] = p;
-				int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+				int compartmentIndex = multiToSingleIndex(ct, numCts, trajectory->dimensions);
 				if(pointsInCompartment[compartmentIndex])
 				{
 					ctList[m][n][p] = (short**)malloc(pointsInCompartment[compartmentIndex]*sizeof(short*));
@@ -279,7 +289,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 	for(n=0; n<totalCompartments; n++)
 		pointsInCompartment[n] = 0;
 
-	for(intlc=0; intlc<numIntl; intlc++)
+	for(intlc=0; intlc<trajectory->readouts; intlc++)
 	{
 		for(n=padfront; n<Nall[intlc]; n++)
 		{
@@ -287,10 +297,10 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 			trajectoryCoordinates(n, intlc, trajectory, kSpaceCoordinates, NULL);
 
 			/* Get compartment number */
-			for(ax=0; ax<numAxes; ax++)
-				ct[ax] = floor(kSpaceCoordinates[ax]*kNormFactor*numCts[ax]+numCts[ax]/2.0);
+			for(ax=0; ax<trajectory->dimensions; ax++)
+				ct[ax] = floor(kSpaceCoordinates[ax]*kNormalizationFactor*numCts[ax]+numCts[ax]/2.0);
 
-			int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+			int compartmentIndex = multiToSingleIndex(ct, numCts, trajectory->dimensions);
 
 			ctList[ct[0]][ct[1]][ct[2]][pointsInCompartment[compartmentIndex]][0] = intlc;
 			ctList[ct[0]][ct[1]][ct[2]][pointsInCompartment[compartmentIndex]][1] = n;
@@ -304,23 +314,23 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 	int compartmentIndicesOther[3];
 	for(it=0; it<numIter; it++)
 	{
-//		setValMatrix2f(WP, numIntl, N, 0.0);
+//		setValMatrix2f(WP, trajectory->readouts, N, 0.0);
 		for(n=0; n<trajectoryPoints; n++)
 			WP[n] = 0;
 		for(m=0; m<numCts[0]; m++)
 		{
 			ct[0] = m;
-			if(numAxes==2 && DBG_DCFJ)
+			if(trajectory->dimensions==2 && DBG_DCFJ)
 				printf("ct[%d]\t%.1f%%\n", m, countPtsTotal/(.01*nptsTotal*numIter));
 			for(n=0; n<numCts[1]; n++)
 			{
 				ct[1] = n;
-				if(numAxes==3 && DBG_DCFJ)
+				if(trajectory->dimensions==3 && DBG_DCFJ)
 					printf("ct[%d][%d]\t%.1f%%\n", m, n, countPtsTotal/(.01*nptsTotal*numIter));
 				for(p=0; p<numCts[2]; p++)
 				{
 					ct[2] = p;
-					int compartmentIndex = multiToSingleIndex(ct, numCts, numAxes);
+					int compartmentIndex = multiToSingleIndex(ct, numCts, trajectory->dimensions);
 					for(idxCt=0; idxCt<pointsInCompartment[compartmentIndex]; idxCt++)
 					{
 						countPtsTotal++;
@@ -332,7 +342,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 						float kSpaceCoordinates[3];
 						trajectoryCoordinates(nc, intlc, trajectory, kSpaceCoordinates, NULL);
 
-						for(ax=0; ax<numAxes; ax++)
+						for(ax=0; ax<trajectory->dimensions; ax++)
 							kCenter[ax] = kSpaceCoordinates[ax];
 
 						mmEnd = fmin(m+maxCtOffset+1, numCts[0]);
@@ -359,7 +369,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 										idxCtoStart = idxCt;
 									else
 										idxCtoStart = 0;
-									size_t compartmentIndexOther = multiToSingleIndex(compartmentIndicesOther, numCts, numAxes);
+									size_t compartmentIndexOther = multiToSingleIndex(compartmentIndicesOther, numCts, trajectory->dimensions);
 									for(idxCto=idxCtoStart; idxCto<pointsInCompartment[compartmentIndexOther]; idxCto++)
 									{
 										no = ctList[mm][nn][pp][idxCto][1];
@@ -370,7 +380,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 										trajectoryCoordinates(no, intlo, trajectory, kSpaceCoordinates, NULL);
 
 										kDistSq = 0;
-										for(ax=0; ax<numAxes; ax++)
+										for(ax=0; ax<trajectory->dimensions; ax++)
 										{
 											kOther[ax] = kSpaceCoordinates[ax];
 											kDistSq += (kOther[ax]-kCenter[ax])*(kOther[ax]-kCenter[ax]);
@@ -411,7 +421,7 @@ void jdcf(const struct Trajectory *trajectory, int N, int padfront, int* Nall, i
 				}
 			}
 		}
-//		dividePtMatrix2f(W, (const float**)WP, numIntl, N);
+//		dividePtMatrix2f(W, (const float**)WP, trajectory->readouts, N);
 		for(n=0; n<trajectoryPoints; n++)
 			W[n] /= WP[n];
 	}

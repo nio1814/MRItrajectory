@@ -14,6 +14,7 @@ To distribute this file, substitute the full license for the above reference.
 
 #include "mrgradient.h"
 #include "trajectory.h"
+#include "densitycompensation2D.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -75,6 +76,8 @@ struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaS
 		for(n=0; n<trajectory->readoutPoints; n++)
 			trajectory->densityCompensation[r*trajectory->readoutPoints+n] = fabs(trajectory->kSpaceCoordinates[n]);
 	}
+
+	convolutionDensityCompensation(trajectory, 0, NULL, 2, 2, trajectory->densityCompensation);
 
 	return trajectory;
 }
