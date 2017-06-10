@@ -1,9 +1,9 @@
-#ifndef SPIRALTEST_H
-#define SPIRALTEST_H
+#ifndef RADIALTEST_H
+#define RADIALTEST_H
 
 #include <QObject>
 
-class SpiralTest : public QObject
+class RadialTest : public QObject
 {
 	Q_OBJECT
 private slots:
@@ -12,4 +12,4 @@ private slots:
 	void testPhantom();
 };
 
-#endif // SPIRALTEST_H
+#endif // RADIALTEST_H

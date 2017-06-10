@@ -18,3 +18,4 @@ macro(set_test TEST_NAME TEST_SRC)
 endmacro()
 
 set_test(spiral_test spiraltest.cpp)
+set_test(radial_test radialtest.cpp)

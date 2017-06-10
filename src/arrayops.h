@@ -16,11 +16,14 @@ To distribute this file, substitute the full license for the above reference.
 void addfloat(float* arr, float addVal, int npts);
 void addfloats(float *inputbuffer1, float *inputbuffer2, float *outputbuffer, long npts);
 float sumfloats(float* arr, int npts);
+void cumsum(float* arr, float* arrOut, int numPts);
 
 void scalefloats(float *data, long npts, float multiplier);
 void multiplyfloats(float* arr1, float* arr2, float* arrOut, int numPts);
 
 void subtractArray(float* arr1, float* arr2, float* arrOut, int numPts);
+
+void diffArray(float* arr, float* arrOut, int numPts);
 
 /** L2 norm
 \ingroup	Math

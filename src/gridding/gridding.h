@@ -35,7 +35,7 @@ public:
 
 	void deapodize(MRdata& oversampledImage);
 
-	MRdata *kSpaceToImage(MRdata& ungriddedData);
+	std::vector<MRdata*> kSpaceToImage(MRdata& ungriddedData, bool returnGriddedKspace=false);
 	MRdata* imageToKspace(const MRdata& image);
 
 private:

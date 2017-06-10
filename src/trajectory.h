@@ -35,6 +35,7 @@ struct Trajectory
 	float maxReadoutGradientAmplitude;
 	float maxSlewRate;
 	int waveformPoints;
+	int preReadoutPoints;
 	int readoutPoints;
 	float samplingInterval;
 	float *densityCompensation;
@@ -68,6 +69,8 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation);
 
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
+
+void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange);
 
 #endif
 

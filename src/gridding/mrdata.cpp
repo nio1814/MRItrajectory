@@ -28,6 +28,11 @@ size_t dimensionsToPoints(std::vector<int> dimensions)
 	return points;
 }
 
+MRdata::MRdata(const MRdata *from)
+{
+	*this = *from;
+}
+
 MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data) : m_dimensions(dimensions), m_numImagingDimensions(numImagingDimensions)
 {
 	if(data.empty())

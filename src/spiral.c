@@ -387,26 +387,18 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	trajectory->variableDensity = variableDensity;
 	trajectory->maxGradientAmplitude = maxGradientAmplitude;
 	trajectory->maxSlewRate = maxSlewRate;
+	trajectory->preReadoutPoints = 0;
+	rotateBasis(gradientWaveformsBasis[0], gradientWaveformsBasis[1], trajectory, 2*M_PI);
 
 	for(n=0; n<trajectory->readouts; n++)
-    {
-		float phi = (2.0f*M_PI*n)/trajectory->readouts;
-
+	{
 		float* gx = &trajectory->gradientWaveforms[2*n*trajectory->waveformPoints];
 		float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->waveformPoints];
 
 		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
 		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
-
-		memcpy(gx, gradientWaveformsBasis[0], trajectory->waveformPoints*sizeof(float));
-		memcpy(gy, gradientWaveformsBasis[1], trajectory->waveformPoints*sizeof(float));
-		scalecomplex(gx, gy, cos(phi), sin(phi), trajectory->waveformPoints);
-
-		gradientToKspace(gx, kx, samplingInterval, trajectory->readoutPoints);
-		gradientToKspace(gy, ky, samplingInterval, trajectory->readoutPoints);
-
 		calcSpiralDcf(gx, gy, kx, ky, trajectory->readoutPoints, &trajectory->densityCompensation[n*trajectory->readoutPoints]);
-    }
+	}
 
     return trajectory;
 }
