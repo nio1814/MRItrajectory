@@ -7,8 +7,8 @@ class RadialTest : public QObject
 {
 	Q_OBJECT
 private slots:
-	void testGenerate_data();
-	void testGenerate();
+	void testGenerate2D_data();
+	void testGenerate2D();
 	void testPhantom();
 };
 

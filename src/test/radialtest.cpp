@@ -11,7 +11,7 @@ extern "C" {
 
 #include <QtTest/QtTest>
 
-void RadialTest::testGenerate_data()
+void RadialTest::testGenerate2D_data()
 {
 	QTest::addColumn<QVector<float> >("fieldOfView");
 	QTest::addColumn<QVector<float> >("spatialResolution");
@@ -26,7 +26,7 @@ void RadialTest::testGenerate_data()
 	QTest::newRow("Default") << fieldOfView << spatialResolution << 5e-3 << 4e-6 << 4.0 << 15000.0;
 }
 
-void RadialTest::testGenerate()
+void RadialTest::testGenerate2D()
 {
 	QFETCH(QVector<float>, fieldOfView);
 	QFETCH(QVector<float>, spatialResolution);
@@ -35,7 +35,7 @@ void RadialTest::testGenerate()
 	QFETCH(double, maxGradient);
 	QFETCH(double, maxSlew);
 
-	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, maxGradient, maxSlew, samplingInterval);
+	Trajectory* radial = generateRadial2D(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, maxGradient, maxSlew, samplingInterval);
 
 	saveTrajectory("radial.trj", radial);
 
@@ -100,7 +100,7 @@ void RadialTest::testPhantom()
 		spatialResolution.push_back(2);
 	}
 
-	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
+	Trajectory* radial = generateRadial2D(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
 
 	std::vector<int> acquisitionSize;
 	acquisitionSize.push_back(radial->readoutPoints);

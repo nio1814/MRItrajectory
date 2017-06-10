@@ -97,3 +97,8 @@ void matrixMultiply(const float* left, int leftRows, int innerDimension, const f
 		}
 	}
 }
+
+float modulus(float b, float m)
+{
+	return (b/m - (int)(b/m))*m;
+}
