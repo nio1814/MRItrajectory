@@ -595,3 +595,13 @@ void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, 
 		memcpy(ky, &kyFull[trajectory->preReadoutPoints], trajectory->readoutPoints*sizeof(float));
 	}
 }
+
+float *trajectoryGradientWaveform(const struct Trajectory *trajectory, int readout, int axis)
+{
+	return &trajectory->gradientWaveforms[(axis+trajectory->dimensions*readout)*trajectory->waveformPoints];
+}
+
+float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout, int axis)
+{
+	return &trajectory->kSpaceCoordinates[(axis+trajectory->dimensions*readout)*trajectory->readoutPoints];
+}

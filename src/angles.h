@@ -63,7 +63,7 @@ function [theta, kmax, dcf_theta] = calc_angles(theta0, theta_width, FOV, vararg
 */
 void calculateAngles(float theta0, float theta_width, enum AngleShape FOV, float *F, enum AngleShape KFCN, float *K, float **theta, float **kmax, float **dcf_theta, int *ntheta);
 
-void calculateAngles3D(int proj_type, enum AngleShape thetaShape, enum AngleShape phiShape, int *N, float **thetaOut, float **phiOut, float **kmaxOut, float **dcfOut, int *Nproj);
+void calculateAngles3D(int halfProjection, enum AngleShape thetaShape, enum AngleShape phiShape, int *N, float **thetaOut, float **phiOut, float **kmaxOut, float **dcfOut, int *Nproj);
 
 float getExtent(enum AngleShape shape, float angle, float *axisLengths);
 

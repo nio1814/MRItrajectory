@@ -162,7 +162,7 @@ for(n=0; n<N; n++)
 	return;
 }
 
-void calculateAngles3D(int proj_type, enum AngleShape thetaShape, enum AngleShape phiShape, int *N, float **thetaOut, float **phiOut, float **kmaxOut, float **dcfOut, int *Nproj)
+void calculateAngles3D(int halfProjection, enum AngleShape thetaShape, enum AngleShape phiShape, int *N, float **thetaOut, float **phiOut, float **kmaxOut, float **dcfOut, int *Nproj)
 {
 	float Ft[2];	/* yz FOV */
 	float Fp[2];	/* transverse FOV */
@@ -208,7 +208,7 @@ void calculateAngles3D(int proj_type, enum AngleShape thetaShape, enum AngleShap
 
 /* Wong & Roos style 3D PR design */
 
-if(proj_type) /* half projections */
+if(halfProjection) /* half projections */
   thwid = M_PI;
 else /* full projections */
   thwid = M_PI_2;
@@ -234,7 +234,7 @@ t[0] = 1;
 for(k=1; k<ncones; k++)
   t[k] = t[k-1] + Nphiest * sin((thcones[k] + thcones[k-1])/2) * (kmaxcones[k] + kmaxcones[k-1]) / kmaxest;
 
-if (proj_type == 0)
+if (!halfProjection)
 {
   /* add extra quarter turn of spiral */
   thcones[ncones] = M_PI_2 + 1/(kmaxest/2 * getExtent(thetaShape, M_PI, Ft)) / 4.0f;
@@ -250,7 +250,9 @@ ncones++;
 Np = t[ncones-1];
 n = (float*)malloc(Np*sizeof(float));
 *thetaOut = (float*)malloc(Np*sizeof(float));
-*kmaxOut = (float*)malloc(Np*sizeof(float));
+if(kmaxOut)
+	kmax = *kmaxOut;
+kmax = (float*)malloc(Np*sizeof(float));
 *phiOut = (float*)malloc(Np*sizeof(float));
 *dcfOut = (float*)malloc(Np*sizeof(float));
 
@@ -261,7 +263,6 @@ theta = *thetaOut;
 /*theta = interp1(t, thcones, n, 'linear');*/
 interpolatefloats(t, thcones, ncones, n, theta, Np);
 
-kmax = *kmaxOut;
 /*kmax = interp1(t, kmaxcones, n, 'linear');*/
 interpolatefloats(t, kmaxcones, ncones, n, kmax, Np);
 
@@ -288,7 +289,7 @@ for(k=0; k<Np; k++)
 	dcf[k] = (kmax[k]/getExtent(thetaShape, theta[k] + M_PI_2, Ft)) / getExtent(phiShape, phi[k] + M_PI_2, Fp);
 }
 
-if (proj_type == 0) /* adjust dcf for full projections near k_xy */
+if (!halfProjection) /* adjust dcf for full projections near k_xy */
 {
 	for(k=0; k<Np; k++)
 	{
@@ -309,6 +310,8 @@ if (proj_type == 0) /* adjust dcf for full projections near k_xy */
 	*Nproj = Np;
 
 	free(n);
+	if(!kmaxOut)
+		free(kmax);
 
 	return;
 }
