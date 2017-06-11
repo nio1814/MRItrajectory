@@ -13,6 +13,7 @@ To distribute this file, substitute the full license for the above reference.
 #include "arrayops.h"
 
 #include <math.h>
+#include <stdio.h>
 
 void addfloat(float* arr, float addVal, int npts)
 {
@@ -155,4 +156,53 @@ void scalecomplex(float *rdata, float *idata, float rmult, float imult, long npt
 	}
 
 	return;
+}
+
+float interpfloat(float *arrx, float *arry, int npts, float x)
+{
+	int n;
+	int nLo=0, nHi=npts-1;
+
+	/* Check for monotonicity */
+	if(arrx[1]>arrx[0])
+	{
+		for(n=1; n<npts-1; n++)
+			if(arrx[n+1]<=arrx[n])
+			{
+				fprintf(stderr, "Error: interpfloats() x is not monotonically increasesing");
+				return 0;
+			}
+	}
+	else if(arrx[1]<arrx[0])
+		for(n=1; n<npts-1; n++)
+			if(arrx[n+1]>=arrx[n])
+			{
+				fprintf(stderr, "Error: interpfloats() x is not monotonically decreasing");
+				return 0;
+			}
+	else
+	{
+		fprintf(stderr, "Error: interpfloats() x is not monotonically decreasing or increasesing");
+		return 0;
+	}
+
+	do
+	{
+		n = .5*(nLo+nHi);
+		if(x>arrx[n])
+			nLo = n;
+		else
+			nHi = n;
+	} while((nHi-nLo)>1);
+
+
+	return ((arrx[nHi]-x)*arry[nLo]+(x-arrx[nLo])*arry[nHi])/(arrx[nHi]-arrx[nLo]);
+}
+
+
+void interpolatefloats(float *arrx, float *arry, int nptsIn, float *x, float *y, int nptsOut)
+{
+	int n;
+	for(n=0; n<nptsOut; n++)
+		y[n] = interpfloat(arrx, arry, nptsIn, x[n]);
 }

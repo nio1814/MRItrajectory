@@ -68,6 +68,10 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation);
 
+float* trajectoryGradientWaveform(const struct Trajectory* trajectory, int readout, int axis);
+
+float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout, int axis);
+
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange);

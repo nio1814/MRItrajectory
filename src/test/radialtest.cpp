@@ -15,7 +15,7 @@ void RadialTest::testGenerate_data()
 {
 	QTest::addColumn<QVector<float> >("fieldOfView");
 	QTest::addColumn<QVector<float> >("spatialResolution");
-	QTest::addColumn<double>("duration");
+//	QTest::addColumn<double>("duration");
 	QTest::addColumn<double>("samplingInterval");
 	QTest::addColumn<double>("maxGradient");
 	QTest::addColumn<double>("maxSlew");
@@ -23,19 +23,38 @@ void RadialTest::testGenerate_data()
 	QVector<float> fieldOfView = QVector<float>() << 28 << 28;
 	QVector<float> spatialResolution = QVector<float>() << 2 << 2;
 
-	QTest::newRow("Default") << fieldOfView << spatialResolution << 5e-3 << 4e-6 << 4.0 << 15000.0;
+	QTest::newRow("2D") << fieldOfView << spatialResolution << 5e-3 << 4e-6 << 4.0 << 15000.0;
+
+	fieldOfView = QVector<float>() << 28 << 28 << 28;
+	spatialResolution = QVector<float>() << 8 << 8 << 8;
+
+	QTest::newRow("3D") << fieldOfView << spatialResolution << 4e-6 << 4.0 << 15000.0;
 }
 
 void RadialTest::testGenerate()
 {
 	QFETCH(QVector<float>, fieldOfView);
 	QFETCH(QVector<float>, spatialResolution);
-	QFETCH(double, duration);
+//	QFETCH(double, duration);
 	QFETCH(double, samplingInterval);
 	QFETCH(double, maxGradient);
 	QFETCH(double, maxSlew);
 
-	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, maxGradient, maxSlew, samplingInterval);
+	qInfo() << "Field of View:" << fieldOfView.toList();
+	qInfo() << "Spatial resolution:" << spatialResolution.toList();
+//	qInfo() << "Duration:" << duration;
+	qInfo() << "Sampling Interval:" << samplingInterval;
+	qInfo() << "Gradient Limit:" << maxGradient;
+	qInfo() << "Slew rate limit:" << maxSlew;
+
+	int dimensions = fieldOfView.size();
+
+	Trajectory* radial;
+
+	if(dimensions==2)
+		radial = generateRadial2D(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, maxGradient, maxSlew, samplingInterval);
+	else
+		radial = generateRadial3D(fieldOfView[0], fieldOfView[1], fieldOfView[2], InverseEllipticalShape, InverseEllipticalShape, spatialResolution[0], spatialResolution[1], spatialResolution[2], 1, 1, maxGradient, maxSlew, samplingInterval);
 
 	saveTrajectory("radial.trj", radial);
 
@@ -100,7 +119,7 @@ void RadialTest::testPhantom()
 		spatialResolution.push_back(2);
 	}
 
-	Trajectory* radial = generateRadial(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
+	Trajectory* radial = generateRadial2D(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
 
 	std::vector<int> acquisitionSize;
 	acquisitionSize.push_back(radial->readoutPoints);
@@ -121,7 +140,7 @@ void RadialTest::testPhantom()
 		}
 	}
 
-	saveTrajectory("radial.trj", radial);
+//	saveTrajectory("radial.trj", radial);
 
 	Gridding gridding(radial);
 	MRdata* image = gridding.kSpaceToImage(kSpaceData)[0];

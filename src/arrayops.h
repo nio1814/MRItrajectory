@@ -25,6 +25,8 @@ void subtractArray(float* arr1, float* arr2, float* arrOut, int numPts);
 
 void diffArray(float* arr, float* arrOut, int numPts);
 
+void interpolatefloats(float *arrx, float *arry, int nptsIn, float *x, float *y, int nptsOut);
+
 /** L2 norm
 \ingroup	Math
 \param[in]	arr	Input vector

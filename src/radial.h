@@ -17,7 +17,9 @@ To distribute this file, substitute the full license for the above reference.
 
 struct Trajectory;
 
-struct Trajectory* generateRadial(float fovx, float fovy, enum AngleShape thetaShape, float resx, float resy, enum AngleShape kShape, int fullProjection, float pct, float gmax, float maxSlewRate, float Ts);
+struct Trajectory* generateRadial2D(float fovx, float fovy, enum AngleShape thetaShape, float resx, float resy, enum AngleShape kShape, int fullProjection, float pct, float gmax, float maxSlewRate, float Ts);
+
+struct Trajectory* generateRadial3D(float fovx, float fovy, float fieldOfViewZ, enum AngleShape thetaShape, enum AngleShape phiShape, float resx, float resy, float spatialResolutionZ, int fullProjection, float pct, float gmax, float maxSlewRate, float Ts);
 
 
 #endif // RADIAL_H
