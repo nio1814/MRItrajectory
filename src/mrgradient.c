@@ -13,84 +13,80 @@
 
 #define DEBUG_MRGRADIENT 1
 
-void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float**gx, float**slew, float**time, int *N, int *N_ramp);
+void triangleGradient(float gradientLimit, float slewRateLimit, float Ktgt, float Ts, float** kx, float**gx, float**slew, float**time, int *N, int *N_ramp);
 
-void grd_trapezoid(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout);
+void trapezoidGradient(float gradientLimit, float slewRateLimit, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout);
 
 /**
 % Project: Concentric Rings
-% filename: grd_rampup.m
+% filename: rampUpGradient.m
 %           rampup gradient to target strength
 % Modified:
 %           2009/02/28 copied from rampup_func.m
 % 2009/02/28
 % Hochong Wu
 
-function [kx,gx,slew,time] = grd_rampup( GYROMAGNETIC_RATIO,GMAX,SMAX, Gtgt,Ts, DEBUG_MRGRADIENT)
+function [kx,gx,slew,time] = rampUpGradient( GYROMAGNETIC_RATIO,gradientLimit,slewRateLimit, gradientTarget,Ts, DEBUG_MRGRADIENT)
 % % Hardware constraints
 % TMIN = 4 *10^-6;            % 4 us --> 4e-6 s
-% GMAX = 40 *(10/100);        % 40 mT/m --> 4 G/cm
-% SMAX = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
+% gradientLimit = 40 *(10/100);        % 40 mT/m --> 4 G/cm
+% slewRateLimit = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
 % % Constants
 % GYROMAGNETIC_RATIO = 4258; % Hz/G
 */
-void grd_rampup(float GMAX, float SMAX, float Gtgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N)
+void rampGradient(float slewRateLimit, float gradientInitial, float gradientTarget, float Ts, float** kx, float** gx, float** slew, float** time, int *N)
 {
-	float T_ramp;
+	float duratiorampPoints;
 	int N_ramp;
 	float scaling;
 
 	int n;
 
-/* Check */
-if( Gtgt > 1.001*GMAX )
-	printf("grd_rampup: Gtgt > 1.001*GMAX\n");
+	/* Ramp timing */
+	duratiorampPoints = (gradientTarget-gradientInitial)/slewRateLimit; /* sec */
+	/* convert to number of samples
+	% use 1 extra sample(s), can scale down at the end*/
+	N_ramp = ceil( duratiorampPoints/Ts ) + 1;
 
-/* Ramp timing */
-T_ramp = Gtgt/SMAX; /* sec */
-/* convert to number of samples
-% use 1 extra sample(s), can scale down at the end*/
-N_ramp = ceil( T_ramp/Ts ) + 1;
+	*gx = (float*)malloc(N_ramp*sizeof(float));
 
-*gx = (float*)malloc(N_ramp*sizeof(float));
-
-/* Ramp up
-gx = [0:N_ramp-1]*Ts*SMAX;*/
-for(n=0; n<N_ramp; n++)
-	(*gx)[n] = n*Ts*SMAX;
-
-/* Scale the ramp to have exactly GMAX at the end */
-scaling = (Gtgt/(*gx)[N_ramp-1]);
-if(fabs(scaling)>1)
-	printf("grd_rampup: abs(scaling)=%.2f> 1 !\n", scaling);
-
-/* Update output
-gx   = gx * scaling;*/
-scalefloats(*gx, N_ramp, scaling);
-
-/*kx   = GYROMAGNETIC_RATIO*Ts*cumsum(gx);*/
-if(kx)
-{
-	*kx = (float*)malloc(N_ramp*sizeof(float));
-	cumsum(*gx, *kx, N_ramp);
-	scalefloats(*kx, N_ramp, GYROMAGNETIC_RATIO*Ts);
-}
-
-/*slew = diff([0 gx])/Ts;
-time = Ts*[0:numel(gx)-1];*/
-if(slew)
-{
-	*slew = (float*)malloc(N_ramp*sizeof(float));
-	diffArray(*gx, *slew, N_ramp);
-	scalefloats(*slew, N_ramp, 1.0f/Ts);
-}
-
-if(time)
-{
-	*time = (float*)malloc(N_ramp*sizeof(float));
+	/* Ramp up
+	gx = [0:N_ramp-1]*Ts*slewRateLimit;*/
 	for(n=0; n<N_ramp; n++)
-		(*time)[n] = n*Ts;
-}
+		(*gx)[n] = n*Ts*slewRateLimit;
+
+	/* Scale the ramp to have exactly gradientLimit at the end */
+	scaling = (gradientTarget/(*gx)[N_ramp-1]);
+	if(fabs(scaling)>1)
+		printf("rampUpGradient: abs(scaling)=%.2f> 1 !\n", scaling);
+
+	/* Update output
+	gx   = gx * scaling;*/
+	scalefloats(*gx, N_ramp, scaling);
+
+	/*kx   = GYROMAGNETIC_RATIO*Ts*cumsum(gx);*/
+	if(kx)
+	{
+		*kx = (float*)malloc(N_ramp*sizeof(float));
+		cumsum(*gx, *kx, N_ramp);
+		scalefloats(*kx, N_ramp, GYROMAGNETIC_RATIO*Ts);
+	}
+
+	/*slew = diff([0 gx])/Ts;
+	time = Ts*[0:numel(gx)-1];*/
+	if(slew)
+	{
+		*slew = (float*)malloc(N_ramp*sizeof(float));
+		diffArray(*gx, *slew, N_ramp);
+		scalefloats(*slew, N_ramp, 1.0f/Ts);
+	}
+
+	if(time)
+	{
+		*time = (float*)malloc(N_ramp*sizeof(float));
+		for(n=0; n<N_ramp; n++)
+			(*time)[n] = n*Ts;
+	}
 
 	*N = N_ramp;
 
@@ -99,57 +95,56 @@ if(time)
 
 /**
 % Project: Concentric Rings
-% filename: grd_triangle.m
+% filename: triangleGradient.m
 %           generate triangle gradient lobes
 % Modified:
 %           2009/02/28 copied from triangle_func.m
 % 2009/02/28
 % Hochong Wu
 
-function [kx, gx, slew, time] = grd_triangle( GYROMAGNETIC_RATIO,GMAX,SMAX, Ktgt,Ts, DEBUG_MRGRADIENT )*/
-void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float**gx, float**slew, float**time, int *N, int *N_ramp)
+function [kx, gx, slew, time] = triangleGradient( GYROMAGNETIC_RATIO,gradientLimit,slewRateLimit, Ktgt,Ts, DEBUG_MRGRADIENT )*/
+void triangleGradient(float gradientLimit, float slewRateLimit, float Ktgt, float Ts, float** kx, float**gx, float**slew, float**time, int *N, int *N_ramp)
 {
 /*% % Hardware constraints
 % TMIN = 4 *10^-6;            % 4 us --> 4e-6 s
-% GMAX = 40 *(10/100);        % 40 mT/m --> 4 G/cm
-% SMAX = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
+% gradientLimit = 40 *(10/100);        % 40 mT/m --> 4 G/cm
+% slewRateLimit = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
 % % Constants
 % GYROMAGNETIC_RATIO = 4258; % Hz/G*/
 
-	float T_ramp;
+	float duratiorampPoints;
 	/*int N_ramp;*/
-//	int N_const = 0;
 	int Ngx;
 	float scaling;
 
 	int n;
 
 	/* Check */
-	if( fabs(Ktgt/GYROMAGNETIC_RATIO) > (GMAX*GMAX)/SMAX )
+	if( fabs(Ktgt/GYROMAGNETIC_RATIO) > (gradientLimit*gradientLimit)/slewRateLimit )
 	{
 		if( DEBUG_MRGRADIENT)
-		   printf("grd_triangle: using a trapezoid lobe\n");
-		grd_trapezoid(GMAX, SMAX, Ktgt,Ts, kx, gx, slew, time, N, N_ramp);
+		   printf("triangleGradient: using a trapezoid lobe\n");
+		trapezoidGradient(gradientLimit, slewRateLimit, Ktgt,Ts, kx, gx, slew, time, N, N_ramp);
 		return;
 	}
 
 	/* Ramp timing */
-	T_ramp = sqrt( fabs(Ktgt/GYROMAGNETIC_RATIO)/SMAX ); /* sec  */
+	duratiorampPoints = sqrt( fabs(Ktgt/GYROMAGNETIC_RATIO)/slewRateLimit ); /* sec  */
 	/*% convert to number of samples
 	% use 3 extra sample(s), can scale down at the end*/
-	*N_ramp = ceil( T_ramp/Ts ) + 3;
+	*N_ramp = ceil( duratiorampPoints/Ts ) + 3;
 
 	/* The max amplitude of the triangle, not explicitly used *
-	%Gmax = abs(Ktgt)/GYROMAGNETIC_RATIO/T_ramp;
+	%gradientLimit = abs(Ktgt)/GYROMAGNETIC_RATIO/duratiorampPoints;
 
 	% 1. Ramp up
-	rampup = [0:N_ramp-1]*Ts*SMAX;*/
+	rampup = [0:N_ramp-1]*Ts*slewRateLimit;*/
 	Ngx = 2**N_ramp;
 	*gx = (float*)malloc(Ngx*sizeof(float));
 
 	for(n=0; n<*N_ramp; n++)
 	{
-		(*gx)[n] = n*Ts*SMAX;
+		(*gx)[n] = n*Ts*slewRateLimit;
 		(*gx)[Ngx-1-n] = (*gx)[n];
 	}
 
@@ -163,7 +158,7 @@ void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, floa
 	/*scaling = (Ktgt/(*kx)[Ngx-1]);*/
 	scaling = Ktgt/(sumfloats((*gx), Ngx)*GYROMAGNETIC_RATIO*Ts);
 	if( fabs(scaling)>1 && DEBUG_MRGRADIENT )
-		printf("grd_triangle: abs(scaling)=%.2f> 1 !\n", scaling);
+		printf("triangleGradient: abs(scaling)=%.2f> 1 !\n", scaling);
 
 	/* Update output */
 	/*gx   = gx * scaling;*/
@@ -200,103 +195,100 @@ void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, floa
 
 /**
 % Project: Concentric Rings
-% filename: grd_trapezoid.m
+% filename: trapezoidGradient.m
 %           generate trapezoid gradient lobes
 % Modified:
 %           2009/02/28 copied from trapezoid_func.m
 % 2009/02/28
 % Hochong Wu
 
-function [kx, gx, slew, time] = grd_trapezoid( GYROMAGNETIC_RATIO,GMAX,SMAX, Ktgt,Ts, DEBUG_MRGRADIENT )
+function [kx, gx, slew, time] = trapezoidGradient( GYROMAGNETIC_RATIO,gradientLimit,slewRateLimit, Ktgt,Ts, DEBUG_MRGRADIENT )
 % % Hardware constraints
 % TMIN = 4 *10^-6;            % 4 us --> 4e-6 s
-% GMAX = 40 *(10/100);        % 40 mT/m --> 4 G/cm
-% SMAX = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
+% gradientLimit = 40 *(10/100);        % 40 mT/m --> 4 G/cm
+% slewRateLimit = 150 *(10/100/10^-3); % 150 mT/m/ms --> 15,000 G/cm/s
 % % Constants
 % GYROMAGNETIC_RATIO = 4258; % Hz/G
 */
 
-void grd_trapezoid(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout)
+void trapezoidGradient(float gradientLimit, float slewRateLimit, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout)
 {
 
-	float T_ramp;
-	float T_plateau;
+	float duratiorampPoints;
+	float durationPlateau;
 	int Nr;
 	int Npl;
 	int Ngx;
 	float scaling;
 
 	int n;
+	if( fabs(Ktgt) < GYROMAGNETIC_RATIO*(gradientLimit*gradientLimit)/slewRateLimit )
+	{
+		triangleGradient(gradientLimit,slewRateLimit, Ktgt,Ts, kx, gx, slew, time, N, &n);
+		return;
+	}
 
-/* Check */
-if( fabs(Ktgt) < GYROMAGNETIC_RATIO*(GMAX*GMAX)/SMAX )
-{
-	grd_triangle(GMAX,SMAX, Ktgt,Ts, kx, gx, slew, time, N, &n);
-	return;
-}
+	duratiorampPoints = gradientLimit/slewRateLimit;
+	durationPlateau = fabs(Ktgt)/gradientLimit/GYROMAGNETIC_RATIO - duratiorampPoints;
 
-/* Ramp timing */
-T_ramp = GMAX/SMAX; /* sec */
-T_plateau = fabs(Ktgt)/GMAX/GYROMAGNETIC_RATIO - T_ramp; /* sec*/
+	/* 1. Ramp up
+	rampup = [0:Ts:duratiorampPoints-Ts]*slewRateLimit;*/
+	Nr = duratiorampPoints/Ts;
 
-/* 1. Ramp up
-rampup = [0:Ts:T_ramp-Ts]*SMAX;*/
-Nr = T_ramp/Ts;
+	/* 2. Plateau, use 3 extra sample(s), can scale down at the end
+	plateau = ones(1, ceil(durationPlateau/Ts)+3) * rampup(end);*/
+	Npl = ceil(durationPlateau/Ts)+3;
 
-/* 2. Plateau, use 3 extra sample(s), can scale down at the end
-plateau = ones(1, ceil(T_plateau/Ts)+3) * rampup(end);*/
-Npl = ceil(T_plateau/Ts)+3;
+	/* 3. Ramp down
+	rampdown = plateau(end) - rampup;
 
-/* 3. Ramp down
-rampdown = plateau(end) - rampup;
+	gx = [rampup plateau rampdown];
+	kx = GYROMAGNETIC_RATIO*Ts*cumsum(gx);*/
 
-gx = [rampup plateau rampdown];
-kx = GYROMAGNETIC_RATIO*Ts*cumsum(gx);*/
+	Ngx = 2*Nr+Npl;
 
-Ngx = 2*Nr+Npl;
+	*gx = (float*)malloc(Ngx*sizeof(float));
 
-*gx = (float*)malloc(Ngx*sizeof(float));
+	for(n=0; n<Nr; n++)
+		(*gx)[n] = n*Ts*slewRateLimit;
+	for(n=Nr; n<(Nr+Npl); n++)
+		(*gx)[n] = (*gx)[Nr-1];
+	for(n=0; n<Nr; n++)
+		(*gx)[Nr+Npl+n] = (*gx)[Nr-1-n];
 
-for(n=0; n<Nr; n++)
-	(*gx)[n] = n*Ts*SMAX;
-for(n=Nr; n<(Nr+Npl); n++)
-	(*gx)[n] = (*gx)[Nr-1];
-for(n=0; n<Nr; n++)
-	(*gx)[Nr+Npl+n] = (*gx)[Nr-1-n];
+	/* Scale the trapezoid to have exactly Ktgt area */
+	scaling = Ktgt/(sumfloats((*gx), Ngx)*GYROMAGNETIC_RATIO*Ts);
+	if( fabs(scaling)>1 && DEBUG_MRGRADIENT )
+		printf("trapezoidGradient: abs(scaling)=%.2f> 1 !\n", scaling);
 
-/* Scale the trapezoid to have exactly Ktgt area */
-scaling = Ktgt/(sumfloats((*gx), Ngx)*GYROMAGNETIC_RATIO*Ts);
-if( fabs(scaling)>1 && DEBUG_MRGRADIENT )
-	printf("grd_trapezoid: abs(scaling)=%.2f> 1 !\n", scaling);
+	/* Update output */
+	/*gx   = gx * scaling;
+	kx   = kx * scaling;
+	slew = diff([0 gx])/Ts;
+	time = Ts*[0:numel(gx)-1];*/
 
-/* Update output */
-/*gx   = gx * scaling;
-kx   = kx * scaling;
-slew = diff([0 gx])/Ts;
-time = Ts*[0:numel(gx)-1];*/
+	scalefloats(*gx, Ngx, scaling);
 
-scalefloats(*gx, Ngx, scaling);
+	if(kx)
+	{
+		*kx = (float*)malloc(Ngx*sizeof(float));
+		cumsum(*gx, *kx, Ngx);
+		scalefloats(*kx, Ngx, GYROMAGNETIC_RATIO*Ts);
+	}
 
-if(kx)
-{
-	*kx = (float*)malloc(Ngx*sizeof(float));
-cumsum(*gx, *kx, Ngx);
-scalefloats(*kx, Ngx, GYROMAGNETIC_RATIO*Ts);
-}
+	if(slew)
+	{
+		*slew = (float*)malloc(Ngx*sizeof(float));
+		diffArray(*gx, *slew, Ngx);
+		scalefloats(*slew, Ngx, 1/Ts);
+	}
 
-if(slew)
-{
-	*slew = (float*)malloc(Ngx*sizeof(float));
-	diffArray(*gx, *slew, Ngx);
-	scalefloats(*slew, Ngx, 1/Ts);
-}
-
-if(time)
-{
-	*time = (float*)malloc(Ngx*sizeof(float));
-	for(n=0; n<Ngx; n++)
-		(*time)[n] = n*Ts;
-}
+	if(time)
+	{
+		*time = (float*)malloc(Ngx*sizeof(float));
+		for(n=0; n<Ngx; n++)
+			(*time)[n] = n*Ts;
+	}
 
 	*N = Ngx;
 	*Nrout = Nr;
@@ -305,10 +297,9 @@ if(time)
 }
 
 
-void grd_readout(int doDephase, int doRephase, int nread, float res, float gmax, float smax, float Ts, float **g, int *nramp, int *ndep, int *npts)
+void readoutGradient(int doDephase, int doRephase, int nread, float spatialResolution, float gradientLimit, float slewRateLimit, float Ts, float **g, int *rampPoints, int *ndep, int *npts)
 {
-	float G;
-	float kmax = 5/res;
+	float kmax = 5/spatialResolution;
 
 	float *gramp, *gtrap;
 	float kramp;
@@ -318,44 +309,42 @@ void grd_readout(int doDephase, int doRephase, int nread, float res, float gmax,
 	int i;
 	int offset;
 
-	G = 2*kmax/(GYROMAGNETIC_RATIO*nread*Ts);
+	float readoutGradientAmplitude = 2*kmax/(GYROMAGNETIC_RATIO*nread*Ts);
 
-	grd_rampup(gmax, smax, G, Ts, NULL, &gramp, NULL, NULL, nramp);
-	kramp = GYROMAGNETIC_RATIO*Ts*sumfloats(gramp, *nramp);
-	grd_trapezoid(gmax, smax, -kmax-kramp, Ts, NULL, &gtrap, NULL, NULL, &ntrap, &i);
+	rampGradient(slewRateLimit, 0, readoutGradientAmplitude, Ts, NULL, &gramp, NULL, NULL, rampPoints);
+	kramp = GYROMAGNETIC_RATIO*Ts*sumfloats(gramp, *rampPoints);
+	trapezoidGradient(gradientLimit, slewRateLimit, -kmax-kramp, Ts, NULL, &gtrap, NULL, NULL, &ntrap, &i);
 
 	/*npts = (*ndep)*2 + nread;*/
-	*npts = (doDephase>0)*(ntrap) + *nramp + nread + *nramp + (doRephase>0)*(ntrap);
+	*npts = (doDephase>0)*(ntrap) + *rampPoints + nread + *rampPoints + (doRephase>0)*(ntrap);
 
 	*g = (float*)malloc(*npts*sizeof(float));
 
 	if(doDephase)
 	{
-//		copyfloats(gtrap, *g, ntrap);
 		memcpy(*g, gtrap, ntrap*sizeof(float));
 		offset = ntrap;
-		*ndep = ntrap + *nramp;
+		*ndep = ntrap + *rampPoints;
 	}
 	else
 	{
-		*ndep = *nramp;
+		*ndep = *rampPoints;
 		offset = 0;
 	}
 
 	/* copy ramp up */
-//	copyfloats(gramp, &(*g)[offset], *nramp);
-	memcpy(&(*g)[offset], gramp, *nramp*sizeof(float));
-	offset += *nramp;
+	memcpy(&(*g)[offset], gramp, *rampPoints*sizeof(float));
+	offset += *rampPoints;
 
 	/* copy readout portion */
 	for(i=0; i<nread; i++)
-	   (*g)[i+offset] = G;
+	   (*g)[i+offset] = readoutGradientAmplitude;
 	offset += nread;
 
 	/* copy ramp down */
-	for(i=0; i<*nramp; i++)
-		(*g)[i+offset] = gramp[*nramp-i-1];
-	offset += *nramp;
+	for(i=0; i<*rampPoints; i++)
+		(*g)[i+offset] = gramp[*rampPoints-i-1];
+	offset += *rampPoints;
 
 	if(doRephase)
 		/* copy rephaser */
@@ -367,4 +356,56 @@ void grd_readout(int doDephase, int doRephase, int nread, float res, float gmax,
 	free(gtrap);
 
 	return;
+}
+
+void spoilerGradient(float gradientLimit, float slewRateLimit, float gradientInitial, float deltaKspace, float gradientFinal, float samplingInterval, float** gradientWaveform, int* points)
+{
+	float areaRampUp = (gradientLimit*gradientLimit - gradientInitial*gradientInitial)/(2*slewRateLimit);
+
+	float areaRampDown;
+	float areaRewind = 0;
+	if(gradientFinal>=0)
+	{
+		areaRampDown = (gradientLimit*gradientLimit - gradientInitial*gradientInitial)/(2*slewRateLimit);
+	}
+	else
+	{
+		areaRampDown = gradientLimit*gradientLimit/(2*slewRateLimit);
+		areaRewind = (gradientLimit*gradientLimit - gradientFinal*gradientFinal)/(2*slewRateLimit);
+	}
+
+	float areaPlateau = deltaKspace - areaRampUp - areaRampDown + areaRewind;
+	float plateauTime = areaPlateau/gradientLimit;
+
+
+	float* gradientWaveformRampUp;
+	int pointsRampUp;
+
+	rampGradient(slewRateLimit, gradientInitial, gradientLimit, samplingInterval, NULL, &gradientWaveformRampUp, NULL, NULL, &pointsRampUp);
+
+	int pointsPlateau = plateauTime/samplingInterval;
+	float* gradientWaveformPlateau = (float*)malloc(pointsPlateau*sizeof(float));
+
+	int n;
+	for(n=0; n<pointsPlateau; n++)
+		gradientWaveformPlateau[n] = gradientLimit;
+
+	float* gradientWaveformRampDown;
+	int pointsRampDown;
+
+	float rampDownGradientAmplitude;
+	if(gradientInitial*gradientFinal>0)
+		rampDownGradientAmplitude = gradientFinal;
+	else
+		rampDownGradientAmplitude = 0;
+
+	rampGradient(slewRateLimit, gradientLimit, rampDownGradientAmplitude, samplingInterval, NULL, &gradientWaveformRampDown, NULL, NULL, &pointsRampDown);
+
+	float* gradientWaveformRewind;
+	int pointsRewind = 0;
+	if(gradientFinal)
+		rampGradient(slewRateLimit, 0, gradientFinal, samplingInterval, NULL, &gradientWaveformRewind, NULL, NULL, &pointsRewind);
+
+	*points = pointsRampUp + pointsPlateau + pointsRampDown + pointsRewind;
+	*gradientWaveform = (float*)malloc(*points*sizeof(float));
 }

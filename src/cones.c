@@ -18,6 +18,7 @@ To distribute this file, substitute the full license for the above reference.
 #include "arrayops.h"
 #include "variabledensity.h"
 #include "convertendian.h"
+#include "mrgradient.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -608,7 +609,7 @@ void makeConesInterpolation(struct Cones *cones)
 }
 
 
-int generateConesBasis(struct Cones *cones)
+int generateConesBasis(struct Cones *cones, int dualEcho)
 {
 	int status = 0;
 	enum AngleShape elevationAngleFieldOfViewShape = InverseEllipticalShape;
@@ -724,6 +725,16 @@ int generateConesBasis(struct Cones *cones)
 		}
 	}
 
+	if(dualEcho)
+	{
+		int index = ((trajectory->bases-1)+2)*trajectory->readoutPoints*3 + cones->basisReadoutPoints[trajectory->bases-1];
+		float lastGradientZ = cones->basisGradientWaveforms[index];
+		float lastKspaceZ = cones->basisKspaceCoordinates[index];
+		float *diffusionGradient;
+		int diffusionPoints;
+		spoilerGradient(trajectory->maxGradientAmplitude, trajectory->maxSlewRate, lastGradientZ, lastKspaceZ+3, -lastGradientZ, trajectory->samplingInterval, &diffusionGradient, &diffusionPoints);
+	}
+
 	trajectory->waveformPoints = 0;
 	for(b=0; b<trajectory->bases; b++)
 	{
@@ -742,8 +753,15 @@ int generateConesBasis(struct Cones *cones)
 			free(gradientRewoundZ);
 			gradientRewoundZ = NULL;
 		}*/
-traverseKspaceToZero(&basisReadoutGradientWaveforms[b*trajectory->readoutPoints*3], &basisReadoutGradientWaveforms[(b*3+1)*trajectory->readoutPoints], &basisReadoutGradientWaveforms[(b*3+2)*trajectory->readoutPoints], cones->basisReadoutPoints[b], trajectory->samplingInterval, trajectory->maxGradientAmplitude, trajectory->maxSlewRate, &basisGradientRewoundX[b], &basisGradientRewoundY[b], &basisGradientRewoundZ[b], &cones->basisWaveformPoints[b]);
-		trajectory->waveformPoints = fmax(trajectory->waveformPoints, cones->basisWaveformPoints[b]);
+		if(dualEcho)
+		{
+
+		}
+		else
+		{
+	traverseKspaceToZero(&basisReadoutGradientWaveforms[b*trajectory->readoutPoints*3], &basisReadoutGradientWaveforms[(b*3+1)*trajectory->readoutPoints], &basisReadoutGradientWaveforms[(b*3+2)*trajectory->readoutPoints], cones->basisReadoutPoints[b], trajectory->samplingInterval, trajectory->maxGradientAmplitude, trajectory->maxSlewRate, &basisGradientRewoundX[b], &basisGradientRewoundY[b], &basisGradientRewoundZ[b], &cones->basisWaveformPoints[b]);
+			trajectory->waveformPoints = fmax(trajectory->waveformPoints, cones->basisWaveformPoints[b]);
+		}
 	}
 
 	trajectory->waveformPoints += trajectory->waveformPoints%2;
@@ -820,8 +838,8 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	}
 	else
 		trajectory->variableDensity = NULL;
-	generateConesBasis(cones);
-	//saveGradientWaveforms("grad.wav", cones->basisGradientWaveforms, 3, trajectory->bases, trajectory->waveformPoints, trajectory->readoutPoints, fmax(fieldOfViewXY,fieldOfViewZ), maxGradientAmplitude, 4, samplingInterval, "cones", LittleEndian);
+	generateConesBasis(cones, 1);
+
 	makeConesInterpolation(cones);
 	trajectory->storage = storage;
 	if(storage==StoreBasis)

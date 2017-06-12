@@ -144,7 +144,6 @@ void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int
 				/*g[n+1] = 0;*/
 				memset(&gradient[dimensions*(n+1)], 0, copySize);
 
-			/*gtarg = 0;*/
 			memset(gtarg, 0, copySize);
 		}
 		else

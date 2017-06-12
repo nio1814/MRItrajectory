@@ -58,7 +58,7 @@ struct Trajectory* generateRadial(float* fieldOfView, enum AngleShape thetaShape
 
 	float *gradientWaveform;
 	int nramp;
-	grd_readout(1, 1, trajectory->readoutPoints, spatialResolutionMin, gmax, maxSlewRate, Ts, &gradientWaveform, &nramp, &trajectory->preReadoutPoints, &trajectory->waveformPoints);
+	readoutGradient(1, 1, trajectory->readoutPoints, spatialResolutionMin, gmax, maxSlewRate, Ts, &gradientWaveform, &nramp, &trajectory->preReadoutPoints, &trajectory->waveformPoints);
 
 	allocateTrajectory(trajectory, trajectory->readoutPoints, trajectory->waveformPoints, trajectory->dimensions, 1, trajectory->readouts, StoreAll);
 
