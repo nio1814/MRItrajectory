@@ -629,7 +629,7 @@ int generateConesBasis(struct Cones *cones, int dualEcho)
 	float fieldOfViewRadial;
 	float fieldOfViewCircumferential;
 	float spatialResolutionRadial;
-	float kSpaceExtentRadial;
+	float kSpaceMaxRadial;
 	float elevationAngleParametric;
 	float scaleXY;
 	float scaleZ;
@@ -649,8 +649,12 @@ int generateConesBasis(struct Cones *cones, int dualEcho)
 
 	srand(0);
 
+	float kSpaceMax[2];
 	for(d=0; d<2; d++)
+	{
 		kSpaceExtent[d] = 10/trajectory->spatialResolution[2-d];
+		kSpaceMax[d] = .5*kSpaceExtent[d];
+	}
 	initialElevationAngleDelta = 1/(kSpaceExtent[0]*fieldOfView[0]);
 
 	if(variableDensity)
@@ -676,19 +680,19 @@ int generateConesBasis(struct Cones *cones, int dualEcho)
 		float fromElevationAngle = M_PI_2*b/trajectory->bases;
 		float toElevationAngle = M_PI_2*(b+1.0f)/trajectory->bases;
 
-		cones->designConeAngles[b] = atan2(kSpaceExtent[0]*sin(toElevationAngle), kSpaceExtent[1]*cos(fromElevationAngle));
+		cones->designConeAngles[b] = atan2(kSpaceMax[0]*sin(toElevationAngle), kSpaceMax[1]*cos(fromElevationAngle));
 
 		fieldOfViewRadial = getExtent(InverseEllipticalShape, cones->designConeAngles[b], fieldOfView);
 		fieldOfViewCircumferential = getExtent(InverseEllipticalShape, cones->designConeAngles[b]+M_PI_2, fieldOfView);
-		spatialResolutionRadial = 5/getExtent(EllipticalShape, cones->designConeAngles[b], kSpaceExtent);
-		kSpaceExtentRadial = 5/spatialResolutionRadial;
-		elevationAngleParametric = atan2((kSpaceExtentRadial*sin(cones->designConeAngles[b])*kSpaceExtent[1]),(kSpaceExtentRadial*cos(cones->designConeAngles[b])*kSpaceExtent[0]));
+		spatialResolutionRadial = 5/getExtent(EllipticalShape, cones->designConeAngles[b], kSpaceMax);
+		kSpaceMaxRadial = 5/spatialResolutionRadial;
+		elevationAngleParametric = atan2((kSpaceMaxRadial*sin(cones->designConeAngles[b])*kSpaceExtent[1]),(kSpaceMaxRadial*cos(cones->designConeAngles[b])*kSpaceExtent[0]));
 
 		scaleXY = cos(elevationAngleParametric)/cos(fromElevationAngle);
 		scaleZ = sin(elevationAngleParametric)/sin(toElevationAngle);
 
 		interleavesLow = .01;
-		interleavesHigh = 2*M_PI*kSpaceExtentRadial*fieldOfViewRadial*cos(cones->designConeAngles[b]);
+		interleavesHigh = 2*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->designConeAngles[b]);
 
 		cones->basisReadoutPoints[b] = -1;
 		while(interleavesHigh-interleavesLow>.03 && cones->basisReadoutPoints[b]!=trajectory->readoutPoints)
@@ -707,7 +711,7 @@ int generateConesBasis(struct Cones *cones, int dualEcho)
 				currentGradientWaveforms = NULL;
 			}
 
-			if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, variableDensity, kSpaceExtentRadial, interleaves, cones->interconeCompensation, cones->designConeAngles[b], trajectory->readoutPoints, trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, trajectory->maxReadoutGradientAmplitude, trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->basisReadoutPoints[b]<=trajectory->readoutPoints)
+			if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, variableDensity, kSpaceMaxRadial, interleaves, cones->interconeCompensation, cones->designConeAngles[b], trajectory->readoutPoints, trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, trajectory->maxReadoutGradientAmplitude, trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->basisReadoutPoints[b]<=trajectory->readoutPoints)
 			{
 				interleavesHigh = interleaves;
 				cones->basisReadoutPoints[b] = currentReadoutPoints;
@@ -725,34 +729,55 @@ int generateConesBasis(struct Cones *cones, int dualEcho)
 		}
 	}
 
+	float *diffusionGradient = NULL;
+	int diffusionPoints;
 	if(dualEcho)
 	{
-		int index = ((trajectory->bases-1)+2)*trajectory->readoutPoints*3 + cones->basisReadoutPoints[trajectory->bases-1];
-		float lastGradientZ = cones->basisGradientWaveforms[index];
-		float lastKspaceZ = cones->basisKspaceCoordinates[index];
-		float *diffusionGradient;
-		int diffusionPoints;
-		spoilerGradient(trajectory->maxGradientAmplitude, trajectory->maxSlewRate, lastGradientZ, lastKspaceZ+3, -lastGradientZ, trajectory->samplingInterval, &diffusionGradient, &diffusionPoints);
+		int step;
+		for(step=0; step<2; step++)
+		{
+			int* diffusionPointsBasis = (int*)malloc(trajectory->bases*sizeof(int));
+			for(b=0; b<trajectory->bases; b++)
+			{
+				int index = (b*3+2)*trajectory->readoutPoints + cones->basisReadoutPoints[b]-1;
+				float lastGradientZ = basisReadoutGradientWaveforms[index];
+				float lastKspaceZ = cones->basisKspaceCoordinates[index];
+				if(step)
+				{
+					float gradientLimitHigh = trajectory->maxGradientAmplitude;
+					float gradientLimitLow = lastGradientZ;
+					int diffusionPointsCurrent = 0;
+					float* diffusionGradientCurrent = NULL;
+
+					while(fabs(diffusionPointsCurrent-diffusionPoints)>2){
+						if(diffusionGradientCurrent)
+							free(diffusionGradientCurrent);
+						float gradientLimit = .5*(gradientLimitLow+gradientLimitHigh);
+						spoilerGradient(gradientLimit, trajectory->maxSlewRate, lastGradientZ, lastKspaceZ+3, -lastGradientZ, trajectory->samplingInterval, &diffusionGradientCurrent, &diffusionPointsCurrent);
+						if(diffusionPointsCurrent>diffusionPoints)
+							gradientLimitLow = gradientLimit;
+						else
+							gradientLimitHigh = gradientLimit;
+					}
+
+				}
+				else
+				{
+					if(diffusionGradient)
+					{
+						free(diffusionGradient);
+						diffusionGradient = NULL;
+					}
+					spoilerGradient(trajectory->maxGradientAmplitude, trajectory->maxSlewRate, lastGradientZ, lastKspaceZ+3, -lastGradientZ, trajectory->samplingInterval, &diffusionGradient, &diffusionPoints);
+					diffusionPointsBasis[b] = diffusionPoints;
+				}
+			}
+		}
 	}
 
 	trajectory->waveformPoints = 0;
 	for(b=0; b<trajectory->bases; b++)
 	{
-		/*if(gradientRewoundX)
-		{
-			free(gradientRewoundX);
-			gradientRewoundX = NULL;
-		}
-		if(gradientRewoundY)
-		{
-			free(gradientRewoundY);
-			gradientRewoundY = NULL;
-		}
-		if(gradientRewoundZ)
-		{
-			free(gradientRewoundZ);
-			gradientRewoundZ = NULL;
-		}*/
 		if(dualEcho)
 		{
 

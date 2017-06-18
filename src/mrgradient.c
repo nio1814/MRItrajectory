@@ -36,17 +36,17 @@ function [kx,gx,slew,time] = rampUpGradient( GYROMAGNETIC_RATIO,gradientLimit,sl
 */
 void rampGradient(float slewRateLimit, float gradientInitial, float gradientTarget, float Ts, float** kx, float** gx, float** slew, float** time, int *N)
 {
-	float duratiorampPoints;
+	float duration;
 	int N_ramp;
 	float scaling;
 
 	int n;
 
 	/* Ramp timing */
-	duratiorampPoints = (gradientTarget-gradientInitial)/slewRateLimit; /* sec */
+	duration = fabs(gradientTarget-gradientInitial)/slewRateLimit; /* sec */
 	/* convert to number of samples
 	% use 1 extra sample(s), can scale down at the end*/
-	N_ramp = ceil( duratiorampPoints/Ts ) + 1;
+	N_ramp = ceil( duration/Ts ) + 1;
 
 	*gx = (float*)malloc(N_ramp*sizeof(float));
 
@@ -112,7 +112,7 @@ void triangleGradient(float gradientLimit, float slewRateLimit, float Ktgt, floa
 % % Constants
 % GYROMAGNETIC_RATIO = 4258; % Hz/G*/
 
-	float duratiorampPoints;
+	float duration;
 	/*int N_ramp;*/
 	int Ngx;
 	float scaling;
@@ -129,13 +129,13 @@ void triangleGradient(float gradientLimit, float slewRateLimit, float Ktgt, floa
 	}
 
 	/* Ramp timing */
-	duratiorampPoints = sqrt( fabs(Ktgt/GYROMAGNETIC_RATIO)/slewRateLimit ); /* sec  */
+	duration = sqrt( fabs(Ktgt/GYROMAGNETIC_RATIO)/slewRateLimit ); /* sec  */
 	/*% convert to number of samples
 	% use 3 extra sample(s), can scale down at the end*/
-	*N_ramp = ceil( duratiorampPoints/Ts ) + 3;
+	*N_ramp = ceil( duration/Ts ) + 3;
 
 	/* The max amplitude of the triangle, not explicitly used *
-	%gradientLimit = abs(Ktgt)/GYROMAGNETIC_RATIO/duratiorampPoints;
+	%gradientLimit = abs(Ktgt)/GYROMAGNETIC_RATIO/duration;
 
 	% 1. Ramp up
 	rampup = [0:N_ramp-1]*Ts*slewRateLimit;*/
@@ -214,7 +214,7 @@ function [kx, gx, slew, time] = trapezoidGradient( GYROMAGNETIC_RATIO,gradientLi
 void trapezoidGradient(float gradientLimit, float slewRateLimit, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout)
 {
 
-	float duratiorampPoints;
+	float duration;
 	float durationPlateau;
 	int Nr;
 	int Npl;
@@ -228,12 +228,12 @@ void trapezoidGradient(float gradientLimit, float slewRateLimit, float Ktgt, flo
 		return;
 	}
 
-	duratiorampPoints = gradientLimit/slewRateLimit;
-	durationPlateau = fabs(Ktgt)/gradientLimit/GYROMAGNETIC_RATIO - duratiorampPoints;
+	duration = gradientLimit/slewRateLimit;
+	durationPlateau = fabs(Ktgt)/gradientLimit/GYROMAGNETIC_RATIO - duration;
 
 	/* 1. Ramp up
-	rampup = [0:Ts:duratiorampPoints-Ts]*slewRateLimit;*/
-	Nr = duratiorampPoints/Ts;
+	rampup = [0:Ts:duration-Ts]*slewRateLimit;*/
+	Nr = duration/Ts;
 
 	/* 2. Plateau, use 3 extra sample(s), can scale down at the end
 	plateau = ones(1, ceil(durationPlateau/Ts)+3) * rampup(end);*/
@@ -360,7 +360,22 @@ void readoutGradient(int doDephase, int doRephase, int nread, float spatialResol
 
 void spoilerGradient(float gradientLimit, float slewRateLimit, float gradientInitial, float deltaKspace, float gradientFinal, float samplingInterval, float** gradientWaveform, int* points)
 {
-	float areaRampUp = (gradientLimit*gradientLimit - gradientInitial*gradientInitial)/(2*slewRateLimit);
+	int useTriangle = 1;
+
+	float gradientTriangleAmplitude = slewRateLimit*deltaKspace/GYROMAGNETIC_RATIO+.5*(gradientInitial*gradientInitial-gradientFinal*gradientFinal);
+	if(gradientTriangleAmplitude<0)
+		useTriangle = 0;
+	else
+	{
+		gradientTriangleAmplitude = sqrt(gradientTriangleAmplitude);
+		if(gradientTriangleAmplitude>gradientLimit)
+			useTriangle = 0;
+	}
+
+	if(useTriangle)
+		gradientLimit = fmin(gradientTriangleAmplitude, gradientLimit);
+
+	float areaRampUp = (gradientLimit*gradientLimit - gradientInitial*gradientInitial)/(2*slewRateLimit)*GYROMAGNETIC_RATIO;
 
 	float areaRampDown;
 	float areaRewind = 0;
@@ -370,25 +385,32 @@ void spoilerGradient(float gradientLimit, float slewRateLimit, float gradientIni
 	}
 	else
 	{
-		areaRampDown = gradientLimit*gradientLimit/(2*slewRateLimit);
-		areaRewind = (gradientLimit*gradientLimit - gradientFinal*gradientFinal)/(2*slewRateLimit);
+		areaRampDown = gradientLimit*gradientLimit/(2*slewRateLimit)*GYROMAGNETIC_RATIO;
+		areaRewind = gradientFinal*gradientFinal/(2*slewRateLimit)*GYROMAGNETIC_RATIO;
 	}
 
 	float areaPlateau = deltaKspace - areaRampUp - areaRampDown + areaRewind;
-	float plateauTime = areaPlateau/gradientLimit;
-
+	float plateauTime = areaPlateau/(gradientLimit*GYROMAGNETIC_RATIO);
 
 	float* gradientWaveformRampUp;
 	int pointsRampUp;
 
 	rampGradient(slewRateLimit, gradientInitial, gradientLimit, samplingInterval, NULL, &gradientWaveformRampUp, NULL, NULL, &pointsRampUp);
 
-	int pointsPlateau = plateauTime/samplingInterval;
-	float* gradientWaveformPlateau = (float*)malloc(pointsPlateau*sizeof(float));
-
-	int n;
-	for(n=0; n<pointsPlateau; n++)
-		gradientWaveformPlateau[n] = gradientLimit;
+	int pointsPlateau;
+	float* gradientWaveformPlateau;
+	if(useTriangle)
+	{
+		pointsPlateau = 0;
+	}
+	else
+	{
+		pointsPlateau = plateauTime/samplingInterval;
+		gradientWaveformPlateau = (float*)malloc(pointsPlateau*sizeof(float));
+		int n;
+		for(n=0; n<pointsPlateau; n++)
+			gradientWaveformPlateau[n] = gradientLimit;
+	}
 
 	float* gradientWaveformRampDown;
 	int pointsRampDown;
@@ -408,4 +430,12 @@ void spoilerGradient(float gradientLimit, float slewRateLimit, float gradientIni
 
 	*points = pointsRampUp + pointsPlateau + pointsRampDown + pointsRewind;
 	*gradientWaveform = (float*)malloc(*points*sizeof(float));
+	memcpy(*gradientWaveform, gradientWaveformRampUp, pointsRampUp*sizeof(float));
+	if(!useTriangle)
+	{
+		memcpy(&(*gradientWaveform)[pointsRampDown], gradientWaveformPlateau, pointsPlateau*sizeof(float));
+	}
+	memcpy(&(*gradientWaveform)[pointsRampDown+pointsPlateau], gradientWaveformRampUp, pointsRampDown*sizeof(float));
+	if(pointsRewind)
+		memcpy(&(*gradientWaveform)[pointsRampDown+pointsPlateau+pointsRampDown], gradientWaveformRewind, pointsRewind*sizeof(float));
 }
