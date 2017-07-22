@@ -565,7 +565,7 @@ void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajec
 
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval)
 {
-	return 1.0f/samplingInterval*GYROMAGNETIC_RATIO*fieldOfView;
+	return 1.0f/(samplingInterval*GYROMAGNETIC_RATIO*fieldOfView);
 }
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)

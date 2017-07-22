@@ -54,3 +54,5 @@ if(points)
 end
 
 fclose(fileID);
+
+trajectory.gradientWaveformsMagnitude = sumOfSquares(trajectory.gradientWaveforms,2);

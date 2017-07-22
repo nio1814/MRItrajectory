@@ -7,15 +7,17 @@
 #include <math.h>
 #include <string.h>
 
-void initializeVariableDensity(struct VariableDensity *v)
+struct VariableDensity* newVariableDensity()
 {
+	struct VariableDensity* v = (struct VariableDensity*)malloc(sizeof(struct VariableDensity));
+
 	v->steps = 0;
 	addVariableDensityStep(v, VariableDensityPolynomial, 0, 0, 1);
 
 	v->kcomp = NULL;
 	v->compSelect = -1;
 
-	return;
+	return v;
 }
 
 void copyVariableDensity(const struct VariableDensity *from, struct VariableDensity *to)
@@ -45,6 +47,11 @@ void addVariableDensityStep(struct VariableDensity *v, enum VariableDensityFunct
         v->step[s].scale = scale;
 		v->steps++;
 	}
+}
+
+void addLinearVariableDensityStep(struct VariableDensity *v, float kr, float scale)
+{
+	addVariableDensityStep(v, VariableDensityPolynomial, kr, 1, scale);
 }
 
 float getFinalScale(const struct VariableDensity *v)
@@ -144,3 +151,4 @@ void getFinalFieldOfView(const struct VariableDensity *variableDensity, const fl
 	memcpy(finalFieldOfView, initialFieldOfView, dimensions*sizeof(float));
 	scalefloats(finalFieldOfView, dimensions, scale);
 }
+
