@@ -25,20 +25,23 @@ void ConesTest::generateTest_data()
 
 	QVector<QPointF> fieldOfViewScale;
 
-	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
+//	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
 
-	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+//	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
-	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+//	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
-	QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+//	QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
 	fieldOfViewScale.append(QPointF(0,1));
 	fieldOfViewScale.append(QPointF(2.5,0.5));
 
-	QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+//	QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
 //	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
+
+	fieldOfViewScale.clear();
+	QTest::newRow("Isotropic - Gurney compensatioon") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << CompensationGurney << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 }
 
 void ConesTest::generateTest()

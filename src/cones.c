@@ -46,7 +46,7 @@ float calculateInterconeCompensation(enum InterConeCompensation interconeCompens
 
 	switch(interconeCompensation)
 	{
-		case Compensation1:
+		case CompensationGurney:
 			compensation = 1 + sqrt(fmax(0, 1-4*kr*kr/(kSpaceExtentRadial*kSpaceExtentRadial)));
 			break;
 		default:
