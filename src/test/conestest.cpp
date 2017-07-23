@@ -21,12 +21,22 @@ void ConesTest::generateTest_data()
 	QTest::addColumn<double>("maxGradient");
 	QTest::addColumn<double>("maxSlew");
 	QTest::addColumn<WaveformStorageType>("storage");
+	QTest::addColumn<QVector<QPointF> >("fieldOfViewScale");
 
-	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis;
+	QVector<QPointF> fieldOfViewScale;
 
-	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
+	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
 
-//	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 5e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
+	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+
+	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+
+	QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+
+	fieldOfViewScale.append(QPointF(0,1));
+	fieldOfViewScale.append(QPointF(2.5,0.5));
+
+	QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
 //	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
 }
@@ -43,10 +53,22 @@ void ConesTest::generateTest()
 	QFETCH(double, maxGradient);
 	QFETCH(double, maxSlew);
 	QFETCH(WaveformStorageType, storage);
+	QFETCH(QVector<QPointF>, fieldOfViewScale);
 
 	float filterFieldOfView = qMax(fieldOfView[0], fieldOfView[1]);
 
-	struct Cones* cones = generateCones(fieldOfView[0], fieldOfView[1], NULL, spatialResolution[0], spatialResolution[1], bases, rotatable, interconeCompensationType, duration, samplingInterval, filterFieldOfView, maxGradient, maxSlew, storage);
+	VariableDensity* variableDensity = NULL;
+	if(fieldOfViewScale.size())
+	{
+		variableDensity = newVariableDensity();
+		for(int n=0; n<fieldOfViewScale.size(); n++)
+		{
+			QPointF fieldOfViewScalePoint = fieldOfViewScale.at(n);
+			addLinearVariableDensityStep(variableDensity, fieldOfViewScalePoint.x(), fieldOfViewScalePoint.y());
+		}
+	}
+
+	struct Cones* cones = generateCones(fieldOfView[0], fieldOfView[1], variableDensity, spatialResolution[0], spatialResolution[1], bases, rotatable, interconeCompensationType, duration, samplingInterval, filterFieldOfView, maxGradient, maxSlew, storage);
 	struct Trajectory *trajectory = &cones->trajectory;
 	saveTrajectory("cones.trj", trajectory);
 
@@ -113,7 +135,7 @@ void ConesTest::generateTest()
 	sprintf(message, "max|kxy| %f expected %f", kxyMax, 5/trajectory->spatialResolution[0]);
 	QVERIFY2(kxyMax>=5/trajectory->spatialResolution[0], message);
 	sprintf(message, "max|kz| %f expected %f", kzMax, 5/trajectory->spatialResolution[1]);
-	QVERIFY2(kzMax>=5/trajectory->spatialResolution[1], message);
+	QVERIFY2(kzMax>=5/trajectory->spatialResolution[2], message);
 }
 
 QTEST_MAIN(ConesTest)

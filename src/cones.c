@@ -665,7 +665,7 @@ int generateConesBasis(struct Cones *cones)
 	else
 		memcpy(finalFieldOfView, fieldOfView, 2*sizeof(float));
 
-	calculateAngles(initialElevationAngleDelta/2, M_PI-initialElevationAngleDelta/2, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
+	calculateAngles(initialElevationAngleDelta, M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
 
 	printf("Number of cones:\t%d\n", cones->numCones);
 
@@ -823,7 +823,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 
 	if(variableDensity)
 	{
-		trajectory->variableDensity = (struct VariableDensity*)malloc(sizeof(struct VariableDensity));
+		trajectory->variableDensity = newVariableDensity();
 		copyVariableDensity(variableDensity, trajectory->variableDensity);
 	}
 	else
