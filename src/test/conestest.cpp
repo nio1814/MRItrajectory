@@ -4,6 +4,10 @@ extern "C" {
 #include "cones.h"
 }
 
+#include "phantom.h"
+#include "mrdata.h"
+#include "gridding.h"
+
 #include <QtTest/QtTest>
 
 Q_DECLARE_METATYPE(InterConeCompensation)
@@ -27,7 +31,7 @@ void ConesTest::generateTest_data()
 
 //	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
 
-//	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
 //	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
@@ -41,7 +45,7 @@ void ConesTest::generateTest_data()
 //	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
 
 	fieldOfViewScale.clear();
-	QTest::newRow("Isotropic - Gurney compensatioon") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << CompensationGurney << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+	//QTest::newRow("Isotropic - Gurney compensatioon") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << CompensationGurney << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 }
 
 void ConesTest::generateTest()
@@ -75,7 +79,31 @@ void ConesTest::generateTest()
 	struct Trajectory *trajectory = &cones->trajectory;
 	saveTrajectory("cones.trj", trajectory);
 
-	qWarning() << "Verifying parameters";
+	qInfo() << "Generating phantom data";
+	std::vector<int> acquisitionSize;
+	acquisitionSize.push_back(trajectory->readoutPoints);
+	acquisitionSize.push_back(trajectory->readouts);
+	MRdata kSpaceData(acquisitionSize, 2);
+	Phantom phantom(fieldOfView.toStdVector());
+	for(int r=0; r<trajectory->readouts; r++)
+	{
+//		fprintf(stderr, "readout %d\n", r);
+		for(int n=0; n<trajectory->readoutPoints; n++)
+		{
+//			fprintf(stderr, "%d %d\n", r, n);
+			float k[3];
+			trajectoryCoordinates(n, r, trajectory, k, NULL);
+			int m = trajectory->readoutPoints*r + n;
+			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1], k[2]));
+		}
+	}
+
+	qInfo() << "Reconstructing phantom image";
+	Gridding gridding(trajectory);
+	MRdata* image = gridding.kSpaceToImage(kSpaceData)[0];
+	image->writeToOctave("conesPhantomImage.txt");
+
+	qInfo() << "Verifying parameters";
 	QCOMPARE(trajectory->fieldOfView[0], fieldOfView[0]);
 	QCOMPARE(trajectory->fieldOfView[1], fieldOfView[0]);
 	QCOMPARE(trajectory->fieldOfView[2], fieldOfView[1]);
