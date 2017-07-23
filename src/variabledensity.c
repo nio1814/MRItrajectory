@@ -12,8 +12,6 @@ struct VariableDensity* newVariableDensity()
 	struct VariableDensity* v = (struct VariableDensity*)malloc(sizeof(struct VariableDensity));
 
 	v->steps = 0;
-	addVariableDensityStep(v, VariableDensityPolynomial, 0, 0, 1);
-
 	v->kcomp = NULL;
 	v->compSelect = -1;
 
