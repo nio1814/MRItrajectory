@@ -628,7 +628,7 @@ int generateConesBasis(struct Cones *cones)
 	float fieldOfViewRadial;
 	float fieldOfViewCircumferential;
 	float spatialResolutionRadial;
-	float kSpaceExtentRadial;
+	float kSpaceMaxRadial;
 	float elevationAngleParametric;
 	float scaleXY;
 	float scaleZ;
@@ -648,8 +648,12 @@ int generateConesBasis(struct Cones *cones)
 
 	srand(0);
 
+	float kSpaceMax[2];
 	for(d=0; d<2; d++)
+	{
 		kSpaceExtent[d] = 10/trajectory->spatialResolution[2-d];
+		kSpaceMax[d] = .5*kSpaceExtent[d];
+	}
 	initialElevationAngleDelta = 1/(kSpaceExtent[0]*fieldOfView[0]);
 
 	if(variableDensity)
@@ -661,7 +665,7 @@ int generateConesBasis(struct Cones *cones)
 
 	printf("Number of cones:\t%d\n", cones->numCones);
 
-	cones->designConeAngles = (float*)malloc(trajectory->bases*sizeof(float));
+	cones->basisConeAngles = (float*)malloc(trajectory->bases*sizeof(float));
 
 	basisReadoutGradientWaveforms = (float*)malloc(3*trajectory->bases*trajectory->readoutPoints*sizeof(float));
 	
@@ -675,19 +679,19 @@ int generateConesBasis(struct Cones *cones)
 		float fromElevationAngle = M_PI_2*b/trajectory->bases;
 		float toElevationAngle = M_PI_2*(b+1.0f)/trajectory->bases;
 
-		cones->designConeAngles[b] = atan2(kSpaceExtent[0]*sin(toElevationAngle), kSpaceExtent[1]*cos(fromElevationAngle));
+		cones->basisConeAngles[b] = atan2(kSpaceMax[0]*sin(toElevationAngle), kSpaceMax[1]*cos(fromElevationAngle));
 
-		fieldOfViewRadial = getExtent(InverseEllipticalShape, cones->designConeAngles[b], fieldOfView);
-		fieldOfViewCircumferential = getExtent(InverseEllipticalShape, cones->designConeAngles[b]+M_PI_2, fieldOfView);
-		spatialResolutionRadial = 5/getExtent(EllipticalShape, cones->designConeAngles[b], kSpaceExtent);
-		kSpaceExtentRadial = 5/spatialResolutionRadial;
-		elevationAngleParametric = atan2((kSpaceExtentRadial*sin(cones->designConeAngles[b])*kSpaceExtent[1]),(kSpaceExtentRadial*cos(cones->designConeAngles[b])*kSpaceExtent[0]));
+		fieldOfViewRadial = getExtent(InverseEllipticalShape, cones->basisConeAngles[b], fieldOfView);
+		fieldOfViewCircumferential = getExtent(InverseEllipticalShape, cones->basisConeAngles[b]+M_PI_2, fieldOfView);
+		spatialResolutionRadial = 5/getExtent(EllipticalShape, cones->basisConeAngles[b], kSpaceMax);
+		kSpaceMaxRadial = 5/spatialResolutionRadial;
+		elevationAngleParametric = atan2((kSpaceMaxRadial*sin(cones->basisConeAngles[b])*kSpaceExtent[1]),(kSpaceMaxRadial*cos(cones->basisConeAngles[b])*kSpaceExtent[0]));
 
 		scaleXY = cos(elevationAngleParametric)/cos(fromElevationAngle);
 		scaleZ = sin(elevationAngleParametric)/sin(toElevationAngle);
 
 		interleavesLow = .01;
-		interleavesHigh = 2*M_PI*kSpaceExtentRadial*fieldOfViewRadial*cos(cones->designConeAngles[b]);
+		interleavesHigh = 2*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
 
 		cones->basisReadoutPoints[b] = -1;
 		while(interleavesHigh-interleavesLow>.03 && cones->basisReadoutPoints[b]!=trajectory->readoutPoints)
@@ -706,7 +710,7 @@ int generateConesBasis(struct Cones *cones)
 				currentGradientWaveforms = NULL;
 			}
 
-			if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, variableDensity, kSpaceExtentRadial, interleaves, cones->interconeCompensation, cones->designConeAngles[b], trajectory->readoutPoints, trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, trajectory->maxReadoutGradientAmplitude, trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->basisReadoutPoints[b]<=trajectory->readoutPoints)
+			if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, variableDensity, kSpaceMaxRadial, interleaves, cones->interconeCompensation, cones->basisConeAngles[b], trajectory->readoutPoints, trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, trajectory->maxReadoutGradientAmplitude, trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->basisReadoutPoints[b]<=trajectory->readoutPoints)
 			{
 				interleavesHigh = interleaves;
 				cones->basisReadoutPoints[b] = currentReadoutPoints;
@@ -852,7 +856,7 @@ struct Cones *allocateCones(int bases)
 
 	cones->coneAngles = NULL;
 	cones->coneAngleDensityCompensation = NULL;
-	cones->designConeAngles = NULL;
+	cones->basisConeAngles = NULL;
 	cones->basisGradientWaveforms = NULL;
 	cones->basisKspaceCoordinates = NULL;
 
@@ -870,8 +874,8 @@ void freeCones(struct Cones *cones)
 		free(cones->coneAngles);
 	if(cones->coneAngleDensityCompensation)
 		free(cones->coneAngleDensityCompensation);
-	if(cones->designConeAngles)
-		free(cones->designConeAngles);
+	if(cones->basisConeAngles)
+		free(cones->basisConeAngles);
 	free(cones->basisReadoutPoints);
 	free(cones->basisWaveformPoints);
 	free(cones->basisGradientWaveforms);

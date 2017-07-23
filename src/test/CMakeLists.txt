@@ -19,3 +19,4 @@ endmacro()
 
 set_test(spiral_test spiraltest.cpp)
 set_test(radial_test radialtest.cpp)
+set_test(cones_test conestest.cpp)

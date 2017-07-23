@@ -29,7 +29,7 @@ struct Cones
 	float* coneAngles;
 	float* coneAngleDensityCompensation;
 	int numCones;
-	float* designConeAngles;
+	float* basisConeAngles;
 	int *basisReadoutPoints;
 	int *basisWaveformPoints;
 	float *basisGradientWaveforms;
