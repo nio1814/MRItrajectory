@@ -268,7 +268,7 @@ void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float 
 }
 
 
-struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float fovFilt, float maxGradientAmplitude, float maxSlewRate)
+struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate)
 {
 	struct Trajectory *trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
 	initializeTrajectory(trajectory);
@@ -280,8 +280,8 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	int n;
 	int readoutPointsTest;
 
-    if(fovFilt)
-		trajectory->maxReadoutGradientAmplitude = fmin(calculateMaxReadoutGradientAmplitude(fovFilt, samplingInterval), maxGradientAmplitude);
+	if(readoutFieldOfView)
+		trajectory->maxReadoutGradientAmplitude = fmin(calculateMaxReadoutGradientAmplitude(readoutFieldOfView, samplingInterval), maxGradientAmplitude);
     else
 		trajectory->maxReadoutGradientAmplitude = maxGradientAmplitude;
 
@@ -300,7 +300,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 		   float fieldOfViewFinal;
 		   if(variableDensity)
 		   {
-			kr = variableDensity->step[n].kr;
+				kr = variableDensity->step[n].kr;
 			getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewFinal, 1);
 		   }
 		   else

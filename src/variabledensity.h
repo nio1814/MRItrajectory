@@ -1,3 +1,15 @@
+/***************************************************************************
+
+ Copyright (c) 2014 The Board of Trustees of the Leland Stanford Junior University.
+ All rights reserved.
+ Contact: Okai Addy <noaddy@alumni.stanford.edu>
+
+ This source code is under a BSD 3-Clause License.
+ See LICENSE for more information.
+
+To distribute this file, substitute the full license for the above reference.
+
+**************************************************************************/
 #ifndef VD_H
 #define VD_H
 
@@ -23,7 +35,7 @@ struct VariableDensity
 	int compSelect;
 };
 
-void initializeVariableDensity(struct VariableDensity *v);
+struct VariableDensity* newVariableDensity();
 
 void copyVariableDensity(const struct VariableDensity *from, struct VariableDensity *to);
 
@@ -33,6 +45,9 @@ float getFinalScale(const struct VariableDensity *v);
 //void getFovComp(struct Vd *v, float kr, float *fov);
 
 void addVariableDensityStep(struct VariableDensity *v, enum VariableDensityFunction function, float kr, float functionParameter, float scale);
+
+void addLinearVariableDensityStep(struct VariableDensity *v, float kr, float scale);
+
 int writeVariableDensity(const char* filename, const struct VariableDensity *v, float krMax, int points);
 //void copyVdArrs(struct Vd *vdfrom, struct Vd *vdto);
 
