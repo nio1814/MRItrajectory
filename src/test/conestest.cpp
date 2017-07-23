@@ -22,7 +22,9 @@ void ConesTest::generateTest_data()
 	QTest::addColumn<double>("maxSlew");
 	QTest::addColumn<WaveformStorageType>("storage");
 
-	QTest::newRow("Isotropic") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis;
+	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis;
+
+	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
 
 //	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 5e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
 
@@ -91,10 +93,14 @@ void ConesTest::generateTest()
 				sprintf(message, "|g| %f limit %f\n", gradientMagnitude, maxReadoutGradient);
 				QVERIFY2(gradientMagnitude < maxReadoutGradient+.01, message);
 				float k[3];
-				trajectoryCoordinates(n, b, trajectory, k, NULL);
-				float kxy = qSqrt(k[0]*k[0]+k[1]*k[1]);
+				float densityCompensation;
+				trajectoryCoordinates(n, r, trajectory, k, &densityCompensation);
+				float kxy = hypotf(k[0],+k[1]);
 				kxyMax = qMax(kxy, kxyMax);
-				kzMax = qMax(k[2], kzMax);
+				kzMax = qMax(qAbs(k[2]), kzMax);
+
+				sprintf(message, "dcf[%d,%d]=%f\n", r, n, densityCompensation);
+				QVERIFY2(densityCompensation>=0, message);
 			}
 			else
 			{
