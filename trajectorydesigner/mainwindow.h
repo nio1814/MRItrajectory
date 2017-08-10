@@ -7,6 +7,8 @@ namespace Ui {
 class MainWindow;
 }
 
+QT_FORWARD_DECLARE_CLASS(Generator)
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -14,9 +16,11 @@ class MainWindow : public QMainWindow
 public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
-
+private slots:
+	void updateFieldOfViewDisplay();
 private:
 	Ui::MainWindow *ui;
+	Generator * m_generator;
 };
 
 #endif // MAINWINDOW_H
