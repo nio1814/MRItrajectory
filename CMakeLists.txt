@@ -5,3 +5,4 @@ set(CMAKE_MODULE_PATH
 
 add_subdirectory(src)
 add_subdirectory(matlab)
+add_subdirectory(trajectorydesigner)
