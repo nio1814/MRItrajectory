@@ -1,6 +1,10 @@
 #include "generator.h"
 
-Generator::Generator(QObject *parent) : QObject(parent), m_trajectoryType(Spiral)
+#include "spiral.h"
+
+Generator::Generator(QObject *parent) : QObject(parent),
+	m_trajectoryType(Spiral),
+	m_trajectory(m_trajectory)
 {
 
 }
@@ -18,4 +22,13 @@ void Generator::setTrajectory(TrajectoryType type)
 void Generator::setFieldOfView(float value, int axis)
 {
 	m_fieldOfView[axis] = value;
+}
+
+void Generator::update()
+{
+	switch(m_trajectoryType)
+	{
+		case Spiral:
+			break;
+	}
 }
