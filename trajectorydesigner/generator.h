@@ -18,12 +18,17 @@ signals:
 
 public slots:
 	void setTrajectory(TrajectoryType type);
-	void setFieldOfView(float value, int axis);
+	void setFieldOfView(float fieldOfView, int axis);
+	void setSpatialResolution(float spatialResolution, int axis);
+	void setReadoutDuration(float readoutDuration);
 private slots:
 	void update();
 private:
 	TrajectoryType m_trajectoryType;
 	float m_fieldOfView[3];
+	float m_spatialResolution[3];
+	float m_readoutDuration;
+	int m_readouts;
 	Trajectory* m_trajectory;
 };
 

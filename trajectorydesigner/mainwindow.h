@@ -24,6 +24,7 @@ private slots:
 	void updateFieldOfViewDisplay();
 	void setFieldOfView(float fieldOfView, int axis);
 	void setSpatialResolution(float spatialResolution, int axis);
+	void setReadoutDuration(float duration);
 private:
 	Ui::MainWindow *ui;
 	QSlider* m_fieldOfViewSlider[3];
@@ -32,6 +33,7 @@ private:
 	QSlider* m_spatialResolutionSlider[3];
 	QDoubleSpinBox* m_spatialResolutionSpinBox[3];
 	float m_spatialResolutionSliderScale = 10;
+	float m_readoutDurationSliderScale = 10;
 
 	Generator * m_generator;
 };

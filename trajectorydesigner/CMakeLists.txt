@@ -11,4 +11,4 @@ set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
 
 add_executable(trajectorydesigner ${SOURCE})
-target_link_libraries(trajectorydesigner ${QT_LIBRARIES})
+target_link_libraries(trajectorydesigner ${QT_LIBRARIES} trajectory)

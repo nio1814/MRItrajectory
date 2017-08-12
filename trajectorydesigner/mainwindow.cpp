@@ -68,6 +68,27 @@ MainWindow::MainWindow(QWidget *parent) :
 		});
 		m_spatialResolutionSpinBox[n]->setValue(2);
 	}
+
+	QSlider* readoutDurationSlider = ui->readoutDurationSlider;
+	ui->readoutDurationDoubleSpinBox->setMinimum(.128);
+	ui->readoutDurationDoubleSpinBox->setMaximum(20);
+	ui->readoutDurationSlider->setMinimum(ui->readoutDurationDoubleSpinBox->minimum()*m_readoutDurationSliderScale);
+	ui->readoutDurationSlider->setMaximum(ui->readoutDurationDoubleSpinBox->maximum()*m_readoutDurationSliderScale);
+	connect(ui->readoutDurationSlider, &QSlider::valueChanged, [=](int value){
+		setReadoutDuration(value/m_readoutDurationSliderScale);
+	});
+	connect(ui->readoutDurationDoubleSpinBox, &QSpinBox::editingFinished, [=]{
+		setReadoutDuration(ui->readoutDurationDoubleSpinBox->value());
+	});
+	setReadoutDuration(8);
+
+	ui->readoutsSlider->setEnabled(false);
+	ui->readoutsSpinBox->setEnabled(false);
+//	ui->readoutsSlider->setMinimum(1);
+//	ui->readoutsSpinBox->setMinimum(ui->readoutsSlider->minimum());
+//	connect(ui->readoutsSlider, &QSlider::valueChanged, [=](int value){
+//		setFieldOfView(value, n);
+//	});
 }
 
 MainWindow::~MainWindow()
@@ -91,10 +112,19 @@ void MainWindow::setFieldOfView(float fieldOfView, int axis)
 {
 	m_fieldOfViewSlider[axis]->setValue(fieldOfView);
 	m_fieldOfViewSpinBox[axis]->setValue(fieldOfView);
+	m_generator->setFieldOfView(fieldOfView, axis);
 }
 
 void MainWindow::setSpatialResolution(float spatialResolution, int axis)
 {
 	m_spatialResolutionSlider[axis]->setValue(m_spatialResolutionSliderScale*spatialResolution);
 	m_spatialResolutionSpinBox[axis]->setValue(spatialResolution);
+		m_generator->setSpatialResolution(spatialResolution, axis);
+}
+
+void MainWindow::setReadoutDuration(float duration)
+{
+	ui->readoutDurationSlider->setValue(duration*m_readoutDurationSliderScale);
+	ui->readoutDurationDoubleSpinBox->setValue(duration);
+	m_generator->setReadoutDuration(duration*1e-3);
 }
