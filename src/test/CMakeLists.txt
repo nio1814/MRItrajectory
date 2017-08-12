@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8.11)
 
 find_package(Qt5 REQUIRED COMPONENTS Test)
 set(QT_LIBRARIES ${QT_LIBRARIES} Qt5::Test)

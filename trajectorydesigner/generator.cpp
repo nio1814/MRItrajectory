@@ -6,8 +6,7 @@ extern "C"
 }
 
 Generator::Generator(QObject *parent) : QObject(parent),
-	m_trajectoryType(Spiral),
-	m_trajectory(m_trajectory)
+	m_trajectoryType(Spiral)
 {
 
 }

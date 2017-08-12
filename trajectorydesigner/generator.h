@@ -29,7 +29,7 @@ private:
 	float m_spatialResolution[3] = {2,2,2};
 	float m_readoutDuration = 8e-3;
 	int m_readouts;
-	Trajectory* m_trajectory;
+	Trajectory* m_trajectory = NULL;
 };
 
 Q_DECLARE_METATYPE(Generator::TrajectoryType)

@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //		Generator::TrajectoryType type = ui->trajectoryComboBox->currentData().value<Generator::TrajectoryType>();
 //		m_generator->setTrajectory(type);
 //	});
-	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index){
+	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
 		Generator::TrajectoryType type = ui->trajectoryComboBox->currentData().value<Generator::TrajectoryType>();
 		m_generator->setTrajectory(type);
 	});
@@ -71,7 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
 		m_spatialResolutionSpinBox[n]->setValue(2);
 	}
 
-	QSlider* readoutDurationSlider = ui->readoutDurationSlider;
 	ui->readoutDurationDoubleSpinBox->setMinimum(.128);
 	ui->readoutDurationDoubleSpinBox->setMaximum(20);
 	ui->readoutDurationSlider->setMinimum(ui->readoutDurationDoubleSpinBox->minimum()*m_readoutDurationSliderScale);
@@ -102,7 +101,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateFieldOfViewDisplay()
 {
-	QWidget* layout;
+	//QWidget* layout;
 	switch(m_generator->trajectoryType())
 	{
 		case Generator::Spiral:
