@@ -25,9 +25,9 @@ private slots:
 	void update();
 private:
 	TrajectoryType m_trajectoryType;
-	float m_fieldOfView[3];
-	float m_spatialResolution[3];
-	float m_readoutDuration;
+	float m_fieldOfView[3] = {28,28,28};
+	float m_spatialResolution[3] = {2,2,2};
+	float m_readoutDuration = 8e-3;
 	int m_readouts;
 	Trajectory* m_trajectory;
 };

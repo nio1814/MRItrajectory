@@ -29,12 +29,20 @@ void Generator::setFieldOfView(float fieldOfView, int axis)
 
 void Generator::setSpatialResolution(float spatialResolution, int axis)
 {
+	bool changed = m_spatialResolution[axis] != spatialResolution;
 	m_spatialResolution[axis] = spatialResolution;
+
+	if(changed)
+		update();
 }
 
 void Generator::setReadoutDuration(float readoutDuration)
 {
+	bool changed = m_readoutDuration != readoutDuration;
 	m_readoutDuration = readoutDuration;
+
+	if(changed)
+		update();
 }
 
 void Generator::update()

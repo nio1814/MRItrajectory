@@ -6,6 +6,7 @@
 QT_FORWARD_DECLARE_CLASS(QSlider)
 QT_FORWARD_DECLARE_CLASS(QSpinBox)
 QT_FORWARD_DECLARE_CLASS(QDoubleSpinBox)
+QT_FORWARD_DECLARE_CLASS(QwtPlot)
 
 namespace Ui {
 class MainWindow;
@@ -34,6 +35,8 @@ private:
 	QDoubleSpinBox* m_spatialResolutionSpinBox[3];
 	float m_spatialResolutionSliderScale = 10;
 	float m_readoutDurationSliderScale = 10;
+
+	QwtPlot* m_trajectoryPlot;
 
 	Generator * m_generator;
 };

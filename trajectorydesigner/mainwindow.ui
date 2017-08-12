@@ -20,7 +20,7 @@
       <x>10</x>
       <y>10</y>
       <width>251</width>
-      <height>300</height>
+      <height>301</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -150,7 +150,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QGroupBox" name="">
+      <widget class="QGroupBox" name="groupBox">
        <property name="title">
         <string>Spatial Resolution</string>
        </property>
@@ -312,6 +312,17 @@
       </layout>
      </item>
     </layout>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>10</y>
+      <width>371</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout"/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">

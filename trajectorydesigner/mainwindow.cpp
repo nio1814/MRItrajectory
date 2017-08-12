@@ -3,6 +3,8 @@
 
 #include "generator.h"
 
+#include <qwt_plot.h>
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
@@ -89,6 +91,8 @@ MainWindow::MainWindow(QWidget *parent) :
 //	connect(ui->readoutsSlider, &QSlider::valueChanged, [=](int value){
 //		setFieldOfView(value, n);
 //	});
+
+	m_trajectoryPlot = new QwtPlot();
 }
 
 MainWindow::~MainWindow()
