@@ -91,7 +91,8 @@ MainWindow::MainWindow(QWidget *parent) :
 //		setFieldOfView(value, n);
 //	});
 
-	m_trajectoryPlot = new QwtPlot();
+	m_trajectoryPlot = new QwtPlot(QwtText("Trajectory Plot"), parent);
+	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
 }
 
 MainWindow::~MainWindow()
