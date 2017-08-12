@@ -64,7 +64,7 @@ float getScale(const struct VariableDensity *v, float kr)
 	int s=0;
 	float deltaKr;
 	float deltaScale;
-	float scale;
+	float scale = 0;
 
 	while((s<v->steps-1) && (kr >= v->step[s].kr))
 		s++;

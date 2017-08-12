@@ -15,6 +15,7 @@ public:
 	TrajectoryType trajectoryType();
 
 signals:
+	void updated(Trajectory *trajectory);
 
 public slots:
 	void setTrajectory(TrajectoryType type);
@@ -24,7 +25,7 @@ public slots:
 private slots:
 	void update();
 private:
-	TrajectoryType m_trajectoryType;
+	TrajectoryType m_trajectoryType = Spiral;
 	float m_fieldOfView[3] = {28,28,28};
 	float m_spatialResolution[3] = {2,2,2};
 	float m_readoutDuration = 8e-3;

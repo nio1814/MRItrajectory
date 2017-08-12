@@ -7,6 +7,7 @@ QT_FORWARD_DECLARE_CLASS(QSlider)
 QT_FORWARD_DECLARE_CLASS(QSpinBox)
 QT_FORWARD_DECLARE_CLASS(QDoubleSpinBox)
 QT_FORWARD_DECLARE_CLASS(QwtPlot)
+QT_FORWARD_DECLARE_STRUCT(Trajectory)
 
 namespace Ui {
 class MainWindow;
@@ -26,6 +27,8 @@ private slots:
 	void setFieldOfView(float fieldOfView, int axis);
 	void setSpatialResolution(float spatialResolution, int axis);
 	void setReadoutDuration(float duration);
+	void updateTrajectoryPlot(Trajectory* trajectory);
+
 private:
 	Ui::MainWindow *ui;
 	QSlider* m_fieldOfViewSlider[3];

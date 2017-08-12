@@ -2,8 +2,14 @@
 #include "ui_mainwindow.h"
 
 #include "generator.h"
+extern "C"
+{
+#include "trajectory.h"
+}
 
 #include <qwt_plot.h>
+#include <qwt_plot_curve.h>
+#include <qwt_plot_grid.h>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -92,7 +98,14 @@ MainWindow::MainWindow(QWidget *parent) :
 //	});
 
 	m_trajectoryPlot = new QwtPlot(QwtText("Trajectory Plot"), parent);
+//	m_trajectoryPlot->setCanvasBackground(Qt::black);
+	QwtPlotGrid *trajectoryPlotGrid = new QwtPlotGrid;
+	trajectoryPlotGrid->attach(m_trajectoryPlot);
+	trajectoryPlotGrid->setMajorPen(Qt::gray, 0, Qt::DotLine);
+
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
+
+	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 }
 
 MainWindow::~MainWindow()
@@ -123,7 +136,7 @@ void MainWindow::setSpatialResolution(float spatialResolution, int axis)
 {
 	m_spatialResolutionSlider[axis]->setValue(m_spatialResolutionSliderScale*spatialResolution);
 	m_spatialResolutionSpinBox[axis]->setValue(spatialResolution);
-		m_generator->setSpatialResolution(spatialResolution, axis);
+	m_generator->setSpatialResolution(spatialResolution, axis);
 }
 
 void MainWindow::setReadoutDuration(float duration)
@@ -131,4 +144,23 @@ void MainWindow::setReadoutDuration(float duration)
 	ui->readoutDurationSlider->setValue(duration*m_readoutDurationSliderScale);
 	ui->readoutDurationDoubleSpinBox->setValue(duration);
 	m_generator->setReadoutDuration(duration*1e-3);
+}
+
+void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
+{
+	QwtPlotCurve trajectoryCurve;
+
+	QVector<QPointF> coordinates;
+	float kSpaceCoordinates[2];
+	for(int n=0; n<trajectory->readoutPoints; n++)
+	{
+		trajectoryCoordinates(n, 0, trajectory, kSpaceCoordinates, NULL);
+		coordinates.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
+	}
+
+	trajectoryCurve.setPen(Qt::green);
+	trajectoryCurve.setSamples(coordinates);
+	trajectoryCurve.attach(m_trajectoryPlot);
+//	m_trajectoryPlot->resize(300,300);
+	m_trajectoryPlot->replot();
 }

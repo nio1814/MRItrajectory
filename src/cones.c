@@ -141,12 +141,12 @@ int generateCone(float fieldOfViewRadial, float fieldOfViewCircumferential, cons
 	float gradient[3];
 	float deltaK[3];
 	float kSpaceDirection[3];
-	float kSpaceDirectionMagnitudeXY;
-	float projectedGradientMagnitude;
-	float projectedGradientMagnitudeXY;
+	float kSpaceDirectionMagnitudeXY = 0;
+	float projectedGradientMagnitude = 0;
+	float projectedGradientMagnitudeXY = 0;
 	float term;
 	float gradientMagnitudeRange[2];
-	float gradientMagnitudeRangeXY[2];
+	float gradientMagnitudeRangeXY[2] = {0,0};
 	float gradientMagnitudeRangeZ[2];
 	float gradientMagnitudeXY;
 	float gradientMagnitudeZ;
