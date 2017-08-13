@@ -22,7 +22,11 @@ void Generator::setTrajectory(TrajectoryType type)
 
 void Generator::setFieldOfView(float fieldOfView, int axis)
 {
+	bool changed = m_fieldOfView[axis] != fieldOfView;
 	m_fieldOfView[axis] = fieldOfView;
+
+	if(changed)
+		update();
 }
 
 void Generator::setSpatialResolution(float spatialResolution, int axis)

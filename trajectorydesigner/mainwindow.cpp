@@ -98,10 +98,13 @@ MainWindow::MainWindow(QWidget *parent) :
 //	});
 
 	m_trajectoryPlot = new QwtPlot(QwtText("Trajectory Plot"), parent);
-//	m_trajectoryPlot->setCanvasBackground(Qt::black);
+	m_trajectoryPlot->setCanvasBackground(Qt::black);
 	QwtPlotGrid *trajectoryPlotGrid = new QwtPlotGrid;
 	trajectoryPlotGrid->attach(m_trajectoryPlot);
 	trajectoryPlotGrid->setMajorPen(Qt::gray, 0, Qt::DotLine);
+	m_trajectoryCurve = new QwtPlotCurve;
+	m_trajectoryCurve->setPen(Qt::green);
+	m_trajectoryCurve->attach(m_trajectoryPlot);
 
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
 
@@ -148,7 +151,7 @@ void MainWindow::setReadoutDuration(float duration)
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 {
-	QwtPlotCurve trajectoryCurve;
+
 
 	QVector<QPointF> coordinates;
 	float kSpaceCoordinates[2];
@@ -158,9 +161,8 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 		coordinates.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
 	}
 
-	trajectoryCurve.setPen(Qt::green);
-	trajectoryCurve.setSamples(coordinates);
-	trajectoryCurve.attach(m_trajectoryPlot);
+	m_trajectoryCurve->setSamples(coordinates);
+
 //	m_trajectoryPlot->resize(300,300);
 	m_trajectoryPlot->replot();
 }

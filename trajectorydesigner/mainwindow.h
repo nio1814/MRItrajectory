@@ -7,6 +7,7 @@ QT_FORWARD_DECLARE_CLASS(QSlider)
 QT_FORWARD_DECLARE_CLASS(QSpinBox)
 QT_FORWARD_DECLARE_CLASS(QDoubleSpinBox)
 QT_FORWARD_DECLARE_CLASS(QwtPlot)
+QT_FORWARD_DECLARE_CLASS(QwtPlotCurve)
 QT_FORWARD_DECLARE_STRUCT(Trajectory)
 
 namespace Ui {
@@ -40,6 +41,7 @@ private:
 	float m_readoutDurationSliderScale = 10;
 
 	QwtPlot* m_trajectoryPlot;
+	QwtPlotCurve* m_trajectoryCurve;
 
 	Generator * m_generator;
 };
