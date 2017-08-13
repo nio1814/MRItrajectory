@@ -49,6 +49,8 @@ void Generator::setReadoutDuration(float readoutDuration)
 
 void Generator::update()
 {
+	int previousReadouts = m_trajectory ? m_trajectory->readouts : 0;
+
 	switch(m_trajectoryType)
 	{
 		case Spiral:
@@ -57,4 +59,7 @@ void Generator::update()
 	}
 
 	emit updated(m_trajectory);
+
+	if(previousReadouts!=m_trajectory->readouts)
+		emit readoutsChanged(m_trajectory->readouts);
 }

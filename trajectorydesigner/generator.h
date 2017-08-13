@@ -16,6 +16,7 @@ public:
 
 signals:
 	void updated(Trajectory *trajectory);
+	void readoutsChanged(int readouts);
 
 public slots:
 	void setTrajectory(TrajectoryType type);

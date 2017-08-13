@@ -28,6 +28,7 @@ private slots:
 	void setFieldOfView(float fieldOfView, int axis);
 	void setSpatialResolution(float spatialResolution, int axis);
 	void setReadoutDuration(float duration);
+	void setReadouts(int readouts);
 	void updateTrajectoryPlot(Trajectory* trajectory);
 
 private:

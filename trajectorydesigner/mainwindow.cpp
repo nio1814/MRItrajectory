@@ -109,6 +109,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
+
+	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 }
 
 MainWindow::~MainWindow()
@@ -147,6 +149,12 @@ void MainWindow::setReadoutDuration(float duration)
 	ui->readoutDurationSlider->setValue(duration*m_readoutDurationSliderScale);
 	ui->readoutDurationDoubleSpinBox->setValue(duration);
 	m_generator->setReadoutDuration(duration*1e-3);
+}
+
+void MainWindow::setReadouts(int readouts)
+{
+	ui->readoutsSlider->setValue(readouts);
+	ui->readoutsSpinBox->setValue(readouts);
 }
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
