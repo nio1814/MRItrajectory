@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "generator.h"
+#include "timeseriesplot.h"
 extern "C"
 {
 #include "trajectory.h"
@@ -11,13 +12,17 @@ extern "C"
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
 
+#include <QDebug>
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
+	m_slewRatePlot(new TimeSeriesPlot(3)),
 	m_generator(new Generator)
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
+	ui->trajectoryComboBox->addItem("Radial", Generator::Radial);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
@@ -25,8 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //		Generator::TrajectoryType type = ui->trajectoryComboBox->currentData().value<Generator::TrajectoryType>();
 //		m_generator->setTrajectory(type);
 //	});
-	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
-		Generator::TrajectoryType type = ui->trajectoryComboBox->currentData().value<Generator::TrajectoryType>();
+	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index){
+		Generator::TrajectoryType type = static_cast<Generator::TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
+		qWarning() << type;
 		m_generator->setTrajectory(type);
 	});
 
@@ -118,11 +124,15 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_gradientPlotCurve[0]->setPen(Qt::blue);
 	m_gradientPlotCurve[1]->setPen(Qt::green);
 
+	m_slewRatePlot->setYLimits(-15000, 15000);
+
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
 	ui->gridLayout->addWidget(m_gradientsPlot, 0, 1);
+	ui->gridLayout->addWidget(m_slewRatePlot, 1, 1);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
+	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 }
@@ -140,6 +150,8 @@ void MainWindow::updateFieldOfViewDisplay()
 		case Generator::Spiral:
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);
 //			layout->hide();
+			break;
+		case Generator::Radial:
 			break;
 	}
 }
@@ -203,4 +215,18 @@ void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 	}
 
 	m_gradientsPlot->replot();
+}
+
+void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
+{
+	m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->waveformPoints-1);
+	for(int d=0; d<trajectory->dimensions; d++)
+	{
+		float* gradientWaveform = trajectoryGradientWaveform(trajectory, 0, d);
+		QVector<double> slew;
+		for(int n=0; n<trajectory->waveformPoints-1; n++)
+			slew.append((gradientWaveform[n+1]-gradientWaveform[n])/trajectory->samplingInterval);
+		m_slewRatePlot->setSeriesData(slew, d);
+	}
+	m_slewRatePlot->replot();
 }

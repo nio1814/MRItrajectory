@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "timeseriesplot.h"
+
 #include <QMainWindow>
 
 QT_FORWARD_DECLARE_CLASS(QSlider)
@@ -9,6 +11,7 @@ QT_FORWARD_DECLARE_CLASS(QDoubleSpinBox)
 QT_FORWARD_DECLARE_CLASS(QwtPlot)
 QT_FORWARD_DECLARE_CLASS(QwtPlotCurve)
 QT_FORWARD_DECLARE_STRUCT(Trajectory)
+QT_FORWARD_DECLARE_CLASS(TimeSeriesPlot)
 
 namespace Ui {
 class MainWindow;
@@ -31,6 +34,7 @@ private slots:
 	void setReadouts(int readouts);
 	void updateTrajectoryPlot(Trajectory* trajectory);
 	void updateGradientsPlot(Trajectory* trajectory);
+	void updateSlewRatePlot(Trajectory* trajectory);
 
 private:
 	Ui::MainWindow *ui;
@@ -47,6 +51,8 @@ private:
 
 	QwtPlot* m_gradientsPlot;
 	QwtPlotCurve* m_gradientPlotCurve[3];
+
+	TimeSeriesPlot* m_slewRatePlot;
 
 	Generator * m_generator;
 };

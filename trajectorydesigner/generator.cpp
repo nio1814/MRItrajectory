@@ -3,6 +3,7 @@
 extern "C"
 {
 #include "spiral.h"
+#include "radial.h"
 }
 
 Generator::Generator(QObject *parent) : QObject(parent)
@@ -17,7 +18,10 @@ Generator::TrajectoryType Generator::trajectoryType()
 
 void Generator::setTrajectory(TrajectoryType type)
 {
+	bool changed = m_trajectoryType != type;
 	m_trajectoryType = type;
+	if(changed)
+		update();
 }
 
 void Generator::setFieldOfView(float fieldOfView, int axis)
@@ -55,6 +59,9 @@ void Generator::update()
 	{
 		case Spiral:
 			m_trajectory = generateSpirals(NULL, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, 4e-6, m_readouts, Archimedean, 0, m_fieldOfView[0], 4, 15000);
+			break;
+		case Radial:
+		m_trajectory = generateRadial2D(m_fieldOfView[0], m_fieldOfView[1], EllipticalShape, m_spatialResolution[0], m_spatialResolution[1], EllipticalShape, 1, 1, 4, 15000, 4e-6);
 			break;
 	}
 

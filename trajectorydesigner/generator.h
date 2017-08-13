@@ -9,7 +9,7 @@ class Generator : public QObject
 {
 	Q_OBJECT
 public:
-	enum TrajectoryType{Spiral};
+	enum TrajectoryType{Spiral, Radial};
 	explicit Generator(QObject *parent = 0);
 
 	TrajectoryType trajectoryType();
