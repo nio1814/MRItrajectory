@@ -106,9 +106,23 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_trajectoryCurve->setPen(Qt::green);
 	m_trajectoryCurve->attach(m_trajectoryPlot);
 
+	m_gradientsPlot = new QwtPlot(QwtText("Gradients"), parent);
+	m_gradientsPlot->setCanvasBackground(Qt::black);
+	m_gradientsPlot->setAxisScale(QwtPlot::yLeft, -4, 4);
+	m_gradientsPlot->setAxisScale(QwtPlot::xBottom, 0, 20);
+	for(int n=0; n<3; n++)
+	{
+		m_gradientPlotCurve[n] = new QwtPlotCurve;
+		m_gradientPlotCurve[n]->attach(m_gradientsPlot);
+	}
+	m_gradientPlotCurve[0]->setPen(Qt::blue);
+	m_gradientPlotCurve[1]->setPen(Qt::green);
+
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
+	ui->gridLayout->addWidget(m_gradientsPlot, 0, 1);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
+	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 }
@@ -159,8 +173,6 @@ void MainWindow::setReadouts(int readouts)
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 {
-
-
 	QVector<QPointF> coordinates;
 	float kSpaceCoordinates[2];
 	for(int n=0; n<trajectory->readoutPoints; n++)
@@ -173,4 +185,22 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 
 //	m_trajectoryPlot->resize(300,300);
 	m_trajectoryPlot->replot();
+}
+
+void MainWindow::updateGradientsPlot(Trajectory *trajectory)
+{
+	QVector<QPointF> coordinates;
+	for(int d=0; d<trajectory->dimensions; d++)
+	{
+		coordinates.clear();
+		float* waveform = trajectoryGradientWaveform(trajectory, 0, d);
+		for(int n=0; n<trajectory->waveformPoints; n++)
+		{
+			float t = n*trajectory->samplingInterval*1e3;
+			coordinates.append(QPointF(t,waveform[n]));
+		}
+		m_gradientPlotCurve[d]->setSamples(coordinates);
+	}
+
+	m_gradientsPlot->replot();
 }

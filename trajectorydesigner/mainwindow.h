@@ -30,6 +30,7 @@ private slots:
 	void setReadoutDuration(float duration);
 	void setReadouts(int readouts);
 	void updateTrajectoryPlot(Trajectory* trajectory);
+	void updateGradientsPlot(Trajectory* trajectory);
 
 private:
 	Ui::MainWindow *ui;
@@ -43,6 +44,9 @@ private:
 
 	QwtPlot* m_trajectoryPlot;
 	QwtPlotCurve* m_trajectoryCurve;
+
+	QwtPlot* m_gradientsPlot;
+	QwtPlotCurve* m_gradientPlotCurve[3];
 
 	Generator * m_generator;
 };
