@@ -39,6 +39,7 @@ struct Cones
 
 struct Cones* allocateCones(int bases);
 void freeCones(struct Cones *cones);
+void deleteCones(struct Cones *cones);
 
 struct Cones* generateCones(float xyFieldOfView, float zFieldOfView, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int bases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage);
 float* conesBasisGradientWaveform(const struct Cones* cones, int basis, int axis);

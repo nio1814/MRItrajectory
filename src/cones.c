@@ -890,3 +890,12 @@ void freeCones(struct Cones *cones)
 	free(cones->basisKspaceCoordinates);
 }
 
+
+
+
+void deleteCones(struct Cones *cones)
+{
+	freeCones(cones);
+	free(cones);
+	cones = NULL;
+}

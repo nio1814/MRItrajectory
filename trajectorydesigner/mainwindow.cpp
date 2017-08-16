@@ -13,6 +13,7 @@ extern "C"
 #include <qwt_plot_grid.h>
 
 #include <QDebug>
+#include <QCheckBox>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -23,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
 	ui->trajectoryComboBox->addItem("Radial", Generator::Radial);
+	ui->trajectoryComboBox->addItem("Cones", Generator::Cones3D);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
@@ -135,6 +137,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
+	connect(ui->autoUpdateCheckBox, SIGNAL(toggled(bool)), m_generator, SLOT(setAutoUpdate(bool)));
+	connect(ui->autoUpdateCheckBox, &QCheckBox::toggled, [=](bool status) {
+		ui->updatePushButton->setEnabled(!status);
+	});
+	ui->autoUpdateCheckBox->setChecked(true);
+	connect(ui->updatePushButton, SIGNAL(clicked()), m_generator, SLOT(update()));
 }
 
 MainWindow::~MainWindow()
@@ -152,6 +160,8 @@ void MainWindow::updateFieldOfViewDisplay()
 //			layout->hide();
 			break;
 		case Generator::Radial:
+			break;
+		case Generator::Cones3D:
 			break;
 	}
 }
@@ -186,7 +196,7 @@ void MainWindow::setReadouts(int readouts)
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 {
 	QVector<QPointF> coordinates;
-	float kSpaceCoordinates[2];
+	float kSpaceCoordinates[3];
 	for(int n=0; n<trajectory->readoutPoints; n++)
 	{
 		trajectoryCoordinates(n, 0, trajectory, kSpaceCoordinates, NULL);
