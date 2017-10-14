@@ -3,6 +3,7 @@
 
 #include "generator.h"
 #include "timeseriesplot.h"
+#include "plot2d.h"
 extern "C"
 {
 #include "trajectory.h"
@@ -18,6 +19,7 @@ extern "C"
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
+	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
 	m_generator(new Generator)
 {
@@ -131,6 +133,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->gridLayout->addWidget(m_trajectoryPlot, 0, 0);
 	ui->gridLayout->addWidget(m_gradientsPlot, 0, 1);
 	ui->gridLayout->addWidget(m_slewRatePlot, 1, 1);
+	ui->gridLayout->addWidget(m_trajectoryPlotXZ, 1, 0);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
@@ -143,11 +146,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	});
 	ui->autoUpdateCheckBox->setChecked(true);
 	connect(ui->updatePushButton, SIGNAL(clicked()), m_generator, SLOT(update()));
+
+	connect(m_generator, &Generator::updated, [=](Trajectory* trajectory) {
+		setPlotReadouts(trajectory->readouts-1);
+	});
+	connect(ui->readoutSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
 }
 
 MainWindow::~MainWindow()
 {
 	delete ui;
+	delete m_trajectoryPlotXZ;
 }
 
 void MainWindow::updateFieldOfViewDisplay()
@@ -193,20 +202,46 @@ void MainWindow::setReadouts(int readouts)
 	ui->readoutsSpinBox->setValue(readouts);
 }
 
+void MainWindow::setPlotReadouts(int readouts)
+{
+	ui->readoutSlider->setMaximum(readouts);
+	ui->readoutSpinBox->setMaximum(readouts);
+}
+
+void MainWindow::setReadout(int readout)
+{
+	ui->readoutSlider->setValue(readout);
+	ui->readoutSpinBox->setValue(readout);
+	bool changed = m_readout != readout;
+	m_readout = readout;
+
+	Trajectory* trajectory = m_generator->trajectory();
+	if(changed && trajectory)
+	{
+		updateTrajectoryPlot(trajectory);
+		updateGradientsPlot(trajectory);
+		updateSlewRatePlot(trajectory);
+	}
+}
+
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 {
-	QVector<QPointF> coordinates;
+	QVector<QPointF> coordinatesXY;
+	QVector<QPointF> coordinatesXZ;
 	float kSpaceCoordinates[3];
 	for(int n=0; n<trajectory->readoutPoints; n++)
 	{
-		trajectoryCoordinates(n, 0, trajectory, kSpaceCoordinates, NULL);
-		coordinates.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
+		trajectoryCoordinates(n, m_readout, trajectory, kSpaceCoordinates, NULL);
+		coordinatesXY.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
+		if(trajectory->dimensions>2)		coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
 	}
 
-	m_trajectoryCurve->setSamples(coordinates);
+	m_trajectoryCurve->setSamples(coordinatesXY);
+	m_trajectoryPlotXZ->setSamples(coordinatesXZ);
 
 //	m_trajectoryPlot->resize(300,300);
 	m_trajectoryPlot->replot();
+	m_trajectoryPlotXZ->replot();
 }
 
 void MainWindow::updateGradientsPlot(Trajectory *trajectory)
@@ -215,7 +250,7 @@ void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 	for(int d=0; d<trajectory->dimensions; d++)
 	{
 		coordinates.clear();
-		float* waveform = trajectoryGradientWaveform(trajectory, 0, d);
+		float* waveform = trajectoryGradientWaveform(trajectory, m_readout, d);
 		for(int n=0; n<trajectory->waveformPoints; n++)
 		{
 			float t = n*trajectory->samplingInterval*1e3;
@@ -232,7 +267,7 @@ void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 	m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->waveformPoints-1);
 	for(int d=0; d<trajectory->dimensions; d++)
 	{
-		float* gradientWaveform = trajectoryGradientWaveform(trajectory, 0, d);
+		float* gradientWaveform = trajectoryGradientWaveform(trajectory, m_readout, d);
 		QVector<double> slew;
 		for(int n=0; n<trajectory->waveformPoints-1; n++)
 			slew.append((gradientWaveform[n+1]-gradientWaveform[n])/trajectory->samplingInterval);

@@ -10,7 +10,7 @@ include_directories(${QWT_INCLUDE_DIR})
 #include_directories(${Qwt_INCLUDE_DIR})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src)
-set(SOURCE main.cpp mainwindow.cpp generator.cpp plot.cpp timeseriesplot.cpp)
+set(SOURCE main.cpp mainwindow.cpp generator.cpp plot.cpp timeseriesplot.cpp plot2d.cpp)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

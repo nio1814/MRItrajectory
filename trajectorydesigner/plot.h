@@ -15,7 +15,7 @@ signals:
 
 public slots:
 protected:
-	QVector<QwtPlotCurve*> m_plotCurve;
+	QVector<QSharedPointer<QwtPlotCurve> > m_plotCurve;
 private:
 	QColor m_colorOrder[3] = {Qt::yellow, QColor(255,0,255), QColor(0,255,255)};
 };

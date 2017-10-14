@@ -33,6 +33,11 @@ void Generator::setTrajectory(TrajectoryType type)
 		update();
 }
 
+Trajectory *Generator::trajectory()
+{
+	return m_trajectory;
+}
+
 void Generator::setFieldOfView(float fieldOfView, int axis)
 {
 	bool changed = m_fieldOfView[axis] != fieldOfView;

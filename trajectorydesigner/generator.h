@@ -22,6 +22,7 @@ signals:
 
 public slots:
 	void setTrajectory(TrajectoryType type);
+	Trajectory* trajectory();
 	void setFieldOfView(float fieldOfView, int axis);
 	void setSpatialResolution(float spatialResolution, int axis);
 	void setReadoutDuration(float readoutDuration);
