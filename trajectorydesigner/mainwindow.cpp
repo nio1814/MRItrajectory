@@ -37,6 +37,16 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index){
 		Generator::TrajectoryType type = static_cast<Generator::TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
 		qWarning() << type;
+		bool autoUpdate;
+		switch(type) {
+			case Generator::Cones3D:
+				autoUpdate = false;
+				break;
+			default:
+				autoUpdate = true;
+				break;
+		}
+		setAutoUpdate(autoUpdate);
 		m_generator->setTrajectory(type);
 	});
 
@@ -222,6 +232,12 @@ void MainWindow::setReadout(int readout)
 		updateGradientsPlot(trajectory);
 		updateSlewRatePlot(trajectory);
 	}
+}
+
+void MainWindow::setAutoUpdate(bool status)
+{
+	m_generator->setAutoUpdate(status);
+	ui->autoUpdateCheckBox->setChecked(status);
 }
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)

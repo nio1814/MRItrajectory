@@ -21,14 +21,7 @@ void Generator::setTrajectory(TrajectoryType type)
 {
 	bool changed = m_trajectoryType != type;
 	m_trajectoryType = type;
-	switch(type) {
-		case Cones3D:
-			m_autoUpdate = false;
-			break;
-		default:
-			m_autoUpdate = true;
-			break;
-	}
+
 	if(changed && m_autoUpdate)
 		update();
 }

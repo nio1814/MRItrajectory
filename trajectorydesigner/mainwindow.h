@@ -36,6 +36,7 @@ private slots:
 	void setReadouts(int readouts);
 	void setPlotReadouts(int readouts);
 	void setReadout(int readout);
+	void setAutoUpdate(bool status);
 	void updateTrajectoryPlot(Trajectory* trajectory);
 	void updateGradientsPlot(Trajectory* trajectory);
 	void updateSlewRatePlot(Trajectory* trajectory);
