@@ -4,6 +4,7 @@
 #include "generator.h"
 #include "timeseriesplot.h"
 #include "plot2d.h"
+#include "variabledensitydesigner.h"
 extern "C"
 {
 #include "trajectory.h"
@@ -21,7 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
-	m_generator(new Generator)
+	m_generator(new Generator),
+	m_variableDensityDesigner(new VariableDensityDesigner)
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
@@ -49,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		setAutoUpdate(autoUpdate);
 		m_generator->setTrajectory(type);
 	});
+	connect(ui->variableDensityPushButton, SIGNAL(clicked(bool)), this, SLOT(setVariableDensity(bool)));
 
 	updateFieldOfViewDisplay();
 
@@ -238,6 +241,14 @@ void MainWindow::setAutoUpdate(bool status)
 {
 	m_generator->setAutoUpdate(status);
 	ui->autoUpdateCheckBox->setChecked(status);
+}
+
+void MainWindow::setVariableDensity(bool status)
+{
+	if(status)
+		m_variableDensityDesigner->show();
+	else
+		m_variableDensityDesigner->hide();
 }
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)

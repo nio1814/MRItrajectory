@@ -14,6 +14,7 @@ QT_FORWARD_DECLARE_CLASS(QwtPlotCurve)
 QT_FORWARD_DECLARE_STRUCT(Trajectory)
 QT_FORWARD_DECLARE_CLASS(TimeSeriesPlot)
 QT_FORWARD_DECLARE_CLASS(Plot2D)
+QT_FORWARD_DECLARE_CLASS(VariableDensityDesigner)
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +38,7 @@ private slots:
 	void setPlotReadouts(int readouts);
 	void setReadout(int readout);
 	void setAutoUpdate(bool status);
+	void setVariableDensity(bool status);
 	void updateTrajectoryPlot(Trajectory* trajectory);
 	void updateGradientsPlot(Trajectory* trajectory);
 	void updateSlewRatePlot(Trajectory* trajectory);
@@ -63,6 +65,7 @@ private:
 
 	Generator* m_generator;
 	int m_readout = 0;
+	QPointer<VariableDensityDesigner> m_variableDensityDesigner;
 };
 
 #endif // MAINWINDOW_H

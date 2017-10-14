@@ -20,7 +20,7 @@
       <x>10</x>
       <y>10</y>
       <width>251</width>
-      <height>355</height>
+      <height>384</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -310,6 +310,16 @@
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="variableDensityPushButton">
+       <property name="text">
+        <string>Variable Density</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_8">
