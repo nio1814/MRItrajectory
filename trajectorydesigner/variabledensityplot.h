@@ -16,6 +16,7 @@ protected:
 	void paintEvent(QPaintEvent *event);
 private:
 	QPointF mapToWindow(QPointF point);
+	void drawLine(QPointF point1, QPointF point2, const QPen& pen);
 
 	QVector<QPointF> m_points = {{0,1}, {1,1}};
 };
