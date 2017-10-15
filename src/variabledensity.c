@@ -18,6 +18,15 @@ struct VariableDensity* newVariableDensity()
 	return v;
 }
 
+void deleteVariableDensity(struct VariableDensity **variableDensity)
+{
+	if(*variableDensity)
+	{
+		free(*variableDensity);
+		*variableDensity = NULL;
+	}
+}
+
 void copyVariableDensity(const struct VariableDensity *from, struct VariableDensity *to)
 {
 	int s;
@@ -150,3 +159,10 @@ void getFinalFieldOfView(const struct VariableDensity *variableDensity, const fl
 	scalefloats(finalFieldOfView, dimensions, scale);
 }
 
+
+void setToFullySampled(struct VariableDensity *variableDensity)
+{
+	variableDensity->steps = 0;
+	addLinearVariableDensityStep(variableDensity, 0, 1);
+	addLinearVariableDensityStep(variableDensity, 1, 1);
+}

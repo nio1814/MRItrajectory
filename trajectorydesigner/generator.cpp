@@ -5,6 +5,7 @@ extern "C"
 #include "spiral.h"
 #include "radial.h"
 #include "cones.h"
+#include "variabledensity.h"
 }
 
 Generator::Generator(QObject *parent) : QObject(parent)
@@ -63,6 +64,30 @@ void Generator::setAutoUpdate(bool status)
 	m_autoUpdate = status;
 }
 
+bool Generator::autoUpdate()
+{
+	return m_autoUpdate;
+}
+
+void Generator::setVariableDensity(bool status)
+{
+	if(status)
+	{
+		if(!m_variableDensity)
+		{
+			m_variableDensity = newVariableDensity();
+			setToFullySampled(m_variableDensity);
+		}
+	}
+	else
+		deleteVariableDensity(&m_variableDensity);
+}
+
+VariableDensity *Generator::variableDensity()
+{
+	return m_variableDensity;
+}
+
 void Generator::update()
 {
 	int previousReadouts = m_trajectory ? m_trajectory->readouts : 0;
@@ -70,7 +95,7 @@ void Generator::update()
 	switch(m_trajectoryType)
 	{
 		case Spiral:
-			m_trajectory = generateSpirals(NULL, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, m_samplingInterval, m_readouts, Archimedean, 0, m_fieldOfView[0], m_gradientLimit, m_slewRateLimit);
+			m_trajectory = generateSpirals(m_variableDensity, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, m_samplingInterval, m_readouts, Archimedean, 0, m_fieldOfView[0], m_gradientLimit, m_slewRateLimit);
 			break;
 		case Radial:
 		m_trajectory = generateRadial2D(m_fieldOfView[0], m_fieldOfView[1], EllipticalShape, m_spatialResolution[0], m_spatialResolution[1], EllipticalShape, m_fullProjection, 1, m_gradientLimit, m_slewRateLimit, m_samplingInterval);

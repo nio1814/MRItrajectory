@@ -8,6 +8,7 @@ namespace Ui {
 class VariableDensityDesigner;
 }
 
+QT_FORWARD_DECLARE_CLASS(VariableDensity)
 QT_FORWARD_DECLARE_CLASS(VariableDensityPlot)
 
 class VariableDensityDesigner : public QWidget
@@ -15,9 +16,10 @@ class VariableDensityDesigner : public QWidget
 	Q_OBJECT
 
 public:
-	explicit VariableDensityDesigner(QWidget *parent = 0);
+	explicit VariableDensityDesigner(VariableDensity* variableDensity, QWidget *parent = 0);
 	~VariableDensityDesigner();
-
+signals:
+	void updated();
 private:
 	Ui::VariableDensityDesigner *ui;
 	QPointer<VariableDensityPlot> m_variableDensityPlot;

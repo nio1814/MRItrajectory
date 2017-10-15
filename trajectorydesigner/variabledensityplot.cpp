@@ -9,10 +9,10 @@ extern "C"
 #include "variabledensity.h"
 }
 
-VariableDensityPlot::VariableDensityPlot(QWidget *parent) : QWidget(parent),
-	m_variableDensity(newVariableDensity())
+VariableDensityPlot::VariableDensityPlot(struct VariableDensity *variableDensity, QWidget *parent) : QWidget(parent),
+	m_variableDensity(variableDensity)
 {
-	setFocus();
+	setMouseTracking(true);
 	setAutoFillBackground(true);
 
 	QPalette palette;
@@ -86,32 +86,69 @@ void VariableDensityPlot::paintEvent(QPaintEvent *event)
 void VariableDensityPlot::mouseMoveEvent(QMouseEvent *event)
 {
 	QPointF cursorPoint = event->pos();
-//	qWarning() << cursorPoint;
 
-	m_hoverIndex = None;
-	for(int n=0; n<m_variableDensity->steps; n++)
+	if(m_clicked)
 	{
-		const struct VariableDensityStep* step = &m_variableDensity->step[n];
-		QPointF variableDensityPoint = mapToWindow(QPointF(step->kr, step->scale));
-		QPointF offset = cursorPoint - variableDensityPoint;
-		float distance = offset.manhattanLength();
+		QPointF cursorPointAsDensity = mapToDensity(cursorPoint);
+		cursorPointAsDensity.setX(qMax(cursorPointAsDensity.x(), 0.));
+		cursorPointAsDensity.setX(qMin(cursorPointAsDensity.x(), 1.));
+		cursorPointAsDensity.setY(qMax(cursorPointAsDensity.y(), 0.));
 
-		if(distance<10)
+		if(m_hoverIndex==0)
+			cursorPointAsDensity.setX(0);
+		else if (m_hoverIndex==(m_variableDensity->steps-1))
+			cursorPointAsDensity.setX(1);
+
+		m_variableDensity->step[m_hoverIndex].kr = cursorPointAsDensity.x();
+		m_variableDensity->step[m_hoverIndex].scale = cursorPointAsDensity.y();
+
+		emit updated();
+	} else {
+		m_hoverIndex = None;
+		for(int n=0; n<m_variableDensity->steps; n++)
 		{
-			m_hoverIndex = n;
-//			qWarning() << distance;
-			update();
-			break;
+			const struct VariableDensityStep* step = &m_variableDensity->step[n];
+			QPointF variableDensityPoint = mapToWindow(QPointF(step->kr, step->scale));
+			QPointF offset = cursorPoint - variableDensityPoint;
+			float distance = offset.manhattanLength();
+
+			if(distance<10)
+			{
+				m_hoverIndex = n;
+				break;
+			}
 		}
 	}
+
+	update();
+}
+
+void VariableDensityPlot::mousePressEvent(QMouseEvent *event)
+{
+	Q_UNUSED(event);
+	m_clicked = true;
+}
+
+void VariableDensityPlot::mouseReleaseEvent(QMouseEvent *event)
+{
+	Q_UNUSED(event);
+	m_clicked = false;
 }
 
 QPointF VariableDensityPlot::mapToWindow(QPointF point)
 {
-	float scale = .9;
-	float offsetFactor = (1-scale)*.5;
-	float x = (point.x()*scale + offsetFactor)*width();
-	float y = ((1-point.y())*scale + offsetFactor)*height();
+	float offFactor = offsetFactor();
+	float x = (point.x()*m_scale + offFactor)*width();
+	float y = ((1-point.y())*m_scale + offFactor)*height();
+
+	return QPointF(x,y);
+}
+
+QPointF VariableDensityPlot::mapToDensity(QPointF point)
+{
+	float offFactor = offsetFactor();
+	float x = (point.x()/width()-offFactor)/m_scale;
+	float y = 1 - (point.y()/height()-offFactor)/m_scale;
 
 	return QPointF(x,y);
 }
@@ -129,6 +166,11 @@ void VariableDensityPlot::drawLine(QPointF point1, QPointF point2, const QPen& p
 void VariableDensityPlot::addPoint(float kr, float scale)
 {
 	addLinearVariableDensityStep(m_variableDensity, kr, scale);
+}
+
+float VariableDensityPlot::offsetFactor()
+{
+	return (1-m_scale)*.5;
 }
 
 

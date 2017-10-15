@@ -28,6 +28,9 @@ public slots:
 	void setSpatialResolution(float spatialResolution, int axis);
 	void setReadoutDuration(float readoutDuration);
 	void setAutoUpdate(bool status);
+	bool autoUpdate();
+	void setVariableDensity(bool status);
+	VariableDensity *variableDensity();
 	void update();
 private:
 	bool m_autoUpdate = true;

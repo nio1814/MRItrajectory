@@ -36,10 +36,12 @@ struct VariableDensity
 };
 
 struct VariableDensity* newVariableDensity();
+void deleteVariableDensity(struct VariableDensity **variableDensity);
 
 void copyVariableDensity(const struct VariableDensity *from, struct VariableDensity *to);
 
-//void deleteVd(struct Vd *v);
+void setToFullySampled(struct VariableDensity* variableDensity);
+
 float getScale(const struct VariableDensity *v, float kr);
 float getFinalScale(const struct VariableDensity *v);
 //void getFovComp(struct Vd *v, float kr, float *fov);

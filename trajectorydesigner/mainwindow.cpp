@@ -22,8 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
-	m_generator(new Generator),
-	m_variableDensityDesigner(new VariableDensityDesigner)
+	m_generator(new Generator)
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
@@ -245,10 +244,24 @@ void MainWindow::setAutoUpdate(bool status)
 
 void MainWindow::setVariableDensity(bool status)
 {
+	m_generator->setVariableDensity(status);
 	if(status)
+	{
+		if(!m_variableDensityDesigner)
+		{
+			m_variableDensityDesigner = new VariableDensityDesigner(m_generator->variableDensity());
+			connect(m_variableDensityDesigner, &VariableDensityDesigner::updated, [=]()
+			{
+				if(m_generator->autoUpdate())
+					m_generator->update();
+			});
+		}
 		m_variableDensityDesigner->show();
+	}
 	else
+	{
 		m_variableDensityDesigner->hide();
+	}
 }
 
 void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
