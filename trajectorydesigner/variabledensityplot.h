@@ -15,6 +15,8 @@ public slots:
 protected:
 	void paintEvent(QPaintEvent *event);
 private:
+	QPointF mapToWindow(QPointF point);
+
 	QVector<QPointF> m_points = {{0,1}, {1,1}};
 };
 

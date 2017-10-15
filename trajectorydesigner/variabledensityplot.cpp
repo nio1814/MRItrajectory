@@ -18,8 +18,9 @@ void VariableDensityPlot::paintEvent(QPaintEvent *event)
 	QPainter painter(this);
 
 	QPen pen;
+	pen.setColor(Qt::white);
 	pen.setColor(Qt::yellow);
-	pen.setWidth(10);
+	pen.setWidth(5);
 	painter.setPen(pen);
 	QLinearGradient gradient;
 	painter.setBrush(gradient);
@@ -27,16 +28,23 @@ void VariableDensityPlot::paintEvent(QPaintEvent *event)
 	for(int n=0; n<m_points.size(); n++)
 	{
 		QPainterPath path;
-		float x = m_points[n].x()*width();
-		float y = (1-m_points[n].y())*height();
-		path.addEllipse(x, y, 5, 5);
+		QPointF pointCurrent = mapToWindow(m_points[n]);
+		path.addEllipse(pointCurrent, 5, 5);
 		painter.drawPath(path);
-		pointPrevious.setX(x);
-		pointPrevious.setY(y);
-		QPointF pointCurrent(x,y);
 		if(n)
 			painter.drawLine(pointPrevious, pointCurrent);
+		pointPrevious = pointCurrent;
 	}
+}
+
+QPointF VariableDensityPlot::mapToWindow(QPointF point)
+{
+	float scale = .9;
+	float offsetFactor = (1-scale)*.5;
+	float x = (point.x()*scale + offsetFactor)*width();
+	float y = (1-point.y() + offsetFactor)*height();
+
+	return QPointF(x,y);
 }
 
 
