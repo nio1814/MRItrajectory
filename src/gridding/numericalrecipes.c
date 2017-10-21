@@ -9,7 +9,8 @@ Copyright (C) 1988-1992 by Cambridge University Press
 */
 float besseli(int n, float x)
 {
-	float ax,ans;
+	float ax;
+	float ans = 0;
 	double y;		/* Accumulate polynomials in double precision */
 
 	switch(n)
@@ -32,5 +33,6 @@ float besseli(int n, float x)
 		default:
 			printf("Invalid bessel order entered\n");
 	}
+
 	return ans;
 }

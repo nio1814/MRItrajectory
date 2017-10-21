@@ -274,7 +274,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	initializeTrajectory(trajectory);
 
 	adjustSpatialResolution(fieldOfView, trajectory->imageDimensions, &spatialResolution);
-	float kr;
+	float kr = 0;
 	float kSpaceMaxRadial = 5/spatialResolution;
 
 	int n;
