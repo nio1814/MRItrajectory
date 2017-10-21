@@ -5,6 +5,7 @@
 #include "timeseriesplot.h"
 #include "plot2d.h"
 #include "variabledensitydesigner.h"
+#include "phantomreconstruction.h"
 extern "C"
 {
 #include "trajectory.h"
@@ -22,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
-	m_generator(new Generator)
+	m_generator(new Generator),
+	m_phantomReconstruction(new PhantomReconstruction)
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
@@ -146,6 +148,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->gridLayout->addWidget(m_gradientsPlot, 0, 1);
 	ui->gridLayout->addWidget(m_slewRatePlot, 1, 1);
 	ui->gridLayout->addWidget(m_trajectoryPlotXZ, 1, 0);
+
+	ui->tabWidget->setCurrentIndex(1);
+	QPointer<QWidget> tab = ui->tabWidget->currentWidget();
+	QScopedPointer<QVBoxLayout> layout(new QVBoxLayout(tab));
+	layout->addWidget(m_phantomReconstruction);
+	tab->setLayout(layout.data());
+
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));

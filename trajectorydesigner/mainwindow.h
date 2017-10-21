@@ -15,6 +15,7 @@ QT_FORWARD_DECLARE_STRUCT(Trajectory)
 QT_FORWARD_DECLARE_CLASS(TimeSeriesPlot)
 QT_FORWARD_DECLARE_CLASS(Plot2D)
 QT_FORWARD_DECLARE_CLASS(VariableDensityDesigner)
+QT_FORWARD_DECLARE_CLASS(PhantomReconstruction)
 
 namespace Ui {
 class MainWindow;
@@ -66,6 +67,7 @@ private:
 	Generator* m_generator;
 	int m_readout = 0;
 	QPointer<VariableDensityDesigner> m_variableDensityDesigner;
+	QPointer<PhantomReconstruction> m_phantomReconstruction;
 };
 
 #endif // MAINWINDOW_H
