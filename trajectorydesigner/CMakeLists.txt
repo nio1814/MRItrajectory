@@ -8,8 +8,13 @@ set(QT_LIBRARIES ${QT_LIBRARIES} Qt5::Widgets)
 find_package(Qwt REQUIRED)
 include_directories(${QWT_INCLUDE_DIR})
 #include_directories(${Qwt_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
+INCLUDE_DIRECTORIES(${FFTW3_INCLUDE_DIR})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/phantom)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/gridding)
+
 set(SOURCE
 	main.cpp
 	mainwindow.cpp
@@ -37,4 +42,4 @@ endif()
 
 
 add_executable(trajectorydesigner ${SOURCE} ${trajectorydesigner_UI})
-target_link_libraries(trajectorydesigner ${QT_LIBRARIES} ${QWT_LIBRARIES} trajectory)
+target_link_libraries(trajectorydesigner ${QT_LIBRARIES} ${QWT_LIBRARIES} trajectory phantom gridding)

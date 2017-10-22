@@ -2,10 +2,11 @@
 #define PHANTOMRECONSTRUCTION_H
 
 #include <QWidget>
-
-#include <memory>
+#include <QPointer>
 
 QT_FORWARD_DECLARE_CLASS(Phantom)
+QT_FORWARD_DECLARE_STRUCT(Trajectory)
+QT_FORWARD_DECLARE_CLASS(QLabel)
 
 class PhantomReconstruction : public QWidget
 {
@@ -16,8 +17,10 @@ public:
 signals:
 
 public slots:
+	void reconstruct(Trajectory *trajectory);
 private:
-	std::shared_ptr<Phantom> m_phantom;
+//	std::shared_ptr<Phantom> m_phantom;
+	QPointer<QLabel> m_imageLabel;
 };
 
 #endif // PHANTOMRECONSTRUCTION_H

@@ -27,6 +27,8 @@ public:
 	complexFloat* signalPointer();
 	std::vector<complexFloat> signal();
 
+	std::vector<int> dimensions();
+
 	void fftShift();
 	FFTplan planFFT(int direction, std::vector<int> outputDimensions);
 	void fft(int direction, std::vector<int> outputDimensions=std::vector<int>());

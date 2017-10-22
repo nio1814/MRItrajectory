@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
 	m_generator(new Generator),
-	m_phantomReconstruction(new PhantomReconstruction)
+	m_phantomReconstruction(new PhantomReconstruction())
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
