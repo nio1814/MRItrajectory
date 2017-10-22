@@ -18,6 +18,8 @@ signals:
 
 public slots:
 	void reconstruct(Trajectory *trajectory);
+protected:
+	void paintEvent(QPaintEvent *event);
 private:
 //	std::shared_ptr<Phantom> m_phantom;
 	QPointer<QLabel> m_imageLabel;

@@ -12,6 +12,7 @@ extern "C"
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QImage>
+#include <QPainter>
 
 PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 	m_imageLabel(new QLabel)
@@ -22,9 +23,13 @@ PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 	palette.setColor(QPalette::Background, Qt::black);
 	setPalette(palette);
 
-	layout()->addWidget(m_imageLabel);
+	QScopedPointer<QVBoxLayout> newLayout(new QVBoxLayout);
+	newLayout->addWidget(m_imageLabel);
+	setLayout(newLayout.data());
 
 //	m_phantom = std::make_shared<Phantom>(fieldOfView.toStdVector());
+	QImage image;
+	m_imageLabel->setPixmap(QPixmap::fromImage(image));
 }
 
 void PhantomReconstruction::reconstruct(Trajectory* trajectory)
@@ -64,4 +69,12 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	QImage image(imageDimensions[0], imageDimensions[1], QImage::Format_Grayscale8);
 	m_imageLabel->setPixmap(QPixmap::fromImage(image));
 	m_imageLabel->adjustSize();
+}
+
+void PhantomReconstruction::paintEvent(QPaintEvent *event)
+{
+	Q_UNUSED(event);
+
+	QPainter painter(this);
+	painter.drawPixmap(0, 0, *m_imageLabel->pixmap());
 }
