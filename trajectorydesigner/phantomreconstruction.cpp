@@ -13,6 +13,7 @@ extern "C"
 #include <QLabel>
 #include <QImage>
 #include <QPainter>
+#include <QDebug>
 
 PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 	m_imageLabel(new QLabel)
@@ -73,7 +74,7 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	}
 	Gridding gridding(trajectory);
 	MRdata* imageReconstructed = gridding.kSpaceToImage(kSpaceData)[0];
-//	imageReconstructed->writeToOctave("phantom.txt");
+	imageReconstructed->writeToOctave("phantom.txt");
 	std::vector<int> imageDimensions = imageReconstructed->dimensions();
 	QVector<float> imageMagnitude;
 	float maxMagnitude = 0;
@@ -84,13 +85,19 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 		imageMagnitude.append(magnitude);
 	}
 
-	QVector<uchar> imageData(imageMagnitude.size());
+	QVector<unsigned char> imageData(imageMagnitude.size());
+	QImage image(imageDimensions[0], imageDimensions[1], QImage::Format_Grayscale8);
 	for(int n=0; n<imageMagnitude.size(); n++)
 	{
-		imageData[n] = qRound(imageMagnitude[n]/maxMagnitude*255);
+		int y = n%imageDimensions[0];
+		int x = n/imageDimensions[0];
+		int value = qRound(imageMagnitude[n]/maxMagnitude*255);
+		QRgb color = qRgb(value, value, value);
+		image.setPixel(x, y, color);
 	}
+//	QByteArray imageArray(imageData.constData(), imageMagnitude.size());
 
-	QImage image(imageData.constData(), imageDimensions[0], imageDimensions[1], QImage::Format_Grayscale8);
+	//image.save("phantom.jpg");
 
 	m_imageLabel->setPixmap(QPixmap::fromImage(image));
 	m_imageLabel->adjustSize();

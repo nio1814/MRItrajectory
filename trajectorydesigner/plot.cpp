@@ -4,6 +4,7 @@
 
 Plot::Plot(int curves, QWidget *parent) : QwtPlot(parent)
 {
+//	setMaximumSize(300, 300);
 	for(int n=0; n<curves; n++)
 	{
 		m_plotCurve.append(QSharedPointer<QwtPlotCurve>::create());

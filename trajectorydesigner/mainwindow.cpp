@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		connect(m_fieldOfViewSpinBox[n], &QSpinBox::editingFinished, [=]{
 			setFieldOfView(m_fieldOfViewSpinBox[n]->value(), n);
 		});
-		m_fieldOfViewSlider[n]->setValue(28);
+		setFieldOfView(28, n);
 	}
 
 	m_spatialResolutionSlider[0] = ui->spatialResolutionXSlider;
@@ -88,7 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	for (int n=0; n<3; n++)
 	{
 		m_spatialResolutionSpinBox[n]->setMinimum(.3);
-		m_spatialResolutionSpinBox[n]->setMaximum(12);
+		m_spatialResolutionSpinBox[n]->setMaximum(5);
 		m_spatialResolutionSlider[n]->setMinimum(m_spatialResolutionSpinBox[n]->minimum()*m_spatialResolutionSliderScale);
 		m_spatialResolutionSlider[n]->setMaximum(m_spatialResolutionSpinBox[n]->maximum()*m_spatialResolutionSliderScale);
 
@@ -98,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		connect(m_spatialResolutionSpinBox[n], &QSpinBox::editingFinished, [=]{
 			setSpatialResolution(m_spatialResolutionSpinBox[n]->value(), n);
 		});
-		m_spatialResolutionSpinBox[n]->setValue(2);
+		setSpatialResolution(2, n);
 	}
 
 	ui->readoutDurationDoubleSpinBox->setMinimum(.128);
