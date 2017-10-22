@@ -172,7 +172,22 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, &Generator::updated, [=](Trajectory* trajectory) {
 		setPlotReadouts(trajectory->readouts-1);
 	});
+
+	connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
+	{
+		if(index==1)
+		{
+			m_phantomReconstruction->setEnabled(true);
+			m_phantomReconstruction->reconstruct(m_generator->trajectory());
+		}
+		else
+			m_phantomReconstruction->setEnabled(false);
+	});
+	ui->tabWidget->setCurrentIndex(0);
+
 	connect(ui->readoutSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
+
+	m_generator->update();
 }
 
 MainWindow::~MainWindow()
@@ -325,3 +340,4 @@ void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 	}
 	m_slewRatePlot->replot();
 }
+

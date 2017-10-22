@@ -23,9 +23,12 @@ PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 	palette.setColor(QPalette::Background, Qt::black);
 	setPalette(palette);
 
-	QScopedPointer<QVBoxLayout> newLayout(new QVBoxLayout);
-	newLayout->addWidget(m_imageLabel);
-	setLayout(newLayout.data());
+	m_imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+	m_imageLabel->setScaledContents(true);
+
+//	QScopedPointer<QVBoxLayout> newLayout(new QVBoxLayout);
+//	newLayout->addWidget(m_imageLabel);
+//	setLayout(newLayout.data());
 
 //	m_phantom = std::make_shared<Phantom>(fieldOfView.toStdVector());
 	std::vector<float> fieldOfView = {28,28};
@@ -37,6 +40,9 @@ PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 
 void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 {
+	if(!isEnabled())
+		return;
+
 	std::vector<float> fieldOfView(std::begin(trajectory->fieldOfView), std::end(trajectory->fieldOfView));
 //	auto phantom = std::unique_ptr<Phantom>(new Phantom(fieldOfView));
 
@@ -97,5 +103,10 @@ void PhantomReconstruction::paintEvent(QPaintEvent *event)
 	Q_UNUSED(event);
 
 	QPainter painter(this);
+	QRect viewport = painter.viewport();
+	QSize imageSize = m_imageLabel->pixmap()->size();
+	imageSize.scale(viewport.size(), Qt::KeepAspectRatio);
+	painter.setViewport(viewport.x(), viewport.y(), imageSize.width(), imageSize.height());
+	painter.setWindow(m_imageLabel->pixmap()->rect());
 	painter.drawPixmap(0, 0, *m_imageLabel->pixmap());
 }
