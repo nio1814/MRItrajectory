@@ -159,6 +159,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
+	connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 	connect(ui->autoUpdateCheckBox, SIGNAL(toggled(bool)), m_generator, SLOT(setAutoUpdate(bool)));

@@ -28,6 +28,9 @@ PhantomReconstruction::PhantomReconstruction(QWidget *parent) : QWidget(parent),
 	setLayout(newLayout.data());
 
 //	m_phantom = std::make_shared<Phantom>(fieldOfView.toStdVector());
+	std::vector<float> fieldOfView = {28,28};
+	m_phantom2D = std::make_shared<Phantom>(fieldOfView);
+
 	QImage image;
 	m_imageLabel->setPixmap(QPixmap::fromImage(image));
 }
@@ -40,7 +43,6 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	std::vector<int> acquisitionSize =
 	{trajectory->readoutPoints, trajectory->readouts};
 
-	Phantom phantom(fieldOfView);
 	MRdata kSpaceData(acquisitionSize, trajectory->dimensions);
 
 	for(int n=0; n<trajectory->readoutPoints; n++)
@@ -53,10 +55,10 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 			int m = trajectory->readoutPoints*r + n;
 			switch (trajectory->dimensions) {
 				case 2:
-					kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
+					kSpaceData.setSignalValue(m, m_phantom2D->fourierDomainSignal(k[0], k[1]));
 					break;
 				case 3:
-				kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1], k[2]));
+//				kSpaceData.setSignalValue(m, m_phantom3D.fourierDomainSignal(k[0], k[1], k[2]));
 					break;
 				default:
 					break;
@@ -65,10 +67,29 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	}
 	Gridding gridding(trajectory);
 	MRdata* imageReconstructed = gridding.kSpaceToImage(kSpaceData)[0];
+//	imageReconstructed->writeToOctave("phantom.txt");
 	std::vector<int> imageDimensions = imageReconstructed->dimensions();
-	QImage image(imageDimensions[0], imageDimensions[1], QImage::Format_Grayscale8);
+	QVector<float> imageMagnitude;
+	float maxMagnitude = 0;
+	foreach(complexFloat value, imageReconstructed->signal())
+	{
+		float magnitude = fabs(value);
+		maxMagnitude = qMax(maxMagnitude, magnitude);
+		imageMagnitude.append(magnitude);
+	}
+
+	QVector<uchar> imageData(imageMagnitude.size());
+	for(int n=0; n<imageMagnitude.size(); n++)
+	{
+		imageData[n] = qRound(imageMagnitude[n]/maxMagnitude*255);
+	}
+
+	QImage image(imageData.constData(), imageDimensions[0], imageDimensions[1], QImage::Format_Grayscale8);
+
 	m_imageLabel->setPixmap(QPixmap::fromImage(image));
 	m_imageLabel->adjustSize();
+
+	update();
 }
 
 void PhantomReconstruction::paintEvent(QPaintEvent *event)
