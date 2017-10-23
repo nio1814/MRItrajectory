@@ -5,6 +5,7 @@
 #include "timeseriesplot.h"
 #include "plot2d.h"
 #include "variabledensitydesigner.h"
+#include "phantomreconstruction.h"
 extern "C"
 {
 #include "trajectory.h"
@@ -22,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui(new Ui::MainWindow),
 	m_trajectoryPlotXZ(new Plot2D()),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
-	m_generator(new Generator)
+	m_generator(new Generator),
+	m_phantomReconstruction(new PhantomReconstruction())
 {
 	ui->setupUi(this);
 	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
@@ -73,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		connect(m_fieldOfViewSpinBox[n], &QSpinBox::editingFinished, [=]{
 			setFieldOfView(m_fieldOfViewSpinBox[n]->value(), n);
 		});
-		m_fieldOfViewSlider[n]->setValue(28);
+		setFieldOfView(28, n);
 	}
 
 	m_spatialResolutionSlider[0] = ui->spatialResolutionXSlider;
@@ -86,7 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	for (int n=0; n<3; n++)
 	{
 		m_spatialResolutionSpinBox[n]->setMinimum(.3);
-		m_spatialResolutionSpinBox[n]->setMaximum(12);
+		m_spatialResolutionSpinBox[n]->setMaximum(5);
 		m_spatialResolutionSlider[n]->setMinimum(m_spatialResolutionSpinBox[n]->minimum()*m_spatialResolutionSliderScale);
 		m_spatialResolutionSlider[n]->setMaximum(m_spatialResolutionSpinBox[n]->maximum()*m_spatialResolutionSliderScale);
 
@@ -96,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		connect(m_spatialResolutionSpinBox[n], &QSpinBox::editingFinished, [=]{
 			setSpatialResolution(m_spatialResolutionSpinBox[n]->value(), n);
 		});
-		m_spatialResolutionSpinBox[n]->setValue(2);
+		setSpatialResolution(2, n);
 	}
 
 	ui->readoutDurationDoubleSpinBox->setMinimum(.128);
@@ -147,9 +149,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->gridLayout->addWidget(m_slewRatePlot, 1, 1);
 	ui->gridLayout->addWidget(m_trajectoryPlotXZ, 1, 0);
 
+	ui->tabWidget->setCurrentIndex(1);
+	QPointer<QWidget> tab = ui->tabWidget->currentWidget();
+	QScopedPointer<QVBoxLayout> layout(new QVBoxLayout(tab));
+	layout->addWidget(m_phantomReconstruction);
+	tab->setLayout(layout.data());
+
+
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
+	connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 	connect(ui->autoUpdateCheckBox, SIGNAL(toggled(bool)), m_generator, SLOT(setAutoUpdate(bool)));
@@ -162,7 +172,22 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, &Generator::updated, [=](Trajectory* trajectory) {
 		setPlotReadouts(trajectory->readouts-1);
 	});
+
+	connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
+	{
+		if(index==1)
+		{
+			m_phantomReconstruction->setEnabled(true);
+			m_phantomReconstruction->reconstruct(m_generator->trajectory());
+		}
+		else
+			m_phantomReconstruction->setEnabled(false);
+	});
+	ui->tabWidget->setCurrentIndex(0);
+
 	connect(ui->readoutSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
+
+	m_generator->update();
 }
 
 MainWindow::~MainWindow()
@@ -315,3 +340,4 @@ void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 	}
 	m_slewRatePlot->replot();
 }
+

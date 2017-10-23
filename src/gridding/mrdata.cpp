@@ -79,6 +79,11 @@ std::vector<complexFloat> MRdata::signal()
 	return m_signal;
 }
 
+std::vector<int> MRdata::dimensions()
+{
+	return m_dimensions;
+}
+
 void MRdata::fftShift()
 {
 	int n;

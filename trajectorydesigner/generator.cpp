@@ -41,6 +41,14 @@ void Generator::setFieldOfView(float fieldOfView, int axis)
 		update();
 }
 
+QVector<float> Generator::fieldOfView()
+{
+	QVector<float> fov(3);
+	memcpy(fov.data(), m_fieldOfView, 3*sizeof(float));
+
+	return fov;
+}
+
 void Generator::setSpatialResolution(float spatialResolution, int axis)
 {
 	bool changed = m_spatialResolution[axis] != spatialResolution;

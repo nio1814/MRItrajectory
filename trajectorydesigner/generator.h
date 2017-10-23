@@ -2,6 +2,7 @@
 #define GENERATOR_H
 
 #include <QObject>
+#include <QVector>
 
 QT_FORWARD_DECLARE_STRUCT(Trajectory)
 QT_FORWARD_DECLARE_STRUCT(Cones)
@@ -25,6 +26,7 @@ public slots:
 	void setTrajectory(TrajectoryType type);
 	Trajectory* trajectory();
 	void setFieldOfView(float fieldOfView, int axis);
+	QVector<float> fieldOfView();
 	void setSpatialResolution(float spatialResolution, int axis);
 	void setReadoutDuration(float readoutDuration);
 	void setAutoUpdate(bool status);
