@@ -25,9 +25,11 @@ void ConesTest::generateTest_data()
 
 	QVector<QPointF> fieldOfViewScale;
 
-	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
+	QTest::newRow("Isotropic - basis store basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
 
-	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+	QTest::newRow("Isotropic - basis store all") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+
+	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << -1 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 
 	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
 

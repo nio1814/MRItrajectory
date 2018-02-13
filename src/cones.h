@@ -35,9 +35,11 @@ struct Cones
 	float *basisGradientWaveforms;
 	float *basisKspaceCoordinates;
 	struct ConesInterpolation interpolation;
+	int useInterpolation;
 };
 
-struct Cones* allocateCones(int bases);
+struct Cones* allocateCones();
+void setNumBases(struct Cones* cones, int bases);
 void freeCones(struct Cones *cones);
 void deleteCones(struct Cones *cones);
 

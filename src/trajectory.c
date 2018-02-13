@@ -551,7 +551,7 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 	int d;
 	for(d=0; d<trajectory->dimensions; d++)
 		coordinates[d] = trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint];
-	if(densityCompensation)
+	if(densityCompensation && trajectory->densityCompensation)
 		*densityCompensation = trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint];
 }
 

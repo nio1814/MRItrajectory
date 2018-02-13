@@ -564,8 +564,16 @@ void makeConesInterpolation(struct Cones *cones)
 	{
 		singleInterleafInterpolation.theta[c] = cones->coneAngles[c];
 //		singleInterleafSchedule.coneIndex[c] = fmin(trajectory->bases, fmax(1,ceil(fabs(singleInterleafSchedule.theta[c])/(M_PI_2)*trajectory->bases)))-1;
-		singleInterleafInterpolation.basis[c] = (1-fabs(1-singleInterleafInterpolation.theta[c]*M_2_PI))*trajectory->bases;
-		singleInterleafInterpolation.cone[c] = c;
+		if(cones->useInterpolation)
+			singleInterleafInterpolation.basis[c] = (1-fabs(1-singleInterleafInterpolation.theta[c]*M_2_PI))*trajectory->bases;
+		else
+		{
+			if(c<cones->numCones/2)
+				i = c;
+			else
+				i = cones->numCones-1-c;
+			singleInterleafInterpolation.basis[c] = i;
+		}
 
 		coneCoverageStart = singleInterleafInterpolation.basis[c]/(1.0*trajectory->bases)*thetaMax;
 		singleInterleafInterpolation.scaleZ[c] = cos(singleInterleafInterpolation.theta[c])/cos(coneCoverageStart);
@@ -611,7 +619,39 @@ void makeConesInterpolation(struct Cones *cones)
 	}
 }
 
+/*
+void calculateConeAngles(const struct Trajectory* trajectory, float** angles, int* numAngles)
+{
+	enum AngleShape elevationAngleFieldOfViewShape = InverseEllipticalShape;
 
+	float kSpaceExtent[2];
+	float initialElevationAngleDelta;
+
+	struct VariableDensity *variableDensity = trajectory->variableDensity;
+
+	float fieldOfView[2] = {trajectory->fieldOfView[2], trajectory->fieldOfView[0]};
+
+	float finalFieldOfView[2];
+
+	int d;
+
+	printf("Number of basis waveforms:\t%d\n", trajectory->bases);
+
+	srand(0);
+
+	for(d=0; d<2; d++)
+		kSpaceExtent[d] = 10/trajectory->spatialResolution[2-d];
+
+	initialElevationAngleDelta = 1/(kSpaceExtent[0]*fieldOfView[0]);
+
+	if(variableDensity)
+		getFinalFieldOfView(variableDensity, fieldOfView, finalFieldOfView, 2);
+	else
+		memcpy(finalFieldOfView, fieldOfView, 2*sizeof(float));
+
+	calculateAngles(initialElevationAngleDelta, M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, angles, NULL, NULL, numAngles);
+}
+*/
 int generateConesBasis(struct Cones *cones)
 {
 	int status = 0;
@@ -619,6 +659,7 @@ int generateConesBasis(struct Cones *cones)
 
 	float kSpaceExtent[2];
 	float initialElevationAngleDelta;
+	float finalElevationAngleDelta;
 	struct Trajectory *trajectory = &cones->trajectory;
 
 	struct VariableDensity *variableDensity = cones->trajectory.variableDensity;
@@ -646,9 +687,10 @@ int generateConesBasis(struct Cones *cones)
 	float **basisGradientRewoundX;
 	float **basisGradientRewoundY;
 	float **basisGradientRewoundZ;
+	float* coneAnglesHalf;
+	int halfNumCones;
 
 	printf("Number of readout points:\t%d\n", trajectory->readoutPoints);
-	printf("Number of basis waveforms:\t%d\n", trajectory->bases);
 
 	srand(0);
 
@@ -659,14 +701,43 @@ int generateConesBasis(struct Cones *cones)
 		kSpaceMax[d] = .5*kSpaceExtent[d];
 	}
 	initialElevationAngleDelta = 1/(kSpaceExtent[0]*fieldOfView[0]);
+	finalElevationAngleDelta = 1/(kSpaceExtent[1]*fieldOfView[1]);
 
 	if(variableDensity)
 		getFinalFieldOfView(variableDensity, fieldOfView, finalFieldOfView, 2);
 	else
 		memcpy(finalFieldOfView, fieldOfView, 2*sizeof(float));
 
-	calculateAngles(initialElevationAngleDelta, M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
+	calculateAngles(initialElevationAngleDelta, M_PI_2-finalElevationAngleDelta, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &coneAnglesHalf, NULL, NULL, &halfNumCones);
 
+	if(trajectory->bases<0)
+	{
+		setNumBases(cones, halfNumCones);
+		cones->useInterpolation = 0;
+	}
+	else
+	{
+		setNumBases(cones, trajectory->bases);
+		cones->useInterpolation = 1;
+	}
+
+	cones->numCones = 2*halfNumCones;
+	cones->coneAngles = (float*)malloc(cones->numCones*sizeof(float));
+	for(d=0; d<cones->numCones; d++)
+	{
+		if(d<halfNumCones)
+		{
+			b = d;
+			cones->coneAngles[d] = coneAnglesHalf[b];
+		}
+		else
+		{
+			b = cones->numCones-1-d;
+			cones->coneAngles[d] = M_PI - coneAnglesHalf[b];
+		}
+	}
+
+	printf("Number of basis waveforms:\t%d\n", trajectory->bases);
 	printf("Number of cones:\t%d\n", cones->numCones);
 
 	cones->basisConeAngles = (float*)malloc(trajectory->bases*sizeof(float));
@@ -683,7 +754,10 @@ int generateConesBasis(struct Cones *cones)
 		float fromElevationAngle = M_PI_2*b/trajectory->bases;
 		float toElevationAngle = M_PI_2*(b+1.0f)/trajectory->bases;
 
-		cones->basisConeAngles[b] = atan2(kSpaceMax[0]*sin(toElevationAngle), kSpaceMax[1]*cos(fromElevationAngle));
+		if(cones->useInterpolation)
+			cones->basisConeAngles[b] = atan2(kSpaceMax[0]*sin(toElevationAngle), kSpaceMax[1]*cos(fromElevationAngle));
+		else
+			cones->basisConeAngles[b] = cones->coneAngles[b];
 
 		fieldOfViewRadial = getExtent(InverseEllipticalShape, cones->basisConeAngles[b], fieldOfView);
 		fieldOfViewCircumferential = getExtent(InverseEllipticalShape, cones->basisConeAngles[b]+M_PI_2, fieldOfView);
@@ -691,11 +765,19 @@ int generateConesBasis(struct Cones *cones)
 		kSpaceMaxRadial = 5/spatialResolutionRadial;
 		elevationAngleParametric = atan2((kSpaceMaxRadial*sin(cones->basisConeAngles[b])*kSpaceExtent[1]),(kSpaceMaxRadial*cos(cones->basisConeAngles[b])*kSpaceExtent[0]));
 
-		scaleZ = cos(elevationAngleParametric)/cos(fromElevationAngle);
-		scaleXY = sin(elevationAngleParametric)/sin(toElevationAngle);
+		if(cones->useInterpolation)
+		{
+			scaleZ = cos(elevationAngleParametric)/cos(fromElevationAngle);
+			scaleXY = sin(elevationAngleParametric)/sin(toElevationAngle);
+		}
+		else
+		{
+			scaleZ = 1;
+			scaleXY = 1;
+		}
 
 		interleavesLow = .01;
-		interleavesHigh = 2*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
+		interleavesHigh = 2*M_PI*kSpaceMaxRadial*fieldOfViewRadial*sin(cones->basisConeAngles[b]);
 
 		cones->basisReadoutPoints[b] = -1;
 		while(interleavesHigh-interleavesLow>.03 && cones->basisReadoutPoints[b]!=trajectory->readoutPoints)
@@ -787,7 +869,7 @@ void generateReadoutWaveforms(int index, const struct Cones* cones, float* gradi
 
 struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int bases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage)
 {
-	struct Cones* cones = allocateCones(bases);
+	struct Cones* cones = allocateCones();
 	struct Trajectory *trajectory = &cones->trajectory;
 	initializeTrajectory(trajectory);
 	int s;
@@ -830,7 +912,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 		trajectory->variableDensity = NULL;
 	generateConesBasis(cones);
 	//saveGradientWaveforms("grad.wav", cones->basisGradientWaveforms, 3, trajectory->bases, trajectory->waveformPoints, trajectory->readoutPoints, fmax(fieldOfViewXY,fieldOfViewZ), maxGradientAmplitude, 4, samplingInterval, "cones", LittleEndian);
-	trajectory->bases = bases;
+//	trajectory->bases = bases;
 	makeConesInterpolation(cones);
 	trajectory->storage = storage;
 	if(storage==StoreBasis)
@@ -858,7 +940,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	return cones;
 }
 
-struct Cones *allocateCones(int bases)
+struct Cones *allocateCones()
 {
 	struct Cones *cones = (struct Cones*)malloc(sizeof(struct Cones));
 
@@ -867,13 +949,18 @@ struct Cones *allocateCones(int bases)
 	cones->basisConeAngles = NULL;
 	cones->basisGradientWaveforms = NULL;
 	cones->basisKspaceCoordinates = NULL;
-
-	cones->basisReadoutPoints = (int*)malloc(bases*sizeof(int));
-	cones->basisWaveformPoints = (int*)malloc(bases*sizeof(int));
-
-	cones->trajectory.bases = bases;
+	cones->basisReadoutPoints = NULL;
+	cones->basisWaveformPoints = NULL;
+	cones->useInterpolation = true;
 
 	return cones;
+}
+
+void setNumBases(struct Cones* cones, int bases)
+{
+	cones->basisReadoutPoints = (int*)malloc(bases*sizeof(int));
+	cones->basisWaveformPoints = (int*)malloc(bases*sizeof(int));
+	cones->trajectory.bases = bases;
 }
 
 void freeCones(struct Cones *cones)
