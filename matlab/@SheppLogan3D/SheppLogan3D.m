@@ -21,7 +21,7 @@
 %  * @version &#8722&#8734.
 classdef SheppLogan3D
 	properties
-		NE = 0;	% number of ellipsoids
+		numEllipsoids = 0;	% number of ellipsoids
 
 		RT = [];
 		d = [];
@@ -70,7 +70,7 @@ classdef SheppLogan3D
 			 E = E(:, [10 4 5 6 1 2 3 8 7 9]);
 		end
 		
-		obj.NE = size(E,1);
+		obj.numEllipsoids = size(E,1);
 
 		obj.d = E(:,[slColx0 slColy0 slColz0]);	% ellipsoid offset 
         
@@ -82,7 +82,7 @@ classdef SheppLogan3D
 		obj.theta = E(:, slColtheta);
 		obj.phi = E(:, slColphi);
 		obj.psi = E(:, slColpsi);
-			for e=1:obj.NE
+			for e=1:obj.numEllipsoids
 			   cphi = cos(obj.phi(e));
 			   sphi = sin(obj.phi(e));
 			   ctheta = cos(obj.theta(e));
