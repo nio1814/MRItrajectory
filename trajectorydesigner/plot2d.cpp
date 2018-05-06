@@ -3,7 +3,7 @@
 #include <qwt_plot_grid.h>
 #include <qwt_plot_curve.h>
 
-Plot2D::Plot2D()
+Plot2D::Plot2D(QWidget *parent) : Plot(1, parent)
 {
 	setCanvasBackground(Qt::black);
 

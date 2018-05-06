@@ -58,6 +58,14 @@ void Generator::setSpatialResolution(float spatialResolution, int axis)
 		update();
 }
 
+QVector<float> Generator::spatialResolution()
+{
+	QVector<float> res(3);
+	memcpy(res.data(), m_spatialResolution, 3*sizeof(float));
+
+	return res;
+}
+
 void Generator::setReadoutDuration(float readoutDuration)
 {
 	bool changed = m_readoutDuration != readoutDuration;

@@ -695,7 +695,7 @@ int generateConesBasis(struct Cones *cones)
 		scaleXY = sin(elevationAngleParametric)/sin(toElevationAngle);
 
 		interleavesLow = .01;
-		interleavesHigh = 2*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
+		interleavesHigh = 8*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
 
 		cones->basisReadoutPoints[b] = -1;
 		while(interleavesHigh-interleavesLow>.03 && cones->basisReadoutPoints[b]!=trajectory->readoutPoints)
@@ -730,6 +730,9 @@ int generateConesBasis(struct Cones *cones)
 			}
 			printf("Basis %d interleaves %f readout points %d\n", b+1, interleaves, cones->basisReadoutPoints[b]);
 		}
+	
+	if(cones->basisReadoutPoints[b]==-1)
+		return -1;
 	}
 
 	trajectory->waveformPoints = 0;

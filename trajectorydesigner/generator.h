@@ -28,6 +28,7 @@ public slots:
 	void setFieldOfView(float fieldOfView, int axis);
 	QVector<float> fieldOfView();
 	void setSpatialResolution(float spatialResolution, int axis);
+	QVector<float> spatialResolution();
 	void setReadoutDuration(float readoutDuration);
 	void setAutoUpdate(bool status);
 	bool autoUpdate();

@@ -1,3 +1,5 @@
+PROJECT(mritrajectory)
+
 set(CMAKE_MODULE_PATH
 	${CMAKE_MODULE_PATH}
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -12,5 +14,7 @@ macro(setCXX11)
 endmacro(setCXX11)
 
 add_subdirectory(src)
-add_subdirectory(matlab)
+if(ENABLE_MATLAB)
+	add_subdirectory(matlab)
+endif(ENABLE_MATLAB)
 add_subdirectory(trajectorydesigner)

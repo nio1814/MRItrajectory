@@ -21,7 +21,7 @@ extern "C"
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	m_trajectoryPlotXZ(new Plot2D()),
+	m_trajectoryPlotXZ(new Plot2D(this)),
 	m_slewRatePlot(new TimeSeriesPlot(3)),
 	m_generator(new Generator),
 	m_phantomReconstruction(new PhantomReconstruction())
@@ -123,6 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	m_trajectoryPlot = new QwtPlot(QwtText("Trajectory Plot"), parent);
 	m_trajectoryPlot->setCanvasBackground(Qt::black);
+//  m_trajectoryPlot->setAxisAutoScale(QwtPlot::xBottom, false);
 	QwtPlotGrid *trajectoryPlotGrid = new QwtPlotGrid;
 	trajectoryPlotGrid->attach(m_trajectoryPlot);
 	trajectoryPlotGrid->setMajorPen(Qt::gray, 0, Qt::DotLine);
@@ -224,6 +225,19 @@ void MainWindow::setSpatialResolution(float spatialResolution, int axis)
 	m_spatialResolutionSlider[axis]->setValue(m_spatialResolutionSliderScale*spatialResolution);
 	m_spatialResolutionSpinBox[axis]->setValue(spatialResolution);
 	m_generator->setSpatialResolution(spatialResolution, axis);
+	QVector<float> spatialResolutions = m_generator->spatialResolution();
+	float minSpatialResolution = spatialResolutions[0];
+	float exent = 10/minSpatialResolution;
+	if(m_trajectoryPlot)
+	{
+		m_trajectoryPlot->setAxisScale(QwtPlot::xBottom, -exent/2, exent/2);
+		m_trajectoryPlot->setAxisScale(QwtPlot::yLeft, -exent/2, exent/2);
+	}
+	if(m_trajectoryPlotXZ)
+	{
+		m_trajectoryPlotXZ->setAxisScale(QwtPlot::xBottom, -exent/2, exent/2);
+		m_trajectoryPlotXZ->setAxisScale(QwtPlot::yLeft, -exent/2, exent/2);
+	}
 }
 
 void MainWindow::setReadoutDuration(float duration)

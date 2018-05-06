@@ -6,7 +6,7 @@
 class Plot2D : public Plot
 {
 public:
-	Plot2D();
+	Plot2D(QWidget *parent);
 
 	void setSamples(QVector<QPointF> samples);
 };
