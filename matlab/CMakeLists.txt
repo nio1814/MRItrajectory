@@ -28,7 +28,7 @@ if(Matlab_FOUND AND NOT WIN32)
 	add_executable(generateSpiral generateSpiral.cpp)
 	target_link_libraries(generateSpiral trajectory)
 
-	add_executable(shepplogan3D shepplogan3D.cpp)
-	target_link_libraries(shepplogan3D trajectory)
+	add_executable(imageForFieldOfView_mex imageForFieldOfView.cpp)
+	target_link_libraries(imageForFieldOfView_mex phantom)
 	
 	endif()
