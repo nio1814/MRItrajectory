@@ -27,4 +27,6 @@ if(Matlab_FOUND AND NOT WIN32)
 
 	add_executable(generateSpiral generateSpiral.cpp)
 	target_link_libraries(generateSpiral trajectory)
+
+	add_subdirectory(mex)
 endif()
