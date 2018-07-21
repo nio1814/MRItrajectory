@@ -1,5 +1,7 @@
 #include "convertendian.h"
 
+#include <stdlib.h>
+
 int inLittleEndian()
 {
 	/* The short value 1 has bytes (1,0) in little-endian mode and (0,1) in big-endian */
@@ -13,7 +15,7 @@ int needEndianSwap(enum Endian endianDesired)
 	enum Endian endianSystem;
 
 	if(inLittleEndian())
-		endianSystem = LittleEndian;
+    endianSystem = LittleEndian;
 	else
 		endianSystem = BigEndian;
 
@@ -42,4 +44,33 @@ void swapArrayEndian(void* buffer, int length, int ptsize)
 	}
 
 	return;
+}
+
+void writeArray(void* array, unsigned long points, int pointSize, FILE* file)
+{
+  if(array)
+  {
+    fwrite(&points, sizeof(unsigned long), 1, file);
+    fwrite(array, pointSize, points, file);
+  }
+  else
+  {
+    points = 0;
+    fwrite(&points, sizeof(unsigned long), 1, file);
+  }
+}
+
+void readArray(void** array, int pointSize, FILE* file, enum Endian endian)
+{
+  unsigned long points;
+  fread(&points, sizeof(unsigned long), 1, file);
+  if(points)
+  {
+    *array = malloc(points*pointSize);
+    fread(*array, pointSize, points, file);
+    if(needEndianSwap(endian))
+      swapArrayEndian(*array, points, pointSize);
+  }
+  else
+    *array = NULL;
 }

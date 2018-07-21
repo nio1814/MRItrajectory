@@ -6,7 +6,7 @@
 
 struct ConesInterpolation
 {
-	int readouts;
+  int numReadouts;
 	int *readout;
 	int *basis;
 	int *cone;
@@ -15,7 +15,7 @@ struct ConesInterpolation
 	float *theta;
 	int *thetaIndex;
 	float *phi;
-	int *interleavesOnCone;
+  int *numInterleavesOnCone;
 	int *interleafOnCone;
 };
 
@@ -23,23 +23,25 @@ enum InterConeCompensation{NoCompensation, Compensation1, Compensation2};
 
 struct Cones
 {
-	struct Trajectory trajectory;
+  struct Trajectory* trajectory;
 	int rotatable;
 	enum InterConeCompensation interconeCompensation;
 	float* coneAngles;
 	float* coneAngleDensityCompensation;
 	int numCones;
 	float* basisConeAngles;
-	int *basisReadoutPoints;
-	int *basisWaveformPoints;
+	int *numBasisReadoutPoints;
+	int *numBasisWaveformPoints;
 	float *basisGradientWaveforms;
 	float *basisKspaceCoordinates;
-	struct ConesInterpolation interpolation;
+  struct ConesInterpolation* interpolation;
 };
 
-struct Cones* allocateCones(int bases);
-void freeCones(struct Cones *cones);
-void deleteCones(struct Cones *cones);
+int saveCones(const char* filename, const struct Cones* cones);
+struct Cones* loadCones(const char* filename, enum Endian endian, enum WaveformStorageType storage);
+
+struct Cones* newCones(int bases);
+void deleteCones(struct Cones **cones);
 
 struct Cones* generateCones(float xyFieldOfView, float zFieldOfView, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int bases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage);
 float* conesBasisGradientWaveform(const struct Cones* cones, int basis, int axis);

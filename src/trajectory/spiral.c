@@ -268,11 +268,9 @@ void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float 
 }
 
 
-struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate)
+struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, float fieldOfView, float spatialResolution, float readoutDuration, int rewindTrajectory, float samplingInterval, int interleavesDesired, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate)
 {
-	struct Trajectory *trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
-	initializeTrajectory(trajectory);
-
+  struct Trajectory *trajectory = newTrajectory();
 	adjustSpatialResolution(fieldOfView, trajectory->imageDimensions, &spatialResolution);
 	float kr = 0;
 	float kSpaceMaxRadial = 5/spatialResolution;
@@ -336,7 +334,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 			if(!readoutDuration)
 			{
 				interleavesTest = interleavesDesired;
-				trajectory->readoutPoints = 1e5;
+        trajectory->numReadoutPoints = 1e5;
 			}
 
 			if(gradientWaveformsTest)
@@ -359,9 +357,9 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
                 else
                 {
 					interleavesHigh = interleavesTest;
-					trajectory->readoutPoints = readoutPointsTest;
-					memcpy(gradientReadoutWaveformsBasis, gradientWaveformsTest, 2*trajectory->readoutPoints*sizeof(float));
-					trajectory->readouts = interleavesTest;
+          trajectory->numReadoutPoints = readoutPointsTest;
+          memcpy(gradientReadoutWaveformsBasis, gradientWaveformsTest, 2*trajectory->numReadoutPoints*sizeof(float));
+          trajectory->numReadouts = interleavesTest;
                 }
             }
             else
@@ -373,10 +371,20 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 				interleavesHigh = interleavesLow;
         }
 
-	float* gradientWaveformsBasis[2];
-	traverseKspaceToZero(gradientReadoutWaveformsBasis, &gradientReadoutWaveformsBasis[trajectory->readoutPoints], NULL, trajectory->readoutPoints, samplingInterval, maxGradientAmplitude, maxSlewRate, &gradientWaveformsBasis[0], &gradientWaveformsBasis[1], NULL, &trajectory->waveformPoints);
+    float* gradientWaveformsBasis[2];
+    if(rewindTrajectory)
+    {
 
-	allocateTrajectory(trajectory, trajectory->readoutPoints, trajectory->waveformPoints, 2, 1, trajectory->readouts, StoreAll);
+      traverseKspaceToZero(gradientReadoutWaveformsBasis, &gradientReadoutWaveformsBasis[trajectory->numReadoutPoints], NULL, trajectory->numReadoutPoints, samplingInterval, maxGradientAmplitude, maxSlewRate, &gradientWaveformsBasis[0], &gradientWaveformsBasis[1], NULL, &trajectory->numWaveformPoints);
+    }
+    else
+    {
+      gradientWaveformsBasis[0] = gradientReadoutWaveformsBasis;
+      gradientWaveformsBasis[1] = &gradientReadoutWaveformsBasis[trajectory->numReadoutPoints];
+      trajectory->numWaveformPoints = trajectory->numReadoutPoints;
+    }
+
+  allocateTrajectory(trajectory, trajectory->numReadoutPoints, trajectory->numWaveformPoints, 2, 1, trajectory->numReadouts, STORE_ALL);
 	trajectory->imageDimensions[1] = trajectory->imageDimensions[0];
 	for(n=0; n<2; n++)
 	{
@@ -387,17 +395,17 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 	trajectory->variableDensity = variableDensity;
 	trajectory->maxGradientAmplitude = maxGradientAmplitude;
 	trajectory->maxSlewRate = maxSlewRate;
-	trajectory->preReadoutPoints = 0;
+  trajectory->numPreReadoutPoints = 0;
 	rotateBasis(gradientWaveformsBasis[0], gradientWaveformsBasis[1], trajectory, 2*M_PI);
 
-	for(n=0; n<trajectory->readouts; n++)
+  for(n=0; n<trajectory->numReadouts; n++)
 	{
-		float* gx = &trajectory->gradientWaveforms[2*n*trajectory->waveformPoints];
-		float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->waveformPoints];
+    float* gx = &trajectory->gradientWaveforms[2*n*trajectory->numWaveformPoints];
+    float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->numWaveformPoints];
 
-		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
-		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
-		calcSpiralDcf(gx, gy, kx, ky, trajectory->readoutPoints, &trajectory->densityCompensation[n*trajectory->readoutPoints]);
+    float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->numReadoutPoints];
+    float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->numReadoutPoints];
+    calcSpiralDcf(gx, gy, kx, ky, trajectory->numReadoutPoints, &trajectory->densityCompensation[n*trajectory->numReadoutPoints]);
 	}
 
     return trajectory;

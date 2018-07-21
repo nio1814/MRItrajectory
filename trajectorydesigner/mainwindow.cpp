@@ -113,8 +113,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	});
 	setReadoutDuration(8);
 
-	ui->readoutsSlider->setEnabled(false);
-	ui->readoutsSpinBox->setEnabled(false);
+  ui->readoutsSlider->setEnabled(false);
+  ui->readoutsSpinBox->setEnabled(false);
 //	ui->readoutsSlider->setMinimum(1);
 //	ui->readoutsSpinBox->setMinimum(ui->readoutsSlider->minimum());
 //	connect(ui->readoutsSlider, &QSlider::valueChanged, [=](int value){
@@ -171,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->updatePushButton, SIGNAL(clicked()), m_generator, SLOT(update()));
 
 	connect(m_generator, &Generator::updated, [=](Trajectory* trajectory) {
-		setPlotReadouts(trajectory->readouts-1);
+    setPlotReadouts(trajectory->numReadouts-1);
 	});
 
 	connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
@@ -186,7 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	});
 	ui->tabWidget->setCurrentIndex(0);
 
-	connect(ui->readoutSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
+  connect(ui->readoutsSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
 
 	m_generator->update();
 }
@@ -249,20 +249,20 @@ void MainWindow::setReadoutDuration(float duration)
 
 void MainWindow::setReadouts(int readouts)
 {
-	ui->readoutsSlider->setValue(readouts);
-	ui->readoutsSpinBox->setValue(readouts);
+  ui->readoutsSlider->setValue(readouts);
+  ui->readoutsSpinBox->setValue(readouts);
 }
 
 void MainWindow::setPlotReadouts(int readouts)
 {
-	ui->readoutSlider->setMaximum(readouts);
-	ui->readoutSpinBox->setMaximum(readouts);
+  ui->readoutsSlider->setMaximum(readouts);
+  ui->readoutSpinBox->setMaximum(readouts);
 }
 
 void MainWindow::setReadout(int readout)
 {
-	ui->readoutSlider->setValue(readout);
-	ui->readoutSpinBox->setValue(readout);
+  ui->readoutsSlider->setValue(readout);
+  ui->readoutSpinBox->setValue(readout);
 	bool changed = m_readout != readout;
 	m_readout = readout;
 
@@ -308,11 +308,11 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 	QVector<QPointF> coordinatesXY;
 	QVector<QPointF> coordinatesXZ;
 	float kSpaceCoordinates[3];
-	for(int n=0; n<trajectory->readoutPoints; n++)
+  for(int n=0; n<trajectory->numReadoutPoints; n++)
 	{
 		trajectoryCoordinates(n, m_readout, trajectory, kSpaceCoordinates, NULL);
 		coordinatesXY.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
-		if(trajectory->dimensions>2)		coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
+    if(trajectory->numDimensions>2)		coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
 	}
 
 	m_trajectoryCurve->setSamples(coordinatesXY);
@@ -326,11 +326,11 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 {
 	QVector<QPointF> coordinates;
-	for(int d=0; d<trajectory->dimensions; d++)
+  for(int d=0; d<trajectory->numDimensions; d++)
 	{
 		coordinates.clear();
 		float* waveform = trajectoryGradientWaveform(trajectory, m_readout, d);
-		for(int n=0; n<trajectory->waveformPoints; n++)
+    for(int n=0; n<trajectory->numWaveformPoints; n++)
 		{
 			float t = n*trajectory->samplingInterval*1e3;
 			coordinates.append(QPointF(t,waveform[n]));
@@ -343,12 +343,12 @@ void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 
 void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 {
-	m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->waveformPoints-1);
-	for(int d=0; d<trajectory->dimensions; d++)
+  m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->numWaveformPoints-1);
+  for(int d=0; d<trajectory->numDimensions; d++)
 	{
 		float* gradientWaveform = trajectoryGradientWaveform(trajectory, m_readout, d);
 		QVector<double> slew;
-		for(int n=0; n<trajectory->waveformPoints-1; n++)
+    for(int n=0; n<trajectory->numWaveformPoints-1; n++)
 			slew.append((gradientWaveform[n+1]-gradientWaveform[n])/trajectory->samplingInterval);
 		m_slewRatePlot->setSeriesData(slew, d);
 	}

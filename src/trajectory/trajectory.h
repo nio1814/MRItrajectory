@@ -21,22 +21,25 @@ To distribute this file, substitute the full license for the above reference.
 #include "variabledensity.h"
 #include "convertendian.h"
 
-enum WaveformStorageType {StoreBasis, StoreAll};
+#include <stdio.h>
+
+enum WaveformStorageType {StoreBasis, STORE_ALL};
+enum TrajectoryType {SPIRAL, RADIAL, RADIAL3D, CONES, RINGS};
 
 struct Trajectory
 {
-	int dimensions;
+  int numDimensions;
 	int imageDimensions[3];
 	float spatialResolution[3];
 	float fieldOfView[3];
-	int readouts;
-	int bases;
+  int numReadouts;
+  int numBases;
 	float maxGradientAmplitude;
 	float maxReadoutGradientAmplitude;
 	float maxSlewRate;
-	int waveformPoints;
-	int preReadoutPoints;
-	int readoutPoints;
+	int numWaveformPoints;
+  int numPreReadoutPoints;
+  int numReadoutPoints;
 	float samplingInterval;
 	float *densityCompensation;
 	short *gradientWaveformsShort;
@@ -44,15 +47,22 @@ struct Trajectory
 	float *kSpaceCoordinates;
 	enum WaveformStorageType storage;
 	struct VariableDensity *variableDensity;
+  enum TrajectoryType type;
 };
 
-void initializeTrajectory(struct Trajectory* trajectory);
+struct Trajectory* newTrajectory();
+
+/*!
+ * \brief Delete a trajectory from memory
+ * \param trajectory  Trajectory to delete
+ */
+void deleteTrajectory(struct Trajectory** trajectory);
 
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution);
 
 void gradientToKspace(float* gradient, float* k, float samplingInterval, int length);
 
-void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int waveformPoints, int dimensions, int bases, int readouts, enum WaveformStorageType storage);
+void allocateTrajectory(struct Trajectory *trajectory, int numReadoutPoints, int numWaveformPoints, int dimensions, int numBases, int numReadouts, enum WaveformStorageType storage);
 
 void traverseKspaceFromWaveform(float *gradientOriginalX, float *gradientOriginalY, float *gradientOriginalZ, int pointsOriginal, float *kSpaceCoordinatesFinal, float samplingInterval, float maxGradientAmplitude, float maxSlewRate, float **gradientRewoundX, float**gradientRewoundY, float **gradientRewoundZ, int *pointsRewound);
 
@@ -60,9 +70,14 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 
 void gradientWaveformToShort(const float *gradientsFloat, int points, float maxGradientAmplitudeScanner, short* gradientsShort);
 
+int writeTrajectory(FILE* file, const struct Trajectory* trajectory);
 int saveTrajectory(const char* filename, const struct Trajectory* trajectory);
 
-int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int readoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
+struct Trajectory* readTrajectory(FILE* file, enum Endian endian);
+struct Trajectory* loadTrajectory(const char *filename, enum Endian endian);
+enum TrajectoryType loadTrajectoryType(const char *filename);
+
+int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int numReadoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
 
 void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float *coordinates, float *densityCompensation);
 

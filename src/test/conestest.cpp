@@ -27,18 +27,18 @@ void ConesTest::generateTest_data()
 
 	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
 
-	QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+  QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-	QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+  QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-	QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+  QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
 	fieldOfViewScale.append(QPointF(0,1));
 	fieldOfViewScale.append(QPointF(2.5,0.5));
 
-	QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll << fieldOfViewScale;
+  QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-//	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << StoreAll;
+//	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL;
 }
 
 void ConesTest::generateTest()
@@ -69,7 +69,7 @@ void ConesTest::generateTest()
 	}
 
 	struct Cones* cones = generateCones(fieldOfView[0], fieldOfView[1], variableDensity, spatialResolution[0], spatialResolution[1], bases, rotatable, interconeCompensationType, duration, samplingInterval, filterFieldOfView, maxGradient, maxSlew, storage);
-	struct Trajectory *trajectory = &cones->trajectory;
+  struct Trajectory *trajectory = cones->trajectory;
 	saveTrajectory("cones.trj", trajectory);
 
 	qWarning() << "Verifying parameters";
@@ -80,19 +80,19 @@ void ConesTest::generateTest()
 	QVERIFY(qAbs(trajectory->spatialResolution[0]-spatialResolution[0]) < threshold);
 	QVERIFY(qAbs(trajectory->spatialResolution[1]- spatialResolution[0]) < threshold);
 	QVERIFY(qAbs(trajectory->spatialResolution[2]- spatialResolution[1]) < threshold);
-	QCOMPARE(trajectory->bases, bases);
+  QCOMPARE(trajectory->numBases, bases);
 
 	float maxReadoutGradient = 1/(filterFieldOfView*samplingInterval*4257);
 	int waveforms;
 	if(storage==StoreBasis)
-		waveforms = trajectory->bases;
+    waveforms = trajectory->numBases;
 	else
-		waveforms = trajectory->readouts;
+		waveforms = trajectory->numReadouts;
 
 	char message[128];
 	float kxyMax;
 	float kzMax;
-	struct ConesInterpolation* schedule = &cones->interpolation;
+  struct ConesInterpolation* schedule = cones->interpolation;
 	for(int r=0; r<waveforms; r++)
 	{
 		int b;
@@ -100,17 +100,17 @@ void ConesTest::generateTest()
 			b = r;
 		else
 			b = schedule->basis[r];
-		for(int n=0; n<trajectory->waveformPoints; n++)
+		for(int n=0; n<trajectory->numWaveformPoints; n++)
 		{
 			float gradientMagnitude = 0;
-			for(int d=0; d<trajectory->dimensions; d++)
+			for(int d=0; d<trajectory->numDimensions; d++)
 			{
 				float* gradientWaveform = trajectoryGradientWaveform(trajectory, r, d);
 				float gradientValue = gradientWaveform[n];
 				gradientMagnitude += gradientValue*gradientValue;
 			}
 			gradientMagnitude = qSqrt(gradientMagnitude);
-			if(n<cones->basisReadoutPoints[b])
+      if(n<cones->numBasisReadoutPoints[b])
 			{
 				sprintf(message, "|g| %f limit %f\n", gradientMagnitude, maxReadoutGradient);
 				QVERIFY2(gradientMagnitude < maxReadoutGradient+.01, message);

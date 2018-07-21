@@ -46,7 +46,7 @@ void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float 
  \param[in]	gmax	Gradient amplitude limit (G/cm)
  \param[in]	smax	Slew rate limit (G/cm/s)
 */
-struct Trajectory* generateSpirals(struct VariableDensity *vd, float fieldOfView, float spatialResolution, float readoutDuration, float samplingInterval, int interleaves, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float gmax, float smax);
+struct Trajectory* generateSpirals(struct VariableDensity *vd, float fieldOfView, float spatialResolution, float readoutDuration, int rewindTrajectory, float samplingInterval, int interleaves, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float gmax, float smax);
 
 
 /** @} */

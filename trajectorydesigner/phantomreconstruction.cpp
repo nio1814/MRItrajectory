@@ -48,19 +48,19 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 //	auto phantom = std::unique_ptr<Phantom>(new Phantom(fieldOfView));
 
 	std::vector<int> acquisitionSize =
-	{trajectory->readoutPoints, trajectory->readouts};
+	{trajectory->numReadoutPoints, trajectory->numReadouts};
 
-	MRdata kSpaceData(acquisitionSize, trajectory->dimensions);
+	MRdata kSpaceData(acquisitionSize, trajectory->numDimensions);
 
-	for(int n=0; n<trajectory->readoutPoints; n++)
+	for(int n=0; n<trajectory->numReadoutPoints; n++)
 	{
-		for(int r=0; r<trajectory->readouts; r++)
+		for(int r=0; r<trajectory->numReadouts; r++)
 		{
 			float k[3];
 			float densityCompensation;
 			trajectoryCoordinates(n, r, trajectory, k, &densityCompensation);
-			int m = trajectory->readoutPoints*r + n;
-			switch (trajectory->dimensions) {
+			int m = trajectory->numReadoutPoints*r + n;
+			switch (trajectory->numDimensions) {
 				case 2:
 					kSpaceData.setSignalValue(m, m_phantom2D->fourierDomainSignal(k[0], k[1]));
 					break;
@@ -75,7 +75,7 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	Gridding gridding(trajectory);
 	MRdata* imageReconstructed = gridding.kSpaceToImage(kSpaceData)[0];
 	imageReconstructed->writeToOctave("phantom.txt");
-	std::vector<int> imageDimensions = imageReconstructed->dimensions();
+  std::vector<int> imageDimensions = imageReconstructed->dimensions();
 	QVector<float> imageMagnitude;
 	float maxMagnitude = 0;
 	foreach(complexFloat value, imageReconstructed->signal())

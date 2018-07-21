@@ -51,7 +51,7 @@ void SpiralTest::testGenerate()
 			addLinearVariableDensityStep(variableDensity, fieldOfViewScalePoint.x(), fieldOfViewScalePoint.y());
 		}
 	}
-	Trajectory* spiral = generateSpirals(variableDensity, fieldOfView, spatialResolution, duration, samplingInterval, 0, Archimedean , 0, fieldOfView, maxGradient, maxSlew);
+  Trajectory* spiral = generateSpirals(variableDensity, fieldOfView, spatialResolution, duration, 1, samplingInterval, 0, Archimedean , 0, fieldOfView, maxGradient, maxSlew);
 
 	saveTrajectory("spiral.trj", spiral);
 
@@ -62,10 +62,10 @@ void SpiralTest::testGenerate()
 		QCOMPARE(spiral->fieldOfView[d], fieldOfView);
 		QVERIFY(qAbs(spiral->spatialResolution[d]-spatialResolution) < threshold);
 	}
-	QCOMPARE(spiral->bases, 1);
+  QCOMPARE(spiral->numBases, 1);
 
 	float maxReadoutGradient = qMin(1/(fieldOfView*samplingInterval*4257), maxGradient);
-	int waveforms = spiral->storage==StoreAll ? spiral->readouts : spiral->bases;
+  int waveforms = spiral->storage==STORE_ALL ? spiral->numReadouts : spiral->numBases;
 
 	QStringList readoutGradientErrorMessages;
 	bool readoutGradientExceeded = false;
@@ -74,16 +74,16 @@ void SpiralTest::testGenerate()
 	float krMax = 0;
 	for(int r=0; r<waveforms; r++)
 	{
-		for(int n=0; n<spiral->waveformPoints; n++)
+    for(int n=0; n<spiral->numWaveformPoints; n++)
 		{
 			float gradientMagnitude = 0;
-			for(int d=0; d<spiral->dimensions; d++)
+      for(int d=0; d<spiral->numDimensions; d++)
 			{
-				float gradientValue = spiral->gradientWaveforms[(d+2*r)*spiral->waveformPoints+n];
+        float gradientValue = spiral->gradientWaveforms[(d+2*r)*spiral->numWaveformPoints+n];
 				gradientMagnitude += gradientValue*gradientValue;
 			}
 			gradientMagnitude = qSqrt(gradientMagnitude);
-			if(n<spiral->readoutPoints)
+      if(n<spiral->numReadoutPoints)
 			{
 				sprintf(message, "|g[%d]| %f limit %f\n", n, gradientMagnitude, maxReadoutGradient);
 //				QVERIFY2(gradientMagnitude < maxReadoutGradient+.01, message);
@@ -127,21 +127,21 @@ void SpiralTest::testPhantom()
 	{
 		fieldOfView.push_back(28);
 	}
-	Trajectory* spiral = generateSpirals(NULL, fieldOfView[0], 2, 5e-3, 4e-6, 0, Archimedean , 0, fieldOfView[0], 4, 15000);
+  Trajectory* spiral = generateSpirals(NULL, fieldOfView[0], 2, 5e-3, 1, 4e-6, 0, Archimedean , 0, fieldOfView[0], 4, 15000);
 
 	std::vector<int> acquisitionSize;
-	acquisitionSize.push_back(spiral->readoutPoints);
-	acquisitionSize.push_back(spiral->readouts);
+  acquisitionSize.push_back(spiral->numReadoutPoints);
+  acquisitionSize.push_back(spiral->numReadouts);
 
 	Phantom phantom(fieldOfView);
 	MRdata kSpaceData(acquisitionSize, 2);
-	for(int n=0; n<spiral->readoutPoints; n++)
+  for(int n=0; n<spiral->numReadoutPoints; n++)
 	{
-		for(int r=0; r<spiral->readouts; r++)
+    for(int r=0; r<spiral->numReadouts; r++)
 		{
 			float k[2];
 			trajectoryCoordinates(n, r, spiral, k, NULL);
-			int m = spiral->readoutPoints*r + n;
+      int m = spiral->numReadoutPoints*r + n;
 			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
 //			kSpaceData.setSignalValue(m, 1);
 		}

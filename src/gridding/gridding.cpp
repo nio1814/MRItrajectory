@@ -56,7 +56,7 @@ Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int ke
 	}
 
 	m_deapodization.resize(numDimensions());
-	for(int d=0; d<m_trajectory->dimensions; d++)
+  for(int d=0; d<m_trajectory->numDimensions; d++)
 	{
 		for(int n=0; n<m_gridDimensions[d]; n++)
 		{
@@ -78,7 +78,7 @@ Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int ke
 std::vector<int> Gridding::imageDimensions()
 {
 	std::vector<int> imageDims;
-	for(int d=0; d<m_trajectory->dimensions; d++)
+  for(int d=0; d<m_trajectory->numDimensions; d++)
 		imageDims.push_back(m_trajectory->imageDimensions[d]);
 
 	return imageDims;
@@ -165,8 +165,8 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 	else
 	{
 		std::vector<int> trajectorySize(2);
-		trajectorySize[0] = m_trajectory->readoutPoints;
-		trajectorySize[1] = m_trajectory->readouts;
+    trajectorySize[0] = m_trajectory->numReadoutPoints;
+    trajectorySize[1] = m_trajectory->numReadouts;
 		ungriddedData = new MRdata(trajectorySize, numDimensions());
 		griddedData = &inputData;
 	}
@@ -184,8 +184,8 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 			ungriddedDataValue = ungriddedData->signalValue(n);
 		else
 			ungriddedDataValue = 0;
-		int readoutPoint = n%m_trajectory->readoutPoints;
-		int readout = n/m_trajectory->readoutPoints;
+    int readoutPoint = n%m_trajectory->numReadoutPoints;
+    int readout = n/m_trajectory->numReadoutPoints;
 
 		float densityCompensation;
 		trajectoryCoordinates(readoutPoint, readout, m_trajectory, ungriddedPoint.data(), &densityCompensation);
@@ -241,7 +241,7 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 
 MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 {
-	std::vector<int> imageDimensions(m_trajectory->imageDimensions, &m_trajectory->imageDimensions[m_trajectory->dimensions]);
+  std::vector<int> imageDimensions(m_trajectory->imageDimensions, &m_trajectory->imageDimensions[m_trajectory->numDimensions]);
 	MRdata* griddedData = new MRdata(imageDimensions, numDimensions());
 	float imageScale = 1.0f/std::sqrt(griddedData->points());
 
@@ -257,8 +257,8 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 	std::vector<int> r(3);
 	for(size_t u=0; u<ungriddedData.points(); u++)
 	{
-		int readoutPoint = u%m_trajectory->readoutPoints;
-		int readout = u/m_trajectory->readoutPoints;
+    int readoutPoint = u%m_trajectory->numReadoutPoints;
+    int readout = u/m_trajectory->numReadoutPoints;
 		float densityCompensation;
 		trajectoryCoordinates(readoutPoint, readout, m_trajectory, k, &densityCompensation);
 		complexFloat ungriddedValue = densityCompensation*ungriddedData.signalValue(u);
@@ -335,7 +335,7 @@ MRdata *Gridding::imageToKspace(const MRdata &image)
 
 int Gridding::numDimensions()
 {
-	return m_trajectory->dimensions;
+  return m_trajectory->numDimensions;
 }
 
 std::vector<int> Gridding::gridDimensions()
