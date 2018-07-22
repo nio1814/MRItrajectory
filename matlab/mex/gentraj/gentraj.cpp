@@ -257,18 +257,18 @@ void mexFunction(int numOutputs, mxArray *outputs[],
     case CONES:
       {
         Cones* cones = generator.getConesTrajectory();
-        copyToStruct(trajectoryStruct, "basisReadoutLengths", cones->numBasisReadoutPoints, trajectory->bases, mxINT32_CLASS, mxREAL);
+        copyToStruct(trajectoryStruct, "basisReadoutLengths", cones->numBasisReadoutPoints, trajectory->numBases, mxINT32_CLASS, mxREAL);
 
-        memcpy(mxGetData(mxGetField(outputs[0], 0, "basisReadoutLengths")), cones->numBasisReadoutPoints, trajectory->bases*sizeof(int));
+        memcpy(mxGetData(mxGetField(outputs[0], 0, "basisReadoutLengths")), cones->numBasisReadoutPoints, trajectory->numBases*sizeof(int));
 
-        copyToStruct(interpolation, "theta", cones->interpolation.theta, cones->interpolation.readouts, mxSINGLE_CLASS, mxREAL);
-        copyToStruct(interpolation, "xyScale", cones->interpolation.scaleXY, cones->interpolation.readouts, mxSINGLE_CLASS, mxREAL);
-        copyToStruct(interpolation, "zScale", cones->interpolation.scaleZ, cones->interpolation.readouts, mxSINGLE_CLASS, mxREAL);
-        copyToStruct(interpolation, "phi", cones->interpolation.phi, cones->interpolation.readouts, mxSINGLE_CLASS, mxREAL);
-        copyToStruct(interpolation, "basisIndex", cones->interpolation.cone, cones->interpolation.readouts, mxINT32_CLASS, mxREAL);
-        copyToStruct(interpolation, "readoutIndex", cones->interpolation.readout, cones->interpolation.readouts, mxINT32_CLASS, mxREAL);
-        copyToStruct(interpolation, "interleafOnCone", cones->interpolation.interleafOnCone, cones->interpolation.readouts, mxINT32_CLASS, mxREAL);
-        copyToStruct(interpolation, "numInterleavesOnCone", cones->interpolation.interleavesOnCone, cones->interpolation.readouts, mxINT32_CLASS, mxREAL);
+        copyToStruct(interpolation, "theta", cones->interpolation->theta, cones->interpolation->numReadouts, mxSINGLE_CLASS, mxREAL);
+        copyToStruct(interpolation, "xyScale", cones->interpolation->scaleXY, cones->interpolation->numReadouts, mxSINGLE_CLASS, mxREAL);
+        copyToStruct(interpolation, "zScale", cones->interpolation->scaleZ, cones->interpolation->numReadouts, mxSINGLE_CLASS, mxREAL);
+        copyToStruct(interpolation, "phi", cones->interpolation->phi, cones->interpolation->numReadouts, mxSINGLE_CLASS, mxREAL);
+        copyToStruct(interpolation, "basisIndex", cones->interpolation->cone, cones->interpolation->numReadouts, mxINT32_CLASS, mxREAL);
+        copyToStruct(interpolation, "readoutIndex", cones->interpolation->readout, cones->interpolation->numReadouts, mxINT32_CLASS, mxREAL);
+        copyToStruct(interpolation, "interleafOnCone", cones->interpolation->interleafOnCone, cones->interpolation->numReadouts, mxINT32_CLASS, mxREAL);
+        copyToStruct(interpolation, "numInterleavesOnCone", cones->interpolation->numInterleavesOnCone, cones->interpolation->numReadouts, mxINT32_CLASS, mxREAL);
       }
       mxSetField(trajectoryStruct, 0, "interpolation", interpolation);
 			
@@ -278,7 +278,7 @@ void mexFunction(int numOutputs, mxArray *outputs[],
       break;
 	}
 
- mwSize numOutputReadouts = generator.storage()==StoreAll ? trajectory->numReadouts : trajectory->bases;
+ mwSize numOutputReadouts = generator.storage()==STORE_ALL ? trajectory->numReadouts : trajectory->numBases;
   mwSize trajectoryDimensions[] = {(mwSize)trajectory->numReadoutPoints, (mwSize)trajectory->numDimensions, numOutputReadouts};
   mxSetField(trajectoryStruct, 0, trajectoryFieldName, mxCreateNumericArray(3, trajectoryDimensions, mxSINGLE_CLASS, mxREAL));
         mxArray* array = mxGetField(trajectoryStruct, 0, trajectoryFieldName);

@@ -22,11 +22,11 @@ if(Matlab_FOUND AND NOT WIN32)
 
 	set(CONES_SOURCE generateCones.cpp)
 
-	add_executable(generateCones ${CONES_SOURCE})
-	target_link_libraries(generateCones trajectory)
+#	add_executable(generateCones ${CONES_SOURCE})
+#	target_link_libraries(generateCones trajectory)
 
-	add_executable(generateSpiral generateSpiral.cpp)
-	target_link_libraries(generateSpiral trajectory)
+#	add_executable(generateSpiral generateSpiral.cpp)
+#	target_link_libraries(generateSpiral trajectory)
 
 	add_subdirectory(mex)
 endif()
