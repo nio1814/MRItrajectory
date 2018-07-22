@@ -26,6 +26,7 @@ set(SOURCE
 	variabledensitydesigner.cpp
 	variabledensityplot.cpp
 	phantomreconstruction.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory/trajectorygenerator.cpp
 )
 
 set(CMAKE_AUTOMOC ON)

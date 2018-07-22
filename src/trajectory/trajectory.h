@@ -87,6 +87,12 @@ float* trajectoryGradientWaveform(const struct Trajectory* trajectory, int reado
 
 float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout, int axis);
 
+/*!
+ * \brief Get the density compensation for a single readout
+ * \param trajectory
+ * \param readout Readout index
+ */
+float *trajectoryDensityCompensationWaveform(const struct Trajectory* trajectory, int readout);
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange);

@@ -13,9 +13,19 @@ To distribute this file, substitute the full license for the above reference.
 #ifndef MATHOPS_H
 #define MATHOPS_H
 
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+
 int roundToInteger(float num);
 
 float modulus(float b, float m);
+
+int leastCommonMultiple(int a, int b);
 
 void calculatePhase(float *realdata, float *imagdata, float *phasedata, long npts, float phasestart, float phasescale);
 void calculateMagnitude(float *realdata, float *imagdata, float *magdata, long npts);

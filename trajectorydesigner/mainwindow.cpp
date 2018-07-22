@@ -26,10 +26,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_generator(new Generator),
 	m_phantomReconstruction(new PhantomReconstruction())
 {
-	ui->setupUi(this);
-	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
-	ui->trajectoryComboBox->addItem("Radial", Generator::Radial);
-	ui->trajectoryComboBox->addItem("Cones", Generator::Cones3D);
+  ui->setupUi(this);
+  ui->trajectoryComboBox->addItem("Spiral", SPIRAL);
+  ui->trajectoryComboBox->addItem("Radial", RADIAL);
+  ui->trajectoryComboBox->addItem("Cones", CONES);
+  ui->trajectoryComboBox->addItem("Rings", RINGS);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
@@ -38,11 +39,11 @@ MainWindow::MainWindow(QWidget *parent) :
 //		m_generator->setTrajectory(type);
 //	});
 	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index){
-		Generator::TrajectoryType type = static_cast<Generator::TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
+    TrajectoryType type = static_cast<TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
 		qWarning() << type;
 		bool autoUpdate;
 		switch(type) {
-			case Generator::Cones3D:
+      case CONES:
 				autoUpdate = false;
 				break;
 			default:
@@ -160,7 +161,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
-	connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
+  connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 	connect(ui->autoUpdateCheckBox, SIGNAL(toggled(bool)), m_generator, SLOT(setAutoUpdate(bool)));
@@ -174,21 +175,21 @@ MainWindow::MainWindow(QWidget *parent) :
     setPlotReadouts(trajectory->numReadouts-1);
 	});
 
-	connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
-	{
-		if(index==1)
-		{
-			m_phantomReconstruction->setEnabled(true);
-			m_phantomReconstruction->reconstruct(m_generator->trajectory());
-		}
-		else
-			m_phantomReconstruction->setEnabled(false);
-	});
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
+  {
+    if(index==1)
+    {
+      m_phantomReconstruction->setEnabled(true);
+      m_phantomReconstruction->reconstruct(m_generator->trajectory());
+    }
+    else
+      m_phantomReconstruction->setEnabled(false);
+  });
 	ui->tabWidget->setCurrentIndex(0);
 
   connect(ui->readoutsSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
 
-	m_generator->update();
+  m_generator->update();
 }
 
 MainWindow::~MainWindow()
@@ -199,17 +200,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateFieldOfViewDisplay()
 {
-	//QWidget* layout;
 	switch(m_generator->trajectoryType())
 	{
-		case Generator::Spiral:
+    case SPIRAL:
+    case RINGS:
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);
 //			layout->hide();
 			break;
-		case Generator::Radial:
+    case RADIAL:
 			break;
-		case Generator::Cones3D:
+    case CONES:
 			break;
+    case RADIAL3D:
+      break;
 	}
 }
 
@@ -288,12 +291,12 @@ void MainWindow::setVariableDensity(bool status)
 	{
 		if(!m_variableDensityDesigner)
 		{
-			m_variableDensityDesigner = new VariableDensityDesigner(m_generator->variableDensity());
+      m_variableDensityDesigner = new VariableDensityDesigner(m_generator->variableDensity());
 			connect(m_variableDensityDesigner, &VariableDensityDesigner::updated, [=]()
 			{
 				if(m_generator->autoUpdate())
 					m_generator->update();
-			});
+      });
 		}
 		m_variableDensityDesigner->show();
 	}

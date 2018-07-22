@@ -601,6 +601,11 @@ float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout
   return &trajectory->kSpaceCoordinates[(axis+trajectory->numDimensions*readout)*trajectory->numReadoutPoints];
 }
 
+float *trajectoryDensityCompensationWaveform(const struct Trajectory *trajectory, int readout)
+{
+  return &trajectory->densityCompensation[trajectory->numReadoutPoints*readout];
+}
+
 void deleteTrajectory(struct Trajectory **trajectory)
 {
   if((*trajectory)->densityCompensation)

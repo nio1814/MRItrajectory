@@ -16,12 +16,11 @@ QT_FORWARD_DECLARE_CLASS(TimeSeriesPlot)
 QT_FORWARD_DECLARE_CLASS(Plot2D)
 QT_FORWARD_DECLARE_CLASS(VariableDensityDesigner)
 QT_FORWARD_DECLARE_CLASS(PhantomReconstruction)
+QT_FORWARD_DECLARE_CLASS(Generator)
 
 namespace Ui {
 class MainWindow;
 }
-
-QT_FORWARD_DECLARE_CLASS(Generator)
 
 class MainWindow : public QMainWindow
 {
@@ -64,7 +63,7 @@ private:
 
 	TimeSeriesPlot* m_slewRatePlot;
 
-	Generator* m_generator;
+  QPointer<Generator> m_generator;
 	int m_readout = 0;
 	QPointer<VariableDensityDesigner> m_variableDensityDesigner;
 	QPointer<PhantomReconstruction> m_phantomReconstruction;
