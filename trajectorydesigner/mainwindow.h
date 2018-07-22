@@ -42,6 +42,7 @@ private slots:
 	void updateTrajectoryPlot(Trajectory* trajectory);
 	void updateGradientsPlot(Trajectory* trajectory);
 	void updateSlewRatePlot(Trajectory* trajectory);
+  void updateReadoutIndex(Trajectory* trajectory);
 
 private:
 	Ui::MainWindow *ui;

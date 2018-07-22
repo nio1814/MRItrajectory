@@ -161,6 +161,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
+  connect(m_generator, &Generator::updated, this, &MainWindow::updateReadoutIndex);
   connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
@@ -187,7 +188,12 @@ MainWindow::MainWindow(QWidget *parent) :
   });
 	ui->tabWidget->setCurrentIndex(0);
 
-  connect(ui->readoutsSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
+  connect(ui->readoutSlider, &QSlider::valueChanged, this, &MainWindow::setReadout);
+  connect(ui->readoutSpinBox, &QSpinBox::editingFinished, [=]
+    {
+      setReadout(ui->readoutSpinBox->value());
+    }
+  );
 
   m_generator->update();
 }
@@ -355,6 +361,14 @@ void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 			slew.append((gradientWaveform[n+1]-gradientWaveform[n])/trajectory->samplingInterval);
 		m_slewRatePlot->setSeriesData(slew, d);
 	}
-	m_slewRatePlot->replot();
+  m_slewRatePlot->replot();
+}
+
+void MainWindow::updateReadoutIndex(Trajectory *trajectory)
+{
+  int maxIndex = trajectory->storage==STORE_ALL ? trajectory->numReadouts : trajectory->numBases;
+  maxIndex--;
+  ui->readoutSlider->setMaximum(maxIndex);
+  ui->readoutSpinBox->setMaximum(maxIndex);
 }
 

@@ -374,7 +374,6 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
     float* gradientWaveformsBasis[2];
     if(rewindTrajectory)
     {
-
       traverseKspaceToZero(gradientReadoutWaveformsBasis, &gradientReadoutWaveformsBasis[trajectory->numReadoutPoints], NULL, trajectory->numReadoutPoints, samplingInterval, maxGradientAmplitude, maxSlewRate, &gradientWaveformsBasis[0], &gradientWaveformsBasis[1], NULL, &trajectory->numWaveformPoints);
     }
     else
