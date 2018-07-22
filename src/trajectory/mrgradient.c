@@ -72,7 +72,7 @@ scalefloats(*gx, N_ramp, scaling);
 if(kx)
 {
 	*kx = (float*)malloc(N_ramp*sizeof(float));
-	cumsum(*gx, *kx, N_ramp);
+  cumulativeSum(*gx, *kx, N_ramp);
 	scalefloats(*kx, N_ramp, GYROMAGNETIC_RATIO*Ts);
 }
 
@@ -173,7 +173,7 @@ void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, floa
 	if(kx)
 	{
 		*kx = (float*)malloc(Ngx*sizeof(float));
-		cumsum(*gx, *kx, Ngx);
+    cumulativeSum(*gx, *kx, Ngx);
 		scalefloats(*kx, Ngx, GYROMAGNETIC_RATIO*Ts);
 	}
 
@@ -280,7 +280,7 @@ scalefloats(*gx, Ngx, scaling);
 if(kx)
 {
 	*kx = (float*)malloc(Ngx*sizeof(float));
-cumsum(*gx, *kx, Ngx);
+  cumulativeSum(*gx, *kx, Ngx);
 scalefloats(*kx, Ngx, GYROMAGNETIC_RATIO*Ts);
 }
 
@@ -367,4 +367,165 @@ void grd_readout(int doDephase, int doRephase, int nread, float res, float gmax,
 	free(gtrap);
 
 	return;
+}
+
+void grd_bipolar_prewinder(float gradMax, float gradMaxSys, float slewMax, float T, float kxpre, float kypre, float Gtgt, float **ktraj, float **grad, float **slew, float **time, int *N)
+{
+  float *gxdep=NULL, *gydep=NULL;
+  float *kxdep, *gxdep1, *sxdep, *txdep;
+  int len_gxdep;
+  float t1;
+  float rSMAX_gy;
+  float *kydepR, *gydepR, *sydepR, *tydepR;
+  int NydepR;
+  float adepR;
+  float *kydepT, *gydepT, *sydepT, *tydepT;
+  int NydepT;
+  int len_gydep;
+  float *interpvec;
+  float adepx;
+  float sMax;
+  float gMax;
+  float sscale;
+  float gscale;
+  float *slewx=NULL, *slewy=NULL;
+  float *ktrajx=NULL, *ktrajy=NULL;
+
+  int n;
+  float *tempfloats=NULL;
+
+  /* Error tolerance level*/
+  float errlevel = 0.0001f;
+
+  int iter;
+
+  /*Starting values: */
+  float rSMAX_gx = .98*slewMax;
+  float rGMAX_gx = .98*gradMax;
+  /*%rSMAX_gx = slewMaxSys; rGMAX_gx = gradMaxSys;*/
+
+  for(iter=0; iter<50; iter++)
+  {
+  /* GX DEPHASER trapezoid */
+    grd_trapezoid(rGMAX_gx, rSMAX_gx, kxpre, T, &kxdep, &gxdep1, &sxdep, &txdep, &len_gxdep, &n);
+
+  /* GY DEPHASER ramp */
+  t1 = txdep[len_gxdep-1]/(1+sqrt(2.0));
+  rSMAX_gy = Gtgt/t1;
+  grd_rampup(gradMaxSys,rSMAX_gy, Gtgt,T, &kydepR, &gydepR, &sydepR, &tydepR, &NydepR);
+
+  /* GY DEPHASER trapezoid, provides extra area of kypre */
+  adepR = GYROMAGNETIC_RATIO*T*sumfloats(gydepR, NydepR);
+  grd_trapezoid(gradMaxSys,rSMAX_gy, -adepR+kypre, T, &kydepT, &gydepT, &sydepT, &tydepT, &NydepT, &n);
+
+  /* combine GY
+  gydep = [gydepT gydepR(2:end)];*/
+  len_gydep = NydepR+NydepT-1;
+  gydep = (float*)malloc(len_gydep*sizeof(float));
+  memcpy(gydep, gydepT, NydepT*sizeof(float));
+  memcpy(&gydep[NydepT], &gydepR[1], (NydepR-1)*sizeof(float));
+
+  /* Interp GX to the same length as GY
+  len_gxdep = numel(gxdep);
+  len_gydep = numel(gydep);*/
+
+  /*interpvec = [0:len_gydep-1]*(len_gxdep-1)/(len_gydep-1);*/
+  interpvec = (float*)malloc(len_gydep*sizeof(float));
+  gxdep = (float*)malloc(len_gydep*sizeof(float));
+  for(n=0; n<len_gydep; n++)
+    interpvec[n] = n*(len_gxdep-1.0f)/(len_gydep-1.0f);
+
+  if(tempfloats!=NULL) free(tempfloats);
+  tempfloats = (float*)malloc(len_gxdep*sizeof(float));
+  for(n=0; n<len_gxdep; n++)
+    tempfloats[n] = n;
+
+  /*gxdep = interp1([0:len_gxdep-1], gxdep, interpvec, 'linear', 'extrap');*/
+  interpolatefloats(tempfloats, gxdep1, len_gxdep, interpvec, gxdep, len_gydep);
+
+  /* double check area */
+  adepx = GYROMAGNETIC_RATIO*T*sumfloats( gxdep , len_gxdep);
+  /*gxdep = abs(kxpre/adepx)gxdep;*/
+  if(adepx)
+    scalefloats(gxdep, len_gxdep, fabs(kxpre/adepx));
+
+  /* combine
+  grad = gxdep + igydep;
+  slew = diff([0 grad])/T;*/
+
+  slewx = (float*)malloc(len_gydep*sizeof(float));
+  slewy = (float*)malloc(len_gydep*sizeof(float));
+
+  diffArray(gxdep, slewx, len_gydep);
+  diffArray(gydep, slewy, len_gydep);
+  slewx[len_gydep-1] = 0;
+  slewy[len_gydep-1] = 0;
+  scalecomplex(slewx, slewy, 1.0f/T, 0.0f, len_gydep);
+
+  /* Check constraints and scale grad/slew */
+  /*sMax = max( abs(slew(:)) );
+  gMax = max( abs(grad(:)) );*/
+  sMax = maxMagnitude(slewx, slewy, len_gydep);
+  gMax = maxMagnitude(gxdep, gydep, len_gydep);
+
+  if( sMax>slewMax)
+  {
+    sscale = slewMax/sMax;
+    rSMAX_gx = rSMAX_gx * sscale;
+    if( DEBUG_MRGRADIENT)
+        printf("bipolar_prewinder: scaling Sx by %.3f\n", sscale);
+  }
+
+  if( gMax>gradMaxSys )
+  {
+    gscale = gradMaxSys/gMax;
+    rGMAX_gx = rGMAX_gx * gscale;
+    if( DEBUG_MRGRADIENT )
+        printf("bipolar_prewinder: scaling Gx by %.3f\n", gscale);
+  }
+
+    free(slewx);	free(slewy);
+    free(kxdep);	free(gxdep1);	free(sxdep);	free(txdep);
+    free(kydepR); free(gydepR); free(sydepR); free(tydepR);
+    free(kydepT); free(gydepT); free(sydepT); free(tydepT);
+
+    /* We're done! */
+    if( sMax<=(1+errlevel)*slewMax && gMax<=(1+errlevel)*gradMaxSys )
+        break;
+    else
+    {
+        free(gxdep);
+        free(gydep);
+    }
+  }
+
+  if( sMax>(1+errlevel)*slewMax || gMax>(1+errlevel)*gradMaxSys )
+    printf("bipolar_prewinder: not enough iterations\n");
+
+  *ktraj = (float*)malloc(2*len_gydep*sizeof(float));
+  *grad = (float*)malloc(2*len_gydep*sizeof(float));
+  *slew = (float*)malloc(2*len_gydep*sizeof(float));
+  *time = (float*)malloc(len_gydep*sizeof(float));
+
+  /* Update the other structures
+  ktraj = 0 + GMR*T*cumsum(grad);
+  slew  = diff([0 grad])/T;
+  time  = [0:len_gydep-1]*T;*/
+
+  memcpy(*grad, gxdep, len_gydep*sizeof(float));
+  memcpy(&(*grad)[len_gydep], gydep, len_gydep*sizeof(float));
+
+  ktrajx = *ktraj;
+  ktrajy = &(*ktraj)[len_gydep];
+
+  cumulativeSum(gxdep, ktrajx, len_gydep);
+  cumulativeSum(gydep, ktrajy, len_gydep);
+  scalecomplex(ktrajx, ktrajy, GYROMAGNETIC_RATIO*T, 0.0f, len_gydep);
+
+  for(n=0; n<len_gydep; n++)
+    (*time)[n] = n*T;
+
+    *N = len_gydep;
+
+  return;
 }

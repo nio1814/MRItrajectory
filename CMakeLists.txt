@@ -1,5 +1,7 @@
 PROJECT(mritrajectory)
 
+option(ENABLE_PYTHON "Compile python module" ON)
+
 set(CMAKE_MODULE_PATH
 	${CMAKE_MODULE_PATH}
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -18,3 +20,6 @@ if(ENABLE_MATLAB)
 	add_subdirectory(matlab)
 endif(ENABLE_MATLAB)
 add_subdirectory(trajectorydesigner)
+if(ENABLE_PYTHON)
+  add_subdirectory(python)
+endif(ENABLE_PYTHON)

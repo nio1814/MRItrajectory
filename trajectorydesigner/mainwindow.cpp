@@ -26,10 +26,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_generator(new Generator),
 	m_phantomReconstruction(new PhantomReconstruction())
 {
-	ui->setupUi(this);
-	ui->trajectoryComboBox->addItem("Spiral", Generator::Spiral);
-	ui->trajectoryComboBox->addItem("Radial", Generator::Radial);
-	ui->trajectoryComboBox->addItem("Cones", Generator::Cones3D);
+  ui->setupUi(this);
+  ui->trajectoryComboBox->addItem("Spiral", SPIRAL);
+  ui->trajectoryComboBox->addItem("Radial", RADIAL);
+  ui->trajectoryComboBox->addItem("Radial 3D", RADIAL3D);
+  ui->trajectoryComboBox->addItem("Cones", CONES);
+  ui->trajectoryComboBox->addItem("Rings", RINGS);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
@@ -38,11 +40,11 @@ MainWindow::MainWindow(QWidget *parent) :
 //		m_generator->setTrajectory(type);
 //	});
 	connect(ui->trajectoryComboBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index){
-		Generator::TrajectoryType type = static_cast<Generator::TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
+    TrajectoryType type = static_cast<TrajectoryType>(ui->trajectoryComboBox->itemData(index).toInt());
 		qWarning() << type;
 		bool autoUpdate;
 		switch(type) {
-			case Generator::Cones3D:
+      case CONES:
 				autoUpdate = false;
 				break;
 			default:
@@ -113,8 +115,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	});
 	setReadoutDuration(8);
 
-	ui->readoutsSlider->setEnabled(false);
-	ui->readoutsSpinBox->setEnabled(false);
+  ui->readoutsSlider->setEnabled(false);
+  ui->readoutsSpinBox->setEnabled(false);
 //	ui->readoutsSlider->setMinimum(1);
 //	ui->readoutsSpinBox->setMinimum(ui->readoutsSlider->minimum());
 //	connect(ui->readoutsSlider, &QSlider::valueChanged, [=](int value){
@@ -152,15 +154,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->tabWidget->setCurrentIndex(1);
 	QPointer<QWidget> tab = ui->tabWidget->currentWidget();
-	QScopedPointer<QVBoxLayout> layout(new QVBoxLayout(tab));
-	layout->addWidget(m_phantomReconstruction);
-	tab->setLayout(layout.data());
-
+  ui->phantomLayout->addWidget(m_phantomReconstruction);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateSlewRatePlot(Trajectory*)));
-	connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
+  connect(m_generator, &Generator::updated, this, &MainWindow::updateReadoutIndex);
+  connect(m_generator, SIGNAL(updated(Trajectory*)), m_phantomReconstruction.data(), SLOT(reconstruct(Trajectory*)));
 
 	connect(m_generator, SIGNAL(readoutsChanged(int)), this, SLOT(setReadouts(int)));
 	connect(ui->autoUpdateCheckBox, SIGNAL(toggled(bool)), m_generator, SLOT(setAutoUpdate(bool)));
@@ -171,24 +171,29 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->updatePushButton, SIGNAL(clicked()), m_generator, SLOT(update()));
 
 	connect(m_generator, &Generator::updated, [=](Trajectory* trajectory) {
-		setPlotReadouts(trajectory->readouts-1);
+    setPlotReadouts(trajectory->numReadouts-1);
 	});
 
-	connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
-	{
-		if(index==1)
-		{
-			m_phantomReconstruction->setEnabled(true);
-			m_phantomReconstruction->reconstruct(m_generator->trajectory());
-		}
-		else
-			m_phantomReconstruction->setEnabled(false);
-	});
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int index)
+  {
+    if(index==1)
+    {
+      m_phantomReconstruction->setEnabled(true);
+      m_phantomReconstruction->reconstruct(m_generator->trajectory());
+    }
+    else
+      m_phantomReconstruction->setEnabled(false);
+  });
 	ui->tabWidget->setCurrentIndex(0);
 
-	connect(ui->readoutSlider, SIGNAL(valueChanged(int)), this, SLOT(setReadout(int)));
+  connect(ui->readoutSlider, &QSlider::valueChanged, this, &MainWindow::setReadout);
+  connect(ui->readoutSpinBox, &QSpinBox::editingFinished, [=]
+    {
+      setReadout(ui->readoutSpinBox->value());
+    }
+  );
 
-	m_generator->update();
+  m_generator->update();
 }
 
 MainWindow::~MainWindow()
@@ -199,17 +204,19 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateFieldOfViewDisplay()
 {
-	//QWidget* layout;
 	switch(m_generator->trajectoryType())
 	{
-		case Generator::Spiral:
+    case SPIRAL:
+    case RINGS:
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);
 //			layout->hide();
 			break;
-		case Generator::Radial:
+    case RADIAL:
 			break;
-		case Generator::Cones3D:
+    case CONES:
 			break;
+    case RADIAL3D:
+      break;
 	}
 }
 
@@ -249,20 +256,20 @@ void MainWindow::setReadoutDuration(float duration)
 
 void MainWindow::setReadouts(int readouts)
 {
-	ui->readoutsSlider->setValue(readouts);
-	ui->readoutsSpinBox->setValue(readouts);
+  ui->readoutsSlider->setValue(readouts);
+  ui->readoutsSpinBox->setValue(readouts);
 }
 
 void MainWindow::setPlotReadouts(int readouts)
 {
-	ui->readoutSlider->setMaximum(readouts);
-	ui->readoutSpinBox->setMaximum(readouts);
+  ui->readoutsSlider->setMaximum(readouts);
+  ui->readoutSpinBox->setMaximum(readouts);
 }
 
 void MainWindow::setReadout(int readout)
 {
-	ui->readoutSlider->setValue(readout);
-	ui->readoutSpinBox->setValue(readout);
+  ui->readoutsSlider->setValue(readout);
+  ui->readoutSpinBox->setValue(readout);
 	bool changed = m_readout != readout;
 	m_readout = readout;
 
@@ -288,12 +295,12 @@ void MainWindow::setVariableDensity(bool status)
 	{
 		if(!m_variableDensityDesigner)
 		{
-			m_variableDensityDesigner = new VariableDensityDesigner(m_generator->variableDensity());
+      m_variableDensityDesigner = new VariableDensityDesigner(m_generator->variableDensity());
 			connect(m_variableDensityDesigner, &VariableDensityDesigner::updated, [=]()
 			{
 				if(m_generator->autoUpdate())
 					m_generator->update();
-			});
+      });
 		}
 		m_variableDensityDesigner->show();
 	}
@@ -308,11 +315,12 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 	QVector<QPointF> coordinatesXY;
 	QVector<QPointF> coordinatesXZ;
 	float kSpaceCoordinates[3];
-	for(int n=0; n<trajectory->readoutPoints; n++)
+  for(int n=0; n<trajectory->numReadoutPoints; n++)
 	{
 		trajectoryCoordinates(n, m_readout, trajectory, kSpaceCoordinates, NULL);
 		coordinatesXY.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
-		if(trajectory->dimensions>2)		coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
+    if(trajectory->numDimensions>2)
+      coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
 	}
 
 	m_trajectoryCurve->setSamples(coordinatesXY);
@@ -326,11 +334,11 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 {
 	QVector<QPointF> coordinates;
-	for(int d=0; d<trajectory->dimensions; d++)
+  for(int d=0; d<trajectory->numDimensions; d++)
 	{
 		coordinates.clear();
 		float* waveform = trajectoryGradientWaveform(trajectory, m_readout, d);
-		for(int n=0; n<trajectory->waveformPoints; n++)
+    for(int n=0; n<trajectory->numWaveformPoints; n++)
 		{
 			float t = n*trajectory->samplingInterval*1e3;
 			coordinates.append(QPointF(t,waveform[n]));
@@ -343,15 +351,23 @@ void MainWindow::updateGradientsPlot(Trajectory *trajectory)
 
 void MainWindow::updateSlewRatePlot(Trajectory *trajectory)
 {
-	m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->waveformPoints-1);
-	for(int d=0; d<trajectory->dimensions; d++)
+  m_slewRatePlot->setTime(trajectory->samplingInterval, trajectory->numWaveformPoints-1);
+  for(int d=0; d<trajectory->numDimensions; d++)
 	{
 		float* gradientWaveform = trajectoryGradientWaveform(trajectory, m_readout, d);
 		QVector<double> slew;
-		for(int n=0; n<trajectory->waveformPoints-1; n++)
+    for(int n=0; n<trajectory->numWaveformPoints-1; n++)
 			slew.append((gradientWaveform[n+1]-gradientWaveform[n])/trajectory->samplingInterval);
 		m_slewRatePlot->setSeriesData(slew, d);
 	}
-	m_slewRatePlot->replot();
+  m_slewRatePlot->replot();
+}
+
+void MainWindow::updateReadoutIndex(Trajectory *trajectory)
+{
+  int maxIndex = trajectory->storage==STORE_ALL ? trajectory->numReadouts : trajectory->numBases;
+  maxIndex--;
+  ui->readoutSlider->setMaximum(maxIndex);
+  ui->readoutSpinBox->setMaximum(maxIndex);
 }
 

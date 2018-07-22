@@ -65,7 +65,7 @@ void RadialTest::testGenerate()
 		QCOMPARE(radial->fieldOfView[d], fieldOfView[d]);
 		QVERIFY(qAbs(radial->spatialResolution[d]-spatialResolution[d]) < threshold);
 	}
-	QCOMPARE(radial->bases, 1);
+	QCOMPARE(radial->numBases, 1);
 
 	float fieldOfViewMax = fmax(fieldOfView[0], fieldOfView[1]);
 	float maxReadoutGradient = qMin(1/(fieldOfViewMax*samplingInterval*4257), maxGradient);
@@ -75,16 +75,16 @@ void RadialTest::testGenerate()
 	float krMax = 0;
 	for(int r=0; r<waveforms; r++)
 	{
-		for(int n=0; n<radial->waveformPoints; n++)
+		for(int n=0; n<radial->numWaveformPoints; n++)
 		{
 			float gradientMagnitude = 0;
-			for(int d=0; d<radial->dimensions; d++)
+			for(int d=0; d<radial->numDimensions; d++)
 			{
-				float gradientValue = radial->gradientWaveforms[(d+2*r)*radial->waveformPoints+n];
+				float gradientValue = radial->gradientWaveforms[(d+2*r)*radial->numWaveformPoints+n];
 				gradientMagnitude += gradientValue*gradientValue;
 			}
 			gradientMagnitude = qSqrt(gradientMagnitude);
-			if(n<radial->readoutPoints)
+			if(n<radial->numReadoutPoints)
 			{
 				sprintf(message, "|g[%d]| %f limit %f\n", n, gradientMagnitude, maxReadoutGradient);
 				QVERIFY2(gradientMagnitude < maxReadoutGradient+.01, message);
@@ -122,18 +122,18 @@ void RadialTest::testPhantom()
 	Trajectory* radial = generateRadial2D(fieldOfView[0], fieldOfView[1], InverseEllipticalShape, spatialResolution[0], spatialResolution[1], InverseEllipticalShape, 1, 1, 4, 15000, 4e-6);
 
 	std::vector<int> acquisitionSize;
-	acquisitionSize.push_back(radial->readoutPoints);
-	acquisitionSize.push_back(radial->readouts);
+	acquisitionSize.push_back(radial->numReadoutPoints);
+	acquisitionSize.push_back(radial->numReadouts);
 
 	Phantom phantom(fieldOfView);
 	MRdata kSpaceData(acquisitionSize, 2);
-	for(int n=0; n<radial->readoutPoints; n++)
+	for(int n=0; n<radial->numReadoutPoints; n++)
 	{
-		for(int r=0; r<radial->readouts; r++)
+		for(int r=0; r<radial->numReadouts; r++)
 		{
 			float k[2];
 			trajectoryCoordinates(n, r, radial, k, NULL);
-			int m = radial->readoutPoints*r + n;
+			int m = radial->numReadoutPoints*r + n;
 //			if(n<69)
 			kSpaceData.setSignalValue(m, phantom.fourierDomainSignal(k[0], k[1]));
 //			kSpaceData.setSignalValue(m, 1);

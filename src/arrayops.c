@@ -45,7 +45,7 @@ float sumfloats(float* arr, int npts)
 	return sumVal;
 }
 
-void cumsum(float* arr, float* arrOut, int numPts)
+void cumulativeSum(float* arr, float* arrOut, int numPts)
 {
 	int i;
 	float sum = 0.0f;
@@ -205,4 +205,62 @@ void interpolatefloats(float *arrx, float *arry, int nptsIn, float *x, float *y,
 	int n;
 	for(n=0; n<nptsOut; n++)
 		y[n] = interpfloat(arrx, arry, nptsIn, x[n]);
+}
+
+float minValue(const float *arr1, int numPts)
+{
+  float mv;
+  int i;
+
+  mv = arr1[0];
+
+  for(i=1; i<numPts; i++)
+  {
+    if(arr1[i]<mv)
+      mv = arr1[i];
+  }
+
+  return mv;
+}
+
+float maxValue(const float *data, long npts)
+{
+  float maxval;
+  long count;
+
+  maxval = *data;
+  for (count=0; count < npts; count++)
+  {
+    if (*data > maxval)
+      maxval = *data;
+    data++;
+  }
+
+  return (maxval);
+}
+
+float maxMagnitude(float *rdata, float *idata, long npts)
+{
+  float valsq, maxval,maxvalsq;
+  long count;
+
+  maxvalsq = 0;
+  for (count=0; count < npts; count++)
+    {
+    valsq = *rdata * *rdata + *idata * *idata;
+    if (valsq > maxvalsq)
+      maxvalsq = valsq;
+    rdata++;
+    idata++;
+    }
+  maxval = sqrt(maxvalsq);
+
+  return (maxval);
+}
+
+void setValues(float *data, long npts, float value)
+{
+  long count;
+  for (count=0; count < npts; count++)
+    *data++ = value;
 }

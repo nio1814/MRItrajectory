@@ -1,0 +1,242 @@
+#include "trajectorygenerator.h"
+
+extern "C"
+{
+#include "spiral.h"
+#include "radial.h"
+#include "cones.h"
+#include "rings.h"
+}
+
+#include <algorithm>
+
+TrajectoryGenerator::TrajectoryGenerator(TrajectoryType type) :
+  m_trajectoryType(type),
+  m_variableDensity(newVariableDensity())
+{
+  resetVariableDensity();
+}
+
+TrajectoryGenerator::~TrajectoryGenerator()
+{
+  deleteVariableDensity(&m_variableDensity);
+}
+
+TrajectoryType TrajectoryGenerator::trajectoryType()
+{
+  return m_trajectoryType;
+}
+
+void TrajectoryGenerator::setTrajectoryType(TrajectoryType type)
+{
+  m_trajectoryType = type;
+}
+
+void TrajectoryGenerator::setFieldOfView(double* fov, int numDims)
+{
+  for(int n=0; n<numDims; n++)
+    m_fieldOfView[n] = fov[n];
+}
+
+float TrajectoryGenerator::maxFieldOfView()
+{
+  return *std::max_element(m_fieldOfView, m_fieldOfView + numDimensions());
+}
+
+float TrajectoryGenerator::maxFieldOfViewXY()
+{
+  return std::max(m_fieldOfView[0], m_fieldOfView[1]);
+}
+
+void TrajectoryGenerator::setFilterFieldOfView(float filterFOV)
+{
+  m_filterFieldOfView = filterFOV;
+}
+
+void TrajectoryGenerator::setSpatialResolution(double *spatialRes, int numDims)
+{
+  for(int n=0; n<numDims; n++)
+    m_spatialResolution[n] = spatialRes[n];
+
+}
+
+void TrajectoryGenerator::resetVariableDensity()
+{
+  setToFullySampled(m_variableDensity);
+}
+
+
+float TrajectoryGenerator::minSpatialResolution()
+{
+  return *std::min_element(m_spatialResolution, m_spatialResolution + numDimensions());
+}
+
+float TrajectoryGenerator::minSpatialResolutionXY()
+{
+  return std::min(m_spatialResolution[0], m_spatialResolution[1]);
+}
+
+void TrajectoryGenerator::setSamplingInterval(float interval)
+{
+  m_samplingInterval = interval;
+}
+
+void TrajectoryGenerator::setGradientAmplitudeLimit(float gradientLimit)
+{
+  m_gradientLimit = gradientLimit;
+}
+
+void TrajectoryGenerator::setSlewRateLimit(float slewLimit)
+{
+  m_slewRateLimit = slewLimit;
+}
+
+
+void TrajectoryGenerator::setReadoutDuration(float readoutDuration)
+{
+  m_readoutDuration = readoutDuration;
+}
+
+void TrajectoryGenerator::setNumReadouts(int numReadouts)
+{
+  m_numReadouts = numReadouts;
+}
+
+void TrajectoryGenerator::setRotatable(bool status)
+{
+  m_rotatable = status;
+}
+
+void TrajectoryGenerator::setNumBases(int bases)
+{
+  m_numBases = bases;
+}
+
+void TrajectoryGenerator::setStorage(WaveformStorageType type)
+{
+  m_storage = type;
+}
+
+WaveformStorageType TrajectoryGenerator::storage()
+{
+  return m_storage;
+}
+
+bool TrajectoryGenerator::generate()
+{
+  switch(m_trajectoryType)
+  {
+    case SPIRAL:
+      m_trajectory = generateSpirals(m_variableDensity, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, 1, m_samplingInterval, m_numReadouts, Archimedean, 0, m_fieldOfView[0], m_gradientLimit, m_slewRateLimit);
+      break;
+    case RADIAL:
+      m_trajectory = generateRadial2D(m_fieldOfView[0], m_fieldOfView[1], EllipticalShape, m_spatialResolution[0], m_spatialResolution[1], EllipticalShape, m_fullProjection, 1, m_gradientLimit, m_slewRateLimit, m_samplingInterval);
+      break;
+    case RADIAL3D:
+      m_trajectory = generateRadial3D(m_fieldOfView[0], m_fieldOfView[1], m_fieldOfView[2],
+          EllipticalShape, EllipticalShape,
+          m_spatialResolution[0], m_spatialResolution[1], m_spatialResolution[2],
+          m_fullProjection, getFinalScale(m_variableDensity), m_gradientLimit, m_slewRateLimit, m_samplingInterval);
+      break;
+    case CONES:
+    {
+
+      if(m_cones)
+        deleteCones(&m_cones);
+      m_cones = generateCones(maxFieldOfViewXY(), m_fieldOfView[2], m_variableDensity, m_spatialResolution[0], m_spatialResolution[2], 48, 1, NoCompensation, m_readoutDuration, m_samplingInterval, maxFieldOfView(), m_gradientLimit, m_slewRateLimit, STORE_ALL);
+      if(!m_cones)
+        return false;
+      m_trajectory = m_cones->trajectory;
+    }
+      break;
+//    case SWIRL:
+//      if(m_swirl)
+//        freeSwirl(m_swirl);
+//      m_swirl = generateSwirls(maxFieldOfView(), maxFieldOfView(), m_variableDensity, minSpatialResolution(), 0, m_readoutDuration, m_samplingInterval, m_gradientLimit, m_slewRateLimit, STORE_ALL);
+//      m_trajectory = m_swirl->trajectory;
+//      break;
+    case RINGS:
+      m_trajectory = generateRings(m_variableDensity, maxFieldOfView(), minSpatialResolution(), m_readoutDuration, m_gradientLimit, m_slewRateLimit, m_samplingInterval);
+      break;
+  }
+
+  return m_trajectory;
+}
+
+bool TrajectoryGenerator::save(std::string filepath)
+{
+  bool status = false;
+  switch(m_trajectoryType)
+  {
+    case CONES:
+      if(m_cones)
+        status = !saveCones(filepath.c_str(), m_cones);
+      break;
+    default:
+      status = !saveTrajectory(filepath.c_str(), m_trajectory);
+  }
+
+  return status;
+}
+
+Trajectory* TrajectoryGenerator::load(std::string filepath)
+{
+  Trajectory* trajectory = loadTrajectory(filepath.c_str(), LittleEndian);
+  TrajectoryType trajectoryType = trajectory->type;
+  switch(trajectoryType)
+  {
+    case CONES:
+      if(m_cones)
+        deleteCones(&m_cones);
+      m_cones = loadCones(filepath.c_str(), LittleEndian, STORE_ALL);
+      deleteTrajectory(&trajectory);
+      trajectory = m_cones->trajectory;
+      break;
+    default:
+      break;
+  }
+
+  m_trajectory = trajectory;
+  setTrajectoryType(trajectory->type);
+
+  return m_trajectory;
+}
+
+int TrajectoryGenerator::numDimensions()
+{
+  int numDims = 0;
+
+  switch(m_trajectoryType)
+  {
+    case SPIRAL:
+    case RADIAL:
+    case RINGS:
+      numDims = 2;
+      break;
+    case CONES:
+    case RADIAL3D:
+      numDims = 3;
+      break;
+  }
+
+  return numDims;
+}
+
+Trajectory *TrajectoryGenerator::trajectory()
+{
+  return m_trajectory;
+}
+
+Cones *TrajectoryGenerator::cones()
+{
+  if(m_trajectoryType==CONES)
+    return m_cones;
+  else
+    return nullptr;
+}
+
+
+Cones* TrajectoryGenerator::getConesTrajectory()
+{
+  return m_cones;
+}

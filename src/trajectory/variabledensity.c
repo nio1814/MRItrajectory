@@ -63,7 +63,7 @@ void addLinearVariableDensityStep(struct VariableDensity *v, float kr, float sca
 
 float getFinalScale(const struct VariableDensity *v)
 {
-//	memcpy(finalFieldOfView, v->fieldOfView, v->dimensions*sizeof(float));
+//	memcpy(finalFieldOfView, v->fieldOfView, v->numDimensions*sizeof(float));
 	return  v->step[v->steps-1].scale;
 }
 

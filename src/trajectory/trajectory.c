@@ -24,12 +24,16 @@ const float GYROMAGNETIC_RATIO = 4257.59;
 const float REWIND_SAMPLING_INTERVAL = 1e-6;
 const int MAX_REWIND_POINTS = 4096;
 
-void initializeTrajectory(struct Trajectory *trajectory)
+struct Trajectory* newTrajectory()
 {
+  struct Trajectory* trajectory = (struct Trajectory*)malloc(sizeof(struct Trajectory));
+
 	trajectory->densityCompensation = NULL;
 	trajectory->kSpaceCoordinates = NULL;
 	trajectory->gradientWaveforms = NULL;
 	trajectory->gradientWaveformsShort = NULL;
+
+  return trajectory;
 }
 
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution)
@@ -66,17 +70,17 @@ void gradientWaveformToShort(const float *gradientsFloat, int points, float maxG
 	gradientsShort[n] = (short)(gradientsFloat[n]*gaussPerCMTo16bit) | 0x0001;
 }
 
-void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int waveformPoints, int dimensions, int bases, int readouts, enum WaveformStorageType storage)
+void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int numWaveformPoints, int dimensions, int numBases, int readouts, enum WaveformStorageType storage)
 {
 	int count;
 
 	if(storage==StoreBasis)
-		count = bases;
+    count = numBases;
 	else
 		count = readouts;
 
-	if(waveformPoints)
-		trajectory->gradientWaveforms = (float*)malloc(dimensions*count*waveformPoints*sizeof(float));
+  if(numWaveformPoints)
+    trajectory->gradientWaveforms = (float*)malloc(dimensions*count*numWaveformPoints*sizeof(float));
 	if(readoutPoints)
 	{
 		trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
@@ -84,11 +88,11 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int wa
 	}
 
 	trajectory->storage = storage;
-	trajectory->readouts = readouts;
-	trajectory->bases = bases;
-	trajectory->readoutPoints = readoutPoints;
-	trajectory->waveformPoints = waveformPoints;
-	trajectory->dimensions = dimensions;
+  trajectory->numReadouts = readouts;
+  trajectory->numBases = numBases;
+  trajectory->numReadoutPoints = readoutPoints;
+  trajectory->numWaveformPoints = numWaveformPoints;
+  trajectory->numDimensions = dimensions;
 }
 
 void traverseKspace(float *gradientInitial, float *kSpaceCoordinatesInitial, int dimensions, float samplingInterval, float *kSpaceCoordinatesFinal, float maxGradientAmplitude, float maxSlewRate, float **gradientRewindX, float **gradientRewindY, float **gradientRewindZ, int *pointsRewind)
@@ -319,39 +323,42 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 	return traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
 }
 
-void writeArray(void* array, unsigned long points, int pointSize, FILE* file)
+int writeTrajectory(FILE *file, const struct Trajectory *trajectory)
 {
-	if(array)
-	{
-		fwrite(&points, sizeof(unsigned long), 1, file);
-		fwrite(array, pointSize, points, file);
-	}
-	else
-	{
-		points = 0;
-		fwrite(&points, sizeof(unsigned long), 1, file);
-	}
-}
+  int version = 1;
+  int storedWaveforms;
 
-void readArray(void** array, int pointSize, FILE* file, enum Endian endian)
-{
-	unsigned long points;
-	fread(&points, sizeof(unsigned long), 1, file);
-	if(points)
-	{
-		*array = malloc(points*pointSize);
-		fread(*array, pointSize, points, file);
-		if(needEndianSwap(endian))
-			swapArrayEndian(*array, points, pointSize);
-	}
-	else
-		*array = NULL;
+  fwrite(&version, sizeof(int), 1, file);
+  fwrite(&trajectory->type, sizeof(enum TrajectoryType), 1, file);
+  fwrite(&trajectory->numDimensions, sizeof(int), 1, file);
+  fwrite(trajectory->imageDimensions, sizeof(int), trajectory->numDimensions, file);
+  fwrite(trajectory->spatialResolution, sizeof(float), trajectory->numDimensions, file);
+  fwrite(trajectory->fieldOfView, sizeof(float), trajectory->numDimensions, file);
+  fwrite(&trajectory->numReadouts, sizeof(int), 1, file);
+  fwrite(&trajectory->numBases, sizeof(int), 1, file);
+  fwrite(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
+  fwrite(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
+  fwrite(&trajectory->maxSlewRate, sizeof(float), 1, file);
+  fwrite(&trajectory->numWaveformPoints, sizeof(int), 1, file);
+  fwrite(&trajectory->numReadoutPoints, sizeof(int), 1, file);
+  fwrite(&trajectory->samplingInterval, sizeof(float), 1, file);
+
+  fwrite(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
+  if(trajectory->storage==StoreBasis)
+    storedWaveforms = trajectory->numBases;
+  else
+    storedWaveforms = trajectory->numReadouts;
+
+  writeArray(trajectory->gradientWaveforms, storedWaveforms*trajectory->numDimensions*trajectory->numWaveformPoints, sizeof(float), file);
+  writeArray(trajectory->gradientWaveformsShort, storedWaveforms*trajectory->numDimensions*trajectory->numWaveformPoints, sizeof(short), file);
+  writeArray(trajectory->kSpaceCoordinates, storedWaveforms*trajectory->numDimensions*trajectory->numReadoutPoints, sizeof(float), file);
+  writeArray(trajectory->densityCompensation, storedWaveforms*trajectory->numReadoutPoints, sizeof(float), file);
+
+  return 0;
 }
 
 int saveTrajectory(const char* filename, const struct Trajectory* trajectory)
 {
-	int version = 1;
-	int storedWaveforms;
 	FILE* file;
 
 	file = fopen(filename, "wb");
@@ -360,31 +367,8 @@ int saveTrajectory(const char* filename, const struct Trajectory* trajectory)
 	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);
 	   return 1;
 	}
-	fwrite(&version, sizeof(int), 1, file);
-	fwrite(&trajectory->dimensions, sizeof(int), 1, file);
-	fwrite(trajectory->imageDimensions, sizeof(int), trajectory->dimensions, file);
-	fwrite(trajectory->spatialResolution, sizeof(float), trajectory->dimensions, file);
-	fwrite(trajectory->fieldOfView, sizeof(float), trajectory->dimensions, file);
-	fwrite(&trajectory->readouts, sizeof(int), 1, file);
-	fwrite(&trajectory->bases, sizeof(int), 1, file);
-	fwrite(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
-	fwrite(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
-	fwrite(&trajectory->maxSlewRate, sizeof(float), 1, file);
-	fwrite(&trajectory->waveformPoints, sizeof(int), 1, file);
-	fwrite(&trajectory->readoutPoints, sizeof(int), 1, file);
-	fwrite(&trajectory->samplingInterval, sizeof(float), 1, file);
 
-	fwrite(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
-	if(trajectory->storage==StoreBasis)
-		storedWaveforms = trajectory->bases;
-	else
-		storedWaveforms = trajectory->readouts;
-
-	writeArray(trajectory->gradientWaveforms, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(float), file);
-	writeArray(trajectory->gradientWaveformsShort, storedWaveforms*trajectory->dimensions*trajectory->waveformPoints, sizeof(short), file);
-	writeArray(trajectory->kSpaceCoordinates, storedWaveforms*trajectory->dimensions*trajectory->readoutPoints, sizeof(float), file);
-	writeArray(trajectory->densityCompensation, storedWaveforms*trajectory->readoutPoints, sizeof(float), file);
-
+  writeTrajectory(file, trajectory);
 
 	fclose(file);
 
@@ -478,6 +462,55 @@ int saveGradientWaveforms(const char *filename, const float* grad, short dimensi
 	return status;
 }
 
+struct Trajectory* readTrajectory(FILE* file, enum Endian endian)
+{
+  struct Trajectory* trajectory = newTrajectory();
+
+  int version;
+  fread(&version, sizeof(int), 1, file);
+  fread(&trajectory->type, sizeof(enum TrajectoryType), 1, file);
+  fread(&trajectory->numDimensions, sizeof(int), 1, file);
+
+  int swapEndian = needEndianSwap(endian);
+  if(swapEndian)
+    swapArrayEndian(&trajectory->numDimensions, 1, sizeof(int));
+  fread(trajectory->imageDimensions, sizeof(int), trajectory->numDimensions, file);
+  fread(trajectory->spatialResolution, sizeof(float), trajectory->numDimensions, file);
+  fread(trajectory->fieldOfView, sizeof(float), trajectory->numDimensions, file);
+  fread(&trajectory->numReadouts, sizeof(int), 1, file);
+  fread(&trajectory->numBases, sizeof(int), 1, file);
+  fread(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
+  fread(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
+  fread(&trajectory->maxSlewRate, sizeof(float), 1, file);
+  fread(&trajectory->numWaveformPoints, sizeof(int), 1, file);
+  fread(&trajectory->numReadoutPoints, sizeof(int), 1, file);
+  fread(&trajectory->samplingInterval, sizeof(float), 1, file);
+  fread(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
+
+  if(swapEndian)
+  {
+    swapArrayEndian(trajectory->imageDimensions, trajectory->numDimensions, sizeof(int));
+    swapArrayEndian(trajectory->spatialResolution, trajectory->numDimensions, sizeof(float));
+    swapArrayEndian(trajectory->fieldOfView, trajectory->numDimensions, sizeof(float));
+    swapArrayEndian(&trajectory->numReadouts, 1, sizeof(int));
+    swapArrayEndian(&trajectory->numBases, 1, sizeof(int));
+    swapArrayEndian(&trajectory->maxGradientAmplitude, 1, sizeof(float));
+    swapArrayEndian(&trajectory->maxReadoutGradientAmplitude, 1, sizeof(float));
+    swapArrayEndian(&trajectory->maxSlewRate, 1, sizeof(float));
+    swapArrayEndian(&trajectory->numWaveformPoints, 1, sizeof(int));
+    swapArrayEndian(&trajectory->numReadoutPoints, 1, sizeof(int));
+    swapArrayEndian(&trajectory->samplingInterval, 1, sizeof(float));
+    swapArrayEndian(&trajectory->storage, 1, sizeof(enum WaveformStorageType));
+  }
+
+  readArray((void**)&trajectory->gradientWaveforms, sizeof(float), file, endian);
+  readArray((void**)&trajectory->gradientWaveformsShort, sizeof(short), file, endian);
+  readArray((void**)&trajectory->kSpaceCoordinates, sizeof(float), file, endian);
+  readArray((void**)&trajectory->densityCompensation,  sizeof(float), file, endian);
+
+  return trajectory;
+}
+
 /*!
  * \brief loadTrajectory
  * \param filename
@@ -485,82 +518,44 @@ int saveGradientWaveforms(const char *filename, const float* grad, short dimensi
  * \param endian	Endian mode of stored file
  * \return	1 if error
  */
-int loadTrajectory(const char *filename, struct Trajectory *trajectory, enum Endian endian)
+struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
 {
-	int version;
 	FILE* file;
-	int swapEndian = needEndianSwap(endian);
 
 	file = fopen(filename, "rb");
 	if(!file)
 	{
 	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);
-	   return 1;
+     return NULL;
 	}
 
-	fread(&version, sizeof(int), 1, file);
-	fread(&trajectory->dimensions, sizeof(int), 1, file);
-	if(swapEndian)
-		swapArrayEndian(&trajectory->dimensions, 1, sizeof(int));
-	fread(trajectory->imageDimensions, sizeof(int), trajectory->dimensions, file);
-	fread(trajectory->spatialResolution, sizeof(float), trajectory->dimensions, file);
-	fread(trajectory->fieldOfView, sizeof(float), trajectory->dimensions, file);
-	fread(&trajectory->readouts, sizeof(int), 1, file);
-	fread(&trajectory->bases, sizeof(int), 1, file);
-	fread(&trajectory->maxGradientAmplitude, sizeof(float), 1, file);
-	fread(&trajectory->maxReadoutGradientAmplitude, sizeof(float), 1, file);
-	fread(&trajectory->maxSlewRate, sizeof(float), 1, file);
-	fread(&trajectory->waveformPoints, sizeof(int), 1, file);
-	fread(&trajectory->readoutPoints, sizeof(int), 1, file);
-	fread(&trajectory->samplingInterval, sizeof(float), 1, file);
-	fread(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
-
-	if(swapEndian)
-	{
-		swapArrayEndian(trajectory->imageDimensions, trajectory->dimensions, sizeof(int));
-		swapArrayEndian(trajectory->spatialResolution, trajectory->dimensions, sizeof(float));
-		swapArrayEndian(trajectory->fieldOfView, trajectory->dimensions, sizeof(float));
-		swapArrayEndian(&trajectory->readouts, 1, sizeof(int));
-		swapArrayEndian(&trajectory->bases, 1, sizeof(int));
-		swapArrayEndian(&trajectory->maxGradientAmplitude, 1, sizeof(float));
-		swapArrayEndian(&trajectory->maxReadoutGradientAmplitude, 1, sizeof(float));
-		swapArrayEndian(&trajectory->maxSlewRate, 1, sizeof(float));
-		swapArrayEndian(&trajectory->waveformPoints, 1, sizeof(int));
-		swapArrayEndian(&trajectory->readoutPoints, 1, sizeof(int));
-		swapArrayEndian(&trajectory->samplingInterval, 1, sizeof(float));
-		swapArrayEndian(&trajectory->storage, 1, sizeof(enum WaveformStorageType));
-	}
-
-	readArray((void**)&trajectory->gradientWaveforms, sizeof(float), file, endian);
-	readArray((void**)&trajectory->gradientWaveformsShort, sizeof(short), file, endian);
-	readArray((void**)&trajectory->kSpaceCoordinates, sizeof(float), file, endian);
-	readArray((void**)&trajectory->densityCompensation,  sizeof(float), file, endian);
+  struct Trajectory* trajectory = readTrajectory(file, endian);
 
 	fclose(file);
 
-	return 0;
+  return trajectory;
 }
 
 int numTrajectoryWaveforms(const struct Trajectory *trajectory)
 {
-	return trajectory->storage==StoreBasis ? trajectory->bases : trajectory->readouts;
+  return trajectory->storage==StoreBasis ? trajectory->numBases : trajectory->numReadouts;
 }
 
 void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float* coordinates, float* densityCompensation)
 {
 	int d;
-	for(d=0; d<trajectory->dimensions; d++)
-		coordinates[d] = trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint];
+  for(d=0; d<trajectory->numDimensions; d++)
+    coordinates[d] = trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint];
 	if(densityCompensation)
-		*densityCompensation = trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint];
+    *densityCompensation = trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint];
 }
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation)
 {
 	int d;
-	for(d=0; d<trajectory->dimensions; d++)
-		trajectory->kSpaceCoordinates[(trajectory->dimensions*readout+d)*trajectory->readoutPoints+readoutPoint] = coordinates[d];
-	trajectory->densityCompensation[readout*trajectory->readoutPoints+readoutPoint] = densityCompensation;
+  for(d=0; d<trajectory->numDimensions; d++)
+    trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint] = coordinates[d];
+  trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
 }
 
 float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval)
@@ -570,38 +565,60 @@ float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInte
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
 {
-	float* kxFull = (float*)malloc(trajectory->waveformPoints*sizeof(float));
-	float* kyFull = (float*)malloc(trajectory->waveformPoints*sizeof(float));
+  float* kxFull = (float*)malloc(trajectory->numWaveformPoints*sizeof(float));
+  float* kyFull = (float*)malloc(trajectory->numWaveformPoints*sizeof(float));
 
 	int n;
-	for(n=0; n<trajectory->readouts; n++)
+  for(n=0; n<trajectory->numReadouts; n++)
 	{
-		float phi = n*angleRange/trajectory->readouts;
+    float phi = n*angleRange/trajectory->numReadouts;
 
-		float* gx = &trajectory->gradientWaveforms[2*n*trajectory->waveformPoints];
-		float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->waveformPoints];
+    float* gx = &trajectory->gradientWaveforms[2*n*trajectory->numWaveformPoints];
+    float* gy = &trajectory->gradientWaveforms[(2*n+1)*trajectory->numWaveformPoints];
 
-		memcpy(gx, gxBasis, trajectory->waveformPoints*sizeof(float));
-		memcpy(gy, gyBasis, trajectory->waveformPoints*sizeof(float));
-		scalecomplex(gx, gy, cos(phi), sin(phi), trajectory->waveformPoints);
+    memcpy(gx, gxBasis, trajectory->numWaveformPoints*sizeof(float));
+    memcpy(gy, gyBasis, trajectory->numWaveformPoints*sizeof(float));
+    scalecomplex(gx, gy, cos(phi), sin(phi), trajectory->numWaveformPoints);
 
-		gradientToKspace(gx, kxFull, trajectory->samplingInterval, trajectory->waveformPoints);
-		gradientToKspace(gy, kyFull, trajectory->samplingInterval, trajectory->waveformPoints);
+    gradientToKspace(gx, kxFull, trajectory->samplingInterval, trajectory->numWaveformPoints);
+    gradientToKspace(gy, kyFull, trajectory->samplingInterval, trajectory->numWaveformPoints);
 
-		float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->readoutPoints];
-		float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->readoutPoints];
+    float* kx = &trajectory->kSpaceCoordinates[2*n*trajectory->numReadoutPoints];
+    float* ky = &trajectory->kSpaceCoordinates[(2*n+1)*trajectory->numReadoutPoints];
 
-		memcpy(kx, &kxFull[trajectory->preReadoutPoints], trajectory->readoutPoints*sizeof(float));
-		memcpy(ky, &kyFull[trajectory->preReadoutPoints], trajectory->readoutPoints*sizeof(float));
+    memcpy(kx, &kxFull[trajectory->numPreReadoutPoints], trajectory->numReadoutPoints*sizeof(float));
+    memcpy(ky, &kyFull[trajectory->numPreReadoutPoints], trajectory->numReadoutPoints*sizeof(float));
 	}
 }
 
 float *trajectoryGradientWaveform(const struct Trajectory *trajectory, int readout, int axis)
 {
-	return &trajectory->gradientWaveforms[(axis+trajectory->dimensions*readout)*trajectory->waveformPoints];
+  return &trajectory->gradientWaveforms[(axis+trajectory->numDimensions*readout)*trajectory->numWaveformPoints];
 }
 
 float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout, int axis)
 {
-	return &trajectory->kSpaceCoordinates[(axis+trajectory->dimensions*readout)*trajectory->readoutPoints];
+  return &trajectory->kSpaceCoordinates[(axis+trajectory->numDimensions*readout)*trajectory->numReadoutPoints];
+}
+
+float *trajectoryDensityCompensationWaveform(const struct Trajectory *trajectory, int readout)
+{
+  return &trajectory->densityCompensation[trajectory->numReadoutPoints*readout];
+}
+
+void deleteTrajectory(struct Trajectory **trajectory)
+{
+  if((*trajectory)->densityCompensation)
+    free((*trajectory)->densityCompensation);
+
+  if((*trajectory)->kSpaceCoordinates)
+    free((*trajectory)->kSpaceCoordinates);
+
+  if((*trajectory)->gradientWaveforms)
+    free((*trajectory)->gradientWaveforms);
+
+  if((*trajectory)->gradientWaveformsShort)
+    free((*trajectory)->gradientWaveformsShort);
+
+  free(*trajectory);
 }

@@ -102,3 +102,13 @@ float modulus(float b, float m)
 {
 	return (b/m - (int)(b/m))*m;
 }
+
+int leastCommonMultiple(int a, int b)
+{
+  int l=1;
+  for(int n=1; n<=MIN(a,b); n++)
+    if((n%a==0) && (n%b==0))
+      l = n;
+
+  return l;
+}

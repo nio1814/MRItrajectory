@@ -14,6 +14,7 @@ INCLUDE_DIRECTORIES(${FFTW3_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/phantom)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/gridding)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory)
 
 set(SOURCE
 	main.cpp
@@ -25,6 +26,7 @@ set(SOURCE
 	variabledensitydesigner.cpp
 	variabledensityplot.cpp
 	phantomreconstruction.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory/trajectorygenerator.cpp
 )
 
 set(CMAKE_AUTOMOC ON)

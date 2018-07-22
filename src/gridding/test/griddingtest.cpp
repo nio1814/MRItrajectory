@@ -84,8 +84,8 @@ void GriddingTest::kernelTest()
 	QFETCH(float, oversamplingRatio);
 
 	Trajectory trajectory;
-	trajectory.dimensions = fieldOfView.size();
-	for(int d=0; d<trajectory.dimensions; d++)
+  trajectory.numDimensions = fieldOfView.size();
+  for(int d=0; d<trajectory.numDimensions; d++)
 	{
 		trajectory.spatialResolution[d] = spatialResolution[d];
 		trajectory.fieldOfView[d] = fieldOfView[d];
@@ -117,8 +117,8 @@ void GriddingTest::testForward_data()
 	spatialResolution << spatialResolution;
 
 	float kSpaceExtent[3];
-	int dimensions = 2;
-	for (int d=0; d<dimensions; d++)
+  int numDimensions = 2;
+  for (int d=0; d<numDimensions; d++)
 		kSpaceExtent[d] = 5/spatialResolution[d];
 
 	QVector<float> kSpaceCoordinates;
@@ -131,7 +131,7 @@ void GriddingTest::testForward_data()
 	{
 		for (int n=0; n<readoutPoints; n++)
 		{
-			for(int d=0; d<dimensions; d++)
+      for(int d=0; d<numDimensions; d++)
 			{
 				kSpaceCoordinates.append(randomNumber(-kSpaceExtent[d], kSpaceExtent[d]));
 			}
@@ -180,14 +180,14 @@ void GriddingTest::testForward()
 	qWarning() << "Oversampling Ratio:" << oversamplingRatio;
 
 	Trajectory trajectory;
-	trajectory.readoutPoints = readoutPoints;
-	qWarning() << "Readout Points:" << trajectory.readoutPoints;
-	trajectory.readouts = readouts;
-	qWarning() << "Readouts:" << trajectory.readouts;
-	trajectory.dimensions = fieldOfView.size();
-	allocateTrajectory(&trajectory, trajectory.readoutPoints, 0, trajectory.dimensions, trajectory.readouts, trajectory.readouts, StoreAll);
+  trajectory.numReadoutPoints = readoutPoints;
+  qWarning() << "Readout Points:" << trajectory.numReadoutPoints;
+  trajectory.numReadouts = readouts;
+  qWarning() << "Readouts:" << trajectory.numReadouts;
+  trajectory.numDimensions = fieldOfView.size();
+  allocateTrajectory(&trajectory, trajectory.numReadoutPoints, 0, trajectory.numDimensions, trajectory.numReadouts, trajectory.numReadouts, STORE_ALL);
 	float minResolution = INFINITY;
-	for (int d=0; d<trajectory.dimensions; d++)
+  for (int d=0; d<trajectory.numDimensions; d++)
 	{
 		trajectory.spatialResolution[d] = spatialResolution[d];
 		trajectory.fieldOfView[d] = fieldOfView[d];
@@ -195,9 +195,9 @@ void GriddingTest::testForward()
 		trajectory.imageDimensions[d] = 10*fieldOfView[d]/spatialResolution[d];
 	}
 
-	for(int r=0; r<trajectory.readouts; r++)
+  for(int r=0; r<trajectory.numReadouts; r++)
 	{
-		for (int n=0; n<trajectory.readoutPoints; n++)
+    for (int n=0; n<trajectory.numReadoutPoints; n++)
 		{
 			int m = r*readoutPoints+n;
 			float k[2] = {kSpaceCoordinates[2*m], kSpaceCoordinates[2*m+1]};
@@ -205,8 +205,8 @@ void GriddingTest::testForward()
 		}
 	}
 
-	QVector<int> trajectorySize = QVector<int>() << trajectory.readoutPoints << trajectory.readouts;
-	MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.dimensions, signal.toStdVector());
+  QVector<int> trajectorySize = QVector<int>() << trajectory.numReadoutPoints << trajectory.numReadouts;
+  MRdata kSpaceData(trajectorySize.toStdVector(), trajectory.numDimensions, signal.toStdVector());
 
 	kSpaceData.writeToOctave("kspace.txt");
 
