@@ -99,7 +99,8 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 
 	//image.save("phantom.jpg");
 
-	m_imageLabel->setPixmap(QPixmap::fromImage(image));
+  QPixmap imageMap = QPixmap::fromImage(image).scaled(m_imageLabel->size(), Qt::KeepAspectRatio);
+  m_imageLabel->setPixmap(imageMap);
 	m_imageLabel->adjustSize();
 
 	update();

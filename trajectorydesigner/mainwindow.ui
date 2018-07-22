@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>646</width>
-    <height>424</height>
+    <height>512</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -396,7 +396,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -437,6 +437,11 @@
        <attribute name="title">
         <string>Phantom</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <layout class="QVBoxLayout" name="phantomLayout"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -448,7 +453,7 @@
      <x>0</x>
      <y>0</y>
      <width>646</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>

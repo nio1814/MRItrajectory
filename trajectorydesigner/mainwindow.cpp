@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
   ui->trajectoryComboBox->addItem("Spiral", SPIRAL);
   ui->trajectoryComboBox->addItem("Radial", RADIAL);
+  ui->trajectoryComboBox->addItem("Radial 3D", RADIAL3D);
   ui->trajectoryComboBox->addItem("Cones", CONES);
   ui->trajectoryComboBox->addItem("Rings", RINGS);
 
@@ -153,10 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->tabWidget->setCurrentIndex(1);
 	QPointer<QWidget> tab = ui->tabWidget->currentWidget();
-	QScopedPointer<QVBoxLayout> layout(new QVBoxLayout(tab));
-	layout->addWidget(m_phantomReconstruction);
-	tab->setLayout(layout.data());
-
+  ui->phantomLayout->addWidget(m_phantomReconstruction);
 
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateTrajectoryPlot(Trajectory*)));
 	connect(m_generator, SIGNAL(updated(Trajectory*)), this, SLOT(updateGradientsPlot(Trajectory*)));
@@ -321,7 +319,8 @@ void MainWindow::updateTrajectoryPlot(Trajectory *trajectory)
 	{
 		trajectoryCoordinates(n, m_readout, trajectory, kSpaceCoordinates, NULL);
 		coordinatesXY.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[1]));
-    if(trajectory->numDimensions>2)		coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
+    if(trajectory->numDimensions>2)
+      coordinatesXZ.append(QPointF(kSpaceCoordinates[0], kSpaceCoordinates[2]));
 	}
 
 	m_trajectoryCurve->setSamples(coordinatesXY);
