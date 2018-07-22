@@ -9,3 +9,6 @@
 ### 3D Cones
  - **Addy, N.O.**, Ingle, R.R., Wu, H.H., Hu, B.S. and Nishimura, D.G. (2015), High-resolution variable-density 3D cones coronary MRA. Magn. Reson. Med., 74: 614–621. [doi:10.1002/mrm.25803](http://onlinelibrary.wiley.com/doi/10.1002/mrm.25803/full)
  - **Addy, N.O.**, Ingle, R.R., Luo, J., Baron, C.A., Yang, P.C., Hu, B.S. and Nishimura, D.G. (2017), 3D image-based navigators for coronary MR angiography. Magn. Reson. Med., 77: 1874–1883. [doi:10.1002/mrm.26269](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26269/abstract)
+
+### Concentric Rings
+ - Wu, H. H., Lee, J. H. and Nishimura, D. G. (2008), MRI using a concentric rings trajectory. Magn. Reson. Med., 59: 102-112. doi:10.1002/mrm.21300
