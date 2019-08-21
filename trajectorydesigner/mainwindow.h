@@ -54,7 +54,7 @@ private:
 	float m_spatialResolutionSliderScale = 10;
 	float m_readoutDurationSliderScale = 10;
 
-	QwtPlot* m_trajectoryPlot;
+  QwtPlot* m_trajectoryPlot = nullptr;
 	QwtPlotCurve* m_trajectoryCurve;
 
 	QPointer<Plot2D> m_trajectoryPlotXZ;

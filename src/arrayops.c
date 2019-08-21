@@ -174,13 +174,15 @@ float interpfloat(float *arrx, float *arry, int npts, float x)
 			}
 	}
 	else if(arrx[1]<arrx[0])
+  {
 		for(n=1; n<npts-1; n++)
 			if(arrx[n+1]>=arrx[n])
 			{
 				fprintf(stderr, "Error: interpfloats() x is not monotonically decreasing");
 				return 0;
 			}
-	else
+  }
+  else
 	{
 		fprintf(stderr, "Error: interpfloats() x is not monotonically decreasing or increasesing");
 		return 0;

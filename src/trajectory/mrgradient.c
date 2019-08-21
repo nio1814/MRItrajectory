@@ -525,7 +525,7 @@ void grd_bipolar_prewinder(float gradMax, float gradMaxSys, float slewMax, float
   for(n=0; n<len_gydep; n++)
     (*time)[n] = n*T;
 
-    *N = len_gydep;
+  *N = len_gydep;
 
   return;
 }

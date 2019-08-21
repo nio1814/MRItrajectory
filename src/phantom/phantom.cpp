@@ -172,7 +172,7 @@ float Phantom::imageDomainSignal(float x, float y)
 /**
  * returning the complex signal evaluated at ( kx, ky, kz) in an array of length 2, i.e. {Re, Im}.
  */
-complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
+complexFloat Phantom::fourierDomainSignal(const float& kx, const float& ky, const float& kz)
 {
 	float k[3] = {kx,ky,kz};
 	float kRotated[3];
@@ -196,29 +196,31 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 		 { // if K = 0
 			 if( norm2(shape.displacement().data(),3)==0.0 )
 			 { // if displacement vector is zero
-				 signal.real() += (4./3.)*M_PI* shape.intensity()*principalAxesProduct;
+         signal += (4.0f/3.0f)*M_PI* shape.intensity()*principalAxesProduct;
 			 }
 			 else
 			 { // displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp = (4./3.)*M_PI* shape.intensity()*principalAxesProduct;
-				 signal.real() += temp * cosf(2.0 * M_PI * kd);
-				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
+				 // signal.real() += temp * cosf(2.0 * M_PI * kd);
+				 // signal.imag() -= temp * sinf(2.0 * M_PI * kd);
+                 signal += complexFloat(temp * std::cos(2 * M_PI * kd), -temp * std::sin(2 * M_PI * kd));
 			 }
 
 		 }else if (K<=0.002){  // if K<=0.002
 			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
 				 double temp = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
-				 signal.real() += shape.intensity()*principalAxesProduct*temp;
+         signal += shape.intensity()*principalAxesProduct*temp;
 
 			 }else{  // if displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
 				 double temp1 = 4.1887902047863905 - 16.5366808961599*powf(K,2) + 23.315785507450016*powf(K,4);
 				 double temp2 = shape.intensity()*principalAxesProduct*temp1;
 
-				 signal.real() += temp2 * cosf(2.0 * M_PI * kd);
-				 signal.imag() -= temp2 * sinf(2.0 * M_PI * kd);
+//				 signal.real() += temp2 * cosf(2.0 * M_PI * kd);
+//				 signal.imag() -= temp2 * sinf(2.0 * M_PI * kd);
+        signal += complexFloat(temp2 * std::cos(2 * M_PI * kd), -temp2 * std::sin(2 * M_PI * kd));
 			 }
 		 }
 		 else
@@ -228,7 +230,7 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 				 double temp = sinf(arg)-arg*cosf(arg);
 						temp /= (2.0*powf(M_PI,2)*powf(K,3));
 
-				 signal.real() += shape.intensity()*principalAxesProduct*temp;
+         signal += shape.intensity()*principalAxesProduct*temp;
 
 			 }else{  // displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
@@ -237,8 +239,9 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky, float kz)
 
 						temp *= shape.intensity()*principalAxesProduct;
 
-				 signal.real() += temp * cosf(2.0 * M_PI * kd);
-				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
+//				 signal.real() += temp * cosf(2.0 * M_PI * kd);
+//				 signal.imag() -= temp * sinf(2.0 * M_PI * kd);
+        signal += complexFloat(temp * std::cos(2.0 * M_PI * kd), -temp * std::sin(2.0 * M_PI * kd));
 			 }
 		 }
 	}
@@ -285,14 +288,15 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky)
 					K2 = K*K;
 					K4 = K2*K2;
 
-					double BJ = 1. - 4.934802200544679*K2 + 8.117424252833533*K4;
+          const float BJ = 1. - 4.934802200544679*K2 + 8.117424252833533*K4;
 
-					double kd = dot(k, shape.displacement().data(), 2);
-					double arg2 = 2.0 * M_PI * kd;
+          const float kd = dot(k, shape.displacement().data(), 2);
+          const float arg2 = 2.0 * M_PI * kd;
 
-					double temp = M_PI* shape.intensity()*principalAxesProduct;
-					signal.real() += temp * std::cos(arg2)*BJ;
-					signal.imag() -= temp * std::sin(arg2)*BJ;
+          const float temp = M_PI* shape.intensity()*principalAxesProduct;
+//					signal.real() += temp * std::cos(arg2)*BJ;
+//					signal.imag() -= temp * std::sin(arg2)*BJ;
+          signal += complexFloat(temp * std::cos(arg2)*BJ, -temp * std::sin(arg2)*BJ);
 			 }
 		 }
 		 else
@@ -301,18 +305,19 @@ complexFloat Phantom::fourierDomainSignal(float kx, float ky)
 			 {
 				double arg = M_PI * K;
 				double BJ = j1(2.0*arg)/arg;
-				signal.real() += M_PI* shape.intensity()*principalAxesProduct*BJ;
+        signal += M_PI * shape.intensity()*principalAxesProduct*BJ;
 			 }
 			 else
 			 {
-				double arg = M_PI * K;
-				double BJ = j1(2.0*arg)/arg;
-				double kd = dot(k, shape.displacement().data(), 2);
-				double arg2 = 2.0 * M_PI * kd;
+        const float arg = M_PI * K;
+        const float BJ = j1(2.0*arg)/arg;
+        const float kd = dot(k, shape.displacement().data(), 2);
+        const float arg2 = 2.0 * M_PI * kd;
 
-				double temp = M_PI* shape.intensity()*principalAxesProduct;
-				signal.real() += temp * std::cos(arg2)*BJ;
-				signal.imag() -= temp * std::sin(arg2)*BJ;
+        const float temp = M_PI* shape.intensity()*principalAxesProduct;
+//				signal.real() += temp * std::cos(arg2)*BJ;
+//				signal.imag() -= temp * std::sin(arg2)*BJ;
+        signal += complexFloat(temp * std::cos(arg2)*BJ, -temp * std::sin(arg2)*BJ);
 			 }
 		 }
 	}

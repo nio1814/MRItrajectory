@@ -232,6 +232,7 @@ void MRdata::crop(std::vector<int> newSize)
 		multiIndexCrop[2] = n/newSize[1];
 
 		for(int s=0; s<m_numImagingDimensions; s++)
+    {
 			indexOriginal[s] = multiIndexCrop[s] - (newSize[s]-m_dimensions[s])/2;
 
 			int index = (indexOriginal[2]*m_dimensions[1] + indexOriginal[1])*m_dimensions[0] + indexOriginal[0];
@@ -239,7 +240,8 @@ void MRdata::crop(std::vector<int> newSize)
 
 			for(int m=0; m<newSize[0]; m++)
 				signalCropped[indexCrop+m] = m_signal[index+m];
-	}
+    }
+  }
 
 	m_signal = signalCropped;
 	for(int d=0; d<m_numImagingDimensions; d++)
