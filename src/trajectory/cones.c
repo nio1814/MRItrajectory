@@ -854,7 +854,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	trajectory->storage = storage;
 
   allocateTrajectory(trajectory, trajectory->numReadoutPoints, trajectory->numWaveformPoints, 3, numBases, cones->interpolation->numReadouts, storage);
-	if(storage==StoreBasis)
+	if(storage==STORE_BASIS)
 	{
     memcpy(trajectory->gradientWaveforms, cones->basisGradientWaveforms, numBases*3*trajectory->numWaveformPoints*sizeof(float));
     memcpy(trajectory->kSpaceCoordinates, cones->basisKspaceCoordinates, numBases*3*trajectory->numReadoutPoints*sizeof(float));
@@ -973,9 +973,9 @@ struct Cones* loadCones(const char* filename, enum Endian endian, enum WaveformS
   {
     struct Trajectory* trajectoryLoaded = trajectory;
     cones->trajectory = newTrajectory();
-    int numWaveforms = storage==StoreBasis ? trajectory->numBases : trajectory->numReadouts;
+    int numWaveforms = storage==STORE_BASIS ? trajectory->numBases : trajectory->numReadouts;
     allocateTrajectory(cones->trajectory, trajectoryLoaded->numReadoutPoints, trajectoryLoaded->numWaveformPoints, trajectoryLoaded->numDimensions, numWaveforms, trajectoryLoaded->numDimensions, storage);
-    if(storage==StoreBasis)
+    if(storage==STORE_BASIS)
     {
       memcpy(trajectory->gradientWaveforms, cones->basisGradientWaveforms, trajectory->numReadoutPoints*trajectory->numBases*3*sizeof(float));
     }
@@ -1011,7 +1011,7 @@ struct Cones *newCones(int bases)
 	cones->numBasisReadoutPoints = (int*)malloc(bases*sizeof(int));
   cones->numBasisWaveformPoints = (int*)malloc(bases*sizeof(int));
 
-  cones->trajectory = newTrajectory(0, 0, 3, bases, 0, StoreBasis);
+  cones->trajectory = newTrajectory(0, 0, 3, bases, 0, STORE_BASIS);
   cones->trajectory->type = CONES;
   cones->interpolation = NULL;
 

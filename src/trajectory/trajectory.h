@@ -23,7 +23,7 @@ To distribute this file, substitute the full license for the above reference.
 
 #include <stdio.h>
 
-enum WaveformStorageType {StoreBasis, STORE_ALL};
+enum WaveformStorageType {STORE_BASIS, STORE_ALL};
 enum TrajectoryType {SPIRAL, RADIAL, RADIAL3D, CONES, RINGS};
 
 struct Trajectory

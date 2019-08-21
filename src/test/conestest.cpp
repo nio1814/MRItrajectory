@@ -25,7 +25,7 @@ void ConesTest::generateTest_data()
 
 	QVector<QPointF> fieldOfViewScale;
 
-	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << StoreBasis << fieldOfViewScale;
+	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_BASIS << fieldOfViewScale;
 
   QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
@@ -84,7 +84,7 @@ void ConesTest::generateTest()
 
 	float maxReadoutGradient = 1/(filterFieldOfView*samplingInterval*4257);
 	int waveforms;
-	if(storage==StoreBasis)
+	if(storage==STORE_BASIS)
     waveforms = trajectory->numBases;
 	else
 		waveforms = trajectory->numReadouts;
@@ -96,7 +96,7 @@ void ConesTest::generateTest()
 	for(int r=0; r<waveforms; r++)
 	{
 		int b;
-		if(storage==StoreBasis)
+		if(storage==STORE_BASIS)
 			b = r;
 		else
 			b = schedule->basis[r];

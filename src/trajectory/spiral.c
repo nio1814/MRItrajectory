@@ -15,6 +15,7 @@ To distribute this file, substitute the full license for the above reference.
 #include "arrayops.h"
 #include "variabledensity.h"
 #include "mathops.h"
+#include "phaseencode.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -409,4 +410,112 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
     return trajectory;
 }
 
+struct StackOfSpirals* newStackOfSpirals(struct Trajectory* spirals, struct PhaseEncoder *phaseEncoder)
+{
+  struct StackOfSpirals* stackOfSpirals = (struct StackOfSpirals*)malloc(sizeof(struct StackOfSpirals*));
+  stackOfSpirals->spirals = spirals;
+  stackOfSpirals->phaseEncoder = phaseEncoder;
 
+  return stackOfSpirals;
+}
+
+struct StackOfSpirals* generateStackOfSpirals(struct VariableDensity *variableDensity, float fieldOfViewXY, float fieldOfViewZ, float spatialResolutionXY, float spatialResolutionZ, float readoutDuration, int balance, float samplingInterval, int numInterleaves, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate)
+{
+  struct Trajectory* spirals = generateSpirals(variableDensity, fieldOfViewXY, spatialResolutionXY, readoutDuration, 0, samplingInterval, numInterleaves, Archimedean, 0, readoutFieldOfView, maxGradientAmplitude, maxSlewRate);
+
+  int imageSizeZ;
+  adjustSpatialResolution(fieldOfViewZ, &imageSizeZ, &spatialResolutionZ);
+
+  struct PhaseEncoder* phaseEncoder;
+  if(balance)
+    phaseEncoder = newPhaseEncoder(fieldOfViewZ, spatialResolutionZ, 1, 1, 0, spirals->numReadoutPoints, samplingInterval, maxGradientAmplitude, maxSlewRate);
+
+  float* spiralGradientXprePadded = (float*)calloc(phaseEncoder->numPoints, sizeof(float));
+  memcpy(&spiralGradientXprePadded[phaseEncoder->numPointsPhaseEncode], trajectoryGradientWaveform(spirals, 0, 0), spirals->numReadoutPoints*sizeof(float));
+
+  float* spiralGradientYprePadded = (float*)calloc(phaseEncoder->numPoints, sizeof(float));
+  memcpy(&spiralGradientYprePadded[phaseEncoder->numPointsPhaseEncode], trajectoryGradientWaveform(spirals, 0, 1), spirals->numReadoutPoints*sizeof(float));
+
+  float* spiralGradientXrewound;
+  float* spiralGradientYrewound;
+  float* phaseEncodeGradientRewound;
+  int numPointsPadded;
+  traverseKspaceToZero(spiralGradientXprePadded, spiralGradientYprePadded, phaseEncoder->gradient, phaseEncoder->numPoints, samplingInterval, maxGradientAmplitude, maxSlewRate, &spiralGradientXrewound, &spiralGradientYrewound, &phaseEncodeGradientRewound, &numPointsPadded);
+
+  struct Trajectory* spiralsPadded = newTrajectory();
+  allocateTrajectory(spiralsPadded, spirals->numReadoutPoints, numPointsPadded, 2, 1, spirals->numReadouts, STORE_BASIS);
+  spiralsPadded->numPreReadoutPoints = phaseEncoder->numPointsPhaseEncode;
+  spiralsPadded->samplingInterval = samplingInterval;
+  for(int d=0; d<2; d++)
+  {
+    spiralsPadded->fieldOfView[d] = fieldOfViewXY;
+    spiralsPadded->spatialResolution[d] = spatialResolutionXY;
+  }
+  spiralsPadded->fieldOfView[2] = fieldOfViewZ;
+  spiralsPadded->spatialResolution[2] = spatialResolutionZ;
+
+  memcpy(trajectoryGradientWaveform(spiralsPadded, 0, 0), spiralGradientXrewound, numPointsPadded*sizeof(float));
+  memcpy(trajectoryGradientWaveform(spiralsPadded, 0, 1), spiralGradientYrewound, numPointsPadded*sizeof(float));
+
+  free(phaseEncoder->gradient);
+  phaseEncoder->gradient = phaseEncodeGradientRewound;
+  phaseEncoder->numPoints = numPointsPadded;
+
+  struct StackOfSpirals* stackOfSpirals = newStackOfSpirals(spiralsPadded, phaseEncoder);
+
+  return stackOfSpirals;
+}
+
+void generateStackOfSpiralsReadoutWaveforms(int index, const struct StackOfSpirals* stackOfSpirals, float* gradientX, float* gradientY, float* gradientZ)
+{
+  struct Trajectory* spirals = stackOfSpirals->spirals;
+  memcpy(gradientX, trajectoryGradientWaveform(spirals, 0, 0), spirals->numWaveformPoints*sizeof(float));
+  memcpy(gradientY, trajectoryGradientWaveform(spirals, 0, 1), spirals->numWaveformPoints*sizeof(float));
+
+  struct PhaseEncoder* phaseEncoder = stackOfSpirals->phaseEncoder;
+  memcpy(gradientZ, phaseEncoder->gradient, phaseEncoder->numPoints*sizeof(float));
+
+  int interleaf = index % spirals->numReadouts;
+  float phi = interleaf*2*M_PI/spirals->numReadouts;
+  scalecomplex(gradientX, gradientY, cos(phi), sin(phi), phaseEncoder->numPoints);
+
+  int phaseEncode = index/spirals->numReadouts;
+  scalefloats(gradientZ, phaseEncoder->numPoints, phaseEncoder->scales[phaseEncode]);
+}
+
+struct Trajectory* stackOfSpiralsToTrajectory(struct StackOfSpirals* stackOfSpirals, enum WaveformStorageType storageType)
+{
+  struct Trajectory* trajectory = newTrajectory();
+  trajectory->numPreReadoutPoints = stackOfSpirals->phaseEncoder->numPointsPhaseEncode;
+  trajectory->samplingInterval = stackOfSpirals->spirals->samplingInterval;
+  for(int d=0; d<2; d++)
+  {
+    trajectory->fieldOfView[d] = stackOfSpirals->spirals->fieldOfView[d];
+    trajectory->spatialResolution[d] = stackOfSpirals->spirals->spatialResolution[d];
+  }
+  trajectory->fieldOfView[2] = stackOfSpirals->phaseEncoder->fieldOfView;
+  trajectory->spatialResolution[2] = stackOfSpirals->phaseEncoder->spatialResolution;
+
+  int numReadouts = stackOfSpirals->spirals->numReadouts*stackOfSpirals->phaseEncoder->numPhaseEncodes;
+  allocateTrajectory(trajectory, stackOfSpirals->spirals->numReadoutPoints, stackOfSpirals->phaseEncoder->numPoints, 3, 1, numReadouts, storageType);
+ 
+  int numWaveforms = storageType==STORE_BASIS ? trajectory->numBases : trajectory->numReadouts;
+  float* kSpaceWaveformFull = (float*)malloc(trajectory->numWaveformPoints*sizeof(float));
+  int w;
+  for(w=0; w<numWaveforms; w++)
+  {
+    float* gradientX = trajectoryGradientWaveform(trajectory, w, 0);
+    float* gradientY = trajectoryGradientWaveform(trajectory, w, 1);
+    float* gradientZ = trajectoryGradientWaveform(trajectory, w, 2);
+    generateStackOfSpiralsReadoutWaveforms(w, stackOfSpirals, gradientX, gradientY, gradientZ);
+
+    int d;
+    for(d=0; d<trajectory->numDimensions; d++)
+    {
+      gradientToKspace(trajectoryGradientWaveform(trajectory, w, d), kSpaceWaveformFull, trajectory->samplingInterval, trajectory->numReadoutPoints);
+      memcpy(trajectoryKspaceWaveform(trajectory, w, d), &kSpaceWaveformFull[trajectory->numPreReadoutPoints], trajectory->numReadoutPoints*sizeof(float));
+    }
+  }
+
+  return trajectory;
+}

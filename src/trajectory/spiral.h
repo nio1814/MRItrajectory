@@ -31,6 +31,11 @@ enum SpiralDirection{spOUT, spINOUT};
 enum spMETHOD{spmVDS, spmMINTIME};
 enum SpiralType{Archimedean, spFERMAT};
 
+struct StackOfSpirals
+{
+  struct Trajectory* spirals;
+  struct PhaseEncoder* phaseEncoder;
+};
 /**
  \brief	Calculate the sampling density compensation weights based on curvature and spacing of samples
  \param[in]	gx	x gradient values (G/cm)
@@ -48,7 +53,10 @@ void calcSpiralDcf(float *gx, float *gy, float *kx, float *ky, int rolen, float 
 */
 struct Trajectory* generateSpirals(struct VariableDensity *vd, float fieldOfView, float spatialResolution, float readoutDuration, int rewindTrajectory, float samplingInterval, int interleaves, enum SpiralType sptype, float floretAngle, float readoutFieldOfView, float gmax, float smax);
 
+struct StackOfSpirals* newStackOfSpirals(struct Trajectory *spirals, struct PhaseEncoder* phaseEncoder);
 
+struct StackOfSpirals* generateStackOfSpirals(struct VariableDensity *variableDensity, float fieldOfViewXY, float fieldOfViewZ, float spatialResolutionXY, float spatialResolutionZ, float readoutDuration, int balance, float samplingInterval, int numInterleaves, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate);
+struct Trajectory* stackOfSpiralsToTrajectory(struct StackOfSpirals* stackOfSpirals, enum WaveformStorageType storageType);
 /** @} */
 
 #endif
