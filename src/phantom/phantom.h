@@ -18,7 +18,14 @@ public:
 	float imageDomainSignal(float x, float y);
 
 	std::vector<complexFloat> fourierDomainSignal(const std::vector<float>& coordinates);
-	complexFloat fourierDomainSignal(float kx, float ky, float kz);
+
+  /*!
+   * \brief Calculate the complex fourier phantom signal at a k-space location.
+   * \param kx
+   * \param ky
+   * \param kz
+   */
+  complexFloat fourierDomainSignal(const float& kx, const float& ky, const float& kz);
 	complexFloat fourierDomainSignal(float kx, float ky);
 
 private:

@@ -283,8 +283,8 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
     else
 		trajectory->maxReadoutGradientAmplitude = maxGradientAmplitude;
 
-	int readoutPointsDesired = readoutDuration/samplingInterval;
-	readoutPointsDesired += readoutPointsDesired%2;
+  int numReadoutPointsDesired = readoutDuration/samplingInterval;
+  numReadoutPointsDesired += numReadoutPointsDesired%2;
 
 	int interleavesLow = 1;
 	int interleavesHigh = 0;
@@ -308,7 +308,7 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 		   }
 
 		   if(sptype==spFERMAT)
-			fieldOfViewFinal = calcFovFermatFloret(fieldOfViewFinal, kr, floretAngle);
+          fieldOfViewFinal = calcFovFermatFloret(fieldOfViewFinal, kr, floretAngle);
 
 			interleavesHigh = fmax(interleavesHigh, 2.0f*M_PI*kr*fieldOfViewFinal);
 	   }
@@ -318,12 +318,12 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 		   float fieldOfViewAtKr = fieldOfView;
 			getFinalFieldOfView(variableDensity, &fieldOfView, &fieldOfViewAtKr, 1);
           if(sptype==spFERMAT)
-		   fieldOfViewAtKr = calcFovFermatFloret(fieldOfViewAtKr, kSpaceMaxRadial, floretAngle);
+            fieldOfViewAtKr = calcFovFermatFloret(fieldOfViewAtKr, kSpaceMaxRadial, floretAngle);
 
 		   interleavesHigh = fmax(interleavesHigh, 2.0f*M_PI*kr*fieldOfViewAtKr);
        }
 
-		float* gradientReadoutWaveformsBasis = (float*)calloc(2*readoutPointsDesired, sizeof(float));
+    float* gradientReadoutWaveformsBasis = (float*)calloc(2*numReadoutPointsDesired, sizeof(float));
 		float* gradientWaveformsTest = NULL;
 		float* kSpaceCoordinatesTest = NULL;
 
@@ -349,10 +349,9 @@ struct Trajectory* generateSpirals(struct VariableDensity *variableDensity, floa
 				kSpaceCoordinatesTest = NULL;
             }
 
-		  if(!generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, readoutPointsDesired, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
+      if(!generateSpiral(fieldOfView, spatialResolution, variableDensity, interleavesTest, numReadoutPointsDesired, samplingInterval, sptype, floretAngle, trajectory->maxReadoutGradientAmplitude, maxSlewRate, &kSpaceCoordinatesTest, &gradientWaveformsTest, &readoutPointsTest))
             {
-
-				if(readoutPointsTest>readoutPointsTest)
+        if(readoutPointsTest > numReadoutPointsDesired)
 					interleavesLow = interleavesTest;
                 else
                 {

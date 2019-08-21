@@ -41,7 +41,7 @@ void SpiralTest::testGenerate()
 	QFETCH(double, maxSlew);
 	QFETCH(QVector<QPointF>, fieldOfViewScale);
 
-	VariableDensity* variableDensity = NULL;
+  VariableDensity* variableDensity = nullptr;
 	if(fieldOfViewScale.size())
 	{
 		variableDensity = newVariableDensity();

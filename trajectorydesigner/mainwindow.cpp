@@ -21,8 +21,8 @@ extern "C"
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	m_trajectoryPlotXZ(new Plot2D(this)),
-	m_slewRatePlot(new TimeSeriesPlot(3)),
+  m_trajectoryPlotXZ(new Plot2D(this)),
+  m_slewRatePlot(new TimeSeriesPlot(3)),
 	m_generator(new Generator),
 	m_phantomReconstruction(new PhantomReconstruction())
 {
@@ -234,7 +234,7 @@ void MainWindow::setSpatialResolution(float spatialResolution, int axis)
 	m_generator->setSpatialResolution(spatialResolution, axis);
 	QVector<float> spatialResolutions = m_generator->spatialResolution();
 	float minSpatialResolution = spatialResolutions[0];
-	float exent = 10/minSpatialResolution;
+  const double exent = 10.0 / minSpatialResolution;
 	if(m_trajectoryPlot)
 	{
 		m_trajectoryPlot->setAxisScale(QwtPlot::xBottom, -exent/2, exent/2);
