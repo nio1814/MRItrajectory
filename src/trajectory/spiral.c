@@ -419,6 +419,13 @@ struct StackOfSpirals* newStackOfSpirals(struct Trajectory* spirals, struct Phas
   return stackOfSpirals;
 }
 
+void deleteStackOfSpirals(struct StackOfSpirals** spirals)
+{
+  deleteTrajectory(&((*spirals)->spirals));
+//  free causing crash
+//  free(*spirals);
+}
+
 struct StackOfSpirals* generateStackOfSpirals(struct VariableDensity *variableDensity, float fieldOfViewXY, float fieldOfViewZ, float spatialResolutionXY, float spatialResolutionZ, float readoutDuration, int balance, float samplingInterval, int numInterleaves, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate)
 {
   struct Trajectory* spirals = generateSpirals(variableDensity, fieldOfViewXY, spatialResolutionXY, readoutDuration, 0, samplingInterval, numInterleaves, Archimedean, 0, readoutFieldOfView, maxGradientAmplitude, maxSlewRate);

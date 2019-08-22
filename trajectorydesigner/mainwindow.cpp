@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
   ui->setupUi(this);
   ui->trajectoryComboBox->addItem("Spiral", SPIRAL);
+  ui->trajectoryComboBox->addItem("Stack of Spirals", STACK_OF_SPIRALS);
   ui->trajectoryComboBox->addItem("Radial", RADIAL);
   ui->trajectoryComboBox->addItem("Radial 3D", RADIAL3D);
   ui->trajectoryComboBox->addItem("Cones", CONES);
@@ -56,14 +57,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	});
 	connect(ui->variableDensityPushButton, SIGNAL(clicked(bool)), this, SLOT(setVariableDensity(bool)));
 
-	updateFieldOfViewDisplay();
-
 	m_fieldOfViewSlider[0] = ui->fieldOfViewXSlider;
 	m_fieldOfViewSlider[1] = ui->fieldOfViewYSlider;
 	m_fieldOfViewSlider[2] = ui->fieldOfViewZSlider;
 	m_fieldOfViewSpinBox[0] = ui->fieldOfViewXSpinBox;
 	m_fieldOfViewSpinBox[1] = ui->fieldOfViewYSpinBox;
 	m_fieldOfViewSpinBox[2] = ui->fieldOfViewZSpinBox;
+  updateFieldOfViewDisplay();
 
 	for (int n=0; n<3; n++)
 	{
@@ -208,6 +208,12 @@ void MainWindow::updateFieldOfViewDisplay()
 	{
     case SPIRAL:
     case RINGS:
+      m_fieldOfViewSlider[2]->setEnabled(false);
+      m_fieldOfViewSpinBox[2]->setEnabled(false);
+      break;
+    case STACK_OF_SPIRALS:
+      m_fieldOfViewSlider[2]->setEnabled(true);
+      m_fieldOfViewSpinBox[2]->setEnabled(true);
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);
 //			layout->hide();
 			break;

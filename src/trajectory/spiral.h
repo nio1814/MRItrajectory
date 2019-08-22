@@ -55,6 +55,12 @@ struct Trajectory* generateSpirals(struct VariableDensity *vd, float fieldOfView
 
 struct StackOfSpirals* newStackOfSpirals(struct Trajectory *spirals, struct PhaseEncoder* phaseEncoder);
 
+/*!
+ * \brief Free the memory of a stack of spirals trajectory.
+ * \param spirals Stack of spirals trajectory.
+ */
+void deleteStackOfSpirals(struct StackOfSpirals** spirals);
+
 struct StackOfSpirals* generateStackOfSpirals(struct VariableDensity *variableDensity, float fieldOfViewXY, float fieldOfViewZ, float spatialResolutionXY, float spatialResolutionZ, float readoutDuration, int balance, float samplingInterval, int numInterleaves, float readoutFieldOfView, float maxGradientAmplitude, float maxSlewRate);
 struct Trajectory* stackOfSpiralsToTrajectory(struct StackOfSpirals* stackOfSpirals, enum WaveformStorageType storageType);
 /** @} */
