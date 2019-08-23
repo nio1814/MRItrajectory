@@ -158,6 +158,11 @@ bool TrajectoryGenerator::generate()
     case RINGS:
       m_trajectory = generateRings(m_variableDensity, maxFieldOfView(), minSpatialResolution(), m_readoutDuration, m_gradientLimit, m_slewRateLimit, m_samplingInterval);
       break;
+    case STACK_OF_SPIRALS:
+      StackOfSpirals* spirals = generateStackOfSpirals(m_variableDensity, maxFieldOfViewXY(), m_fieldOfView[2], minSpatialResolutionXY(), m_spatialResolution[2], m_readoutDuration, true, m_samplingInterval, 0, m_filterFieldOfView, m_gradientLimit, m_slewRateLimit);
+      m_trajectory = stackOfSpiralsToTrajectory(spirals, STORE_ALL);
+      deleteStackOfSpirals(&spirals);
+      break;
   }
 
   return m_trajectory;
@@ -215,6 +220,7 @@ int TrajectoryGenerator::numDimensions()
       break;
     case CONES:
     case RADIAL3D:
+    case STACK_OF_SPIRALS:
       numDims = 3;
       break;
   }

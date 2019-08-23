@@ -74,7 +74,7 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int nu
 {
 	int count;
 
-	if(storage==StoreBasis)
+  if(storage==STORE_BASIS)
     count = numBases;
 	else
 		count = readouts;
@@ -344,7 +344,7 @@ int writeTrajectory(FILE *file, const struct Trajectory *trajectory)
   fwrite(&trajectory->samplingInterval, sizeof(float), 1, file);
 
   fwrite(&trajectory->storage, sizeof(enum WaveformStorageType), 1, file);
-  if(trajectory->storage==StoreBasis)
+  if(trajectory->storage==STORE_BASIS)
     storedWaveforms = trajectory->numBases;
   else
     storedWaveforms = trajectory->numReadouts;
@@ -538,7 +538,7 @@ struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
 
 int numTrajectoryWaveforms(const struct Trajectory *trajectory)
 {
-  return trajectory->storage==StoreBasis ? trajectory->numBases : trajectory->numReadouts;
+  return trajectory->storage==STORE_BASIS ? trajectory->numBases : trajectory->numReadouts;
 }
 
 void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajectory *trajectory, float* coordinates, float* densityCompensation)
