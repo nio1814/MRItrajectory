@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->trajectoryComboBox->addItem("Radial 3D", RADIAL3D);
   ui->trajectoryComboBox->addItem("Cones", CONES);
   ui->trajectoryComboBox->addItem("Rings", RINGS);
+  ui->trajectoryComboBox->addItem("Cartesian 3D", CARTESIAN3D);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
