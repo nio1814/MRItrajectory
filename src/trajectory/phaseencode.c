@@ -67,7 +67,6 @@ struct PhaseEncoder* newPhaseEncoder(float fieldOfView, float spatialResolution,
   return phaseEncoder;
 }
 
-
 void deletePhaseEncoder(struct PhaseEncoder **phaseEncoder)
 {
     free((*phaseEncoder)->gradient);
