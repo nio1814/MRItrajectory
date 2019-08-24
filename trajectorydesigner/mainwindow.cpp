@@ -213,6 +213,7 @@ void MainWindow::updateFieldOfViewDisplay()
       m_fieldOfViewSpinBox[2]->setEnabled(false);
       break;
     case STACK_OF_SPIRALS:
+    case CARTESIAN3D:
       m_fieldOfViewSlider[2]->setEnabled(true);
       m_fieldOfViewSpinBox[2]->setEnabled(true);
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);

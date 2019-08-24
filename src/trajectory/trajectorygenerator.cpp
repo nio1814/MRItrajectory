@@ -6,6 +6,7 @@ extern "C"
 #include "radial.h"
 #include "cones.h"
 #include "rings.h"
+#include "spinwarp.h"
 }
 
 #include <algorithm>
@@ -159,9 +160,16 @@ bool TrajectoryGenerator::generate()
       m_trajectory = generateRings(m_variableDensity, maxFieldOfView(), minSpatialResolution(), m_readoutDuration, m_gradientLimit, m_slewRateLimit, m_samplingInterval);
       break;
     case STACK_OF_SPIRALS:
-      StackOfSpirals* spirals = generateStackOfSpirals(m_variableDensity, maxFieldOfViewXY(), m_fieldOfView[2], minSpatialResolutionXY(), m_spatialResolution[2], m_readoutDuration, true, m_samplingInterval, 0, m_filterFieldOfView, m_gradientLimit, m_slewRateLimit);
-      m_trajectory = stackOfSpiralsToTrajectory(spirals, STORE_ALL);
-      deleteStackOfSpirals(&spirals);
+      {
+        StackOfSpirals* spirals = generateStackOfSpirals(m_variableDensity, maxFieldOfViewXY(), m_fieldOfView[2], minSpatialResolutionXY(), m_spatialResolution[2], m_readoutDuration, true, m_samplingInterval, 0, m_filterFieldOfView, m_gradientLimit, m_slewRateLimit);
+        m_trajectory = stackOfSpiralsToTrajectory(spirals, STORE_ALL);
+        deleteStackOfSpirals(&spirals);
+      }
+      break;
+    case CARTESIAN3D:
+      const int numDims = m_trajectoryType==CARTESIAN3D ? 3 : 2;
+      Cartesian cartesian = generateCartesian(m_fieldOfView, m_spatialResolution, "xyz", numDims, false, m_samplingInterval, m_gradientLimit, m_slewRateLimit);
+      m_trajectory = cartesianToTrajectory(&cartesian, STORE_ALL);
       break;
   }
 
@@ -221,6 +229,7 @@ int TrajectoryGenerator::numDimensions()
     case CONES:
     case RADIAL3D:
     case STACK_OF_SPIRALS:
+    case CARTESIAN3D:
       numDims = 3;
       break;
   }
