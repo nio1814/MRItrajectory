@@ -18,6 +18,7 @@ To distribute this file, substitute the full license for the above reference.
 #include "arrayops.h"
 #include "variabledensity.h"
 #include "convertendian.h"
+#include "mrgradient.h"
 
 #include <math.h>
 #include <stdlib.h>

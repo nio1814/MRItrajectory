@@ -13,6 +13,16 @@
 
 #define DEBUG_MRGRADIENT 1
 
+float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval)
+{
+  return 1.0f/(samplingInterval*GYROMAGNETIC_RATIO*fieldOfView);
+}
+
+float calculateMinFieldOfView(float gradientAmplitude, float samplingInterval)
+{
+  return calculateMaxReadoutGradientAmplitude(gradientAmplitude, samplingInterval);
+}
+
 void grd_triangle(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float**gx, float**slew, float**time, int *N, int *N_ramp);
 
 void grd_trapezoid(float GMAX, float SMAX, float Ktgt, float Ts, float** kx, float** gx, float** slew, float** time, int *N, int *Nrout);

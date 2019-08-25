@@ -17,8 +17,6 @@ void phaseEncodeScales(float fieldOfView, float spatialResolution, float **scale
 
   if(fullPhaseEncoding)
   {
-
-
     for(p=0; p<*numPhaseEncodes; p++)
      if(*numPhaseEncodes%2)
       (*scales)[p] = direction*2.0f*(p-*numPhaseEncodes/2)/(float)*numPhaseEncodes;
@@ -69,3 +67,8 @@ struct PhaseEncoder* newPhaseEncoder(float fieldOfView, float spatialResolution,
   return phaseEncoder;
 }
 
+void deletePhaseEncoder(struct PhaseEncoder **phaseEncoder)
+{
+    free((*phaseEncoder)->gradient);
+    free(*phaseEncoder);
+}

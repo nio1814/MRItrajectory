@@ -13,5 +13,6 @@ struct PhaseEncoder
 };
 
 struct PhaseEncoder* newPhaseEncoder(float fieldOfView, float spatialResolution, int fullPhaseEncoding, int direction, int rewind, int numPointsBetween, float samplingInterval, float gradientLimit, float slewLimit);
+void deletePhaseEncoder(struct PhaseEncoder** phaseEncoder);
 
 #endif // PHASEENCODE_H

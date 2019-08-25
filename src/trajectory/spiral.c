@@ -16,6 +16,7 @@ To distribute this file, substitute the full license for the above reference.
 #include "variabledensity.h"
 #include "mathops.h"
 #include "phaseencode.h"
+#include "mrgradient.h"
 
 #include <math.h>
 #include <stdio.h>

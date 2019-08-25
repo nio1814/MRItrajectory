@@ -24,7 +24,7 @@ To distribute this file, substitute the full license for the above reference.
 #include <stdio.h>
 
 enum WaveformStorageType {STORE_BASIS, STORE_ALL};
-enum TrajectoryType {SPIRAL, RADIAL, RADIAL3D, CONES, RINGS, STACK_OF_SPIRALS};
+enum TrajectoryType {SPIRAL, RADIAL, RADIAL3D, CONES, RINGS, STACK_OF_SPIRALS, CARTESIAN3D};
 
 struct Trajectory
 {
@@ -93,9 +93,10 @@ float *trajectoryKspaceWaveform(const struct Trajectory *trajectory, int readout
  * \param readout Readout index
  */
 float *trajectoryDensityCompensationWaveform(const struct Trajectory* trajectory, int readout);
-float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval);
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange);
+
+int axisNameToIndex(const char name);
 
 #endif
 

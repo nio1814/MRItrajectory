@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->trajectoryComboBox->addItem("Radial 3D", RADIAL3D);
   ui->trajectoryComboBox->addItem("Cones", CONES);
   ui->trajectoryComboBox->addItem("Rings", RINGS);
+  ui->trajectoryComboBox->addItem("Cartesian 3D", CARTESIAN3D);
 
 //	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), m_generator, SLOT(setTrajectory(TrajectoryType)));
 	connect(ui->trajectoryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateFieldOfViewDisplay()));
@@ -212,6 +213,7 @@ void MainWindow::updateFieldOfViewDisplay()
       m_fieldOfViewSpinBox[2]->setEnabled(false);
       break;
     case STACK_OF_SPIRALS:
+    case CARTESIAN3D:
       m_fieldOfViewSlider[2]->setEnabled(true);
       m_fieldOfViewSpinBox[2]->setEnabled(true);
 //			layout = qobject_cast<QWidget*>(ui->fieldOfViewYLayout);

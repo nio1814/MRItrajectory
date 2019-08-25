@@ -558,11 +558,6 @@ void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajec
   trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
 }
 
-float calculateMaxReadoutGradientAmplitude(float fieldOfView, float samplingInterval)
-{
-	return 1.0f/(samplingInterval*GYROMAGNETIC_RATIO*fieldOfView);
-}
-
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
 {
   float* kxFull = (float*)malloc(trajectory->numWaveformPoints*sizeof(float));
@@ -622,3 +617,24 @@ void deleteTrajectory(struct Trajectory **trajectory)
 
   free(*trajectory);
 }
+int axisNameToIndex(const char name)
+{
+  switch(name)
+  {
+    case 'x':
+      return 0;
+      break;
+    case 'y':
+      return 1;
+      break;
+    case 'z':
+      return 2;
+    break;
+    default:
+      printf("Invalid axis %c", name);
+      break;
+  }
+
+  return -1;
+}
+
