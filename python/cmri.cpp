@@ -26,11 +26,11 @@ pybind11::array_t<float> createNumpyArray(float* array, std::vector<int> size)
 }
 
 
-class CTrajectory
+class PyTrajectory
 {
 public:
 
-  ~CTrajectory()
+  ~PyTrajectory()
   {
     deleteTrajectory(&m_trajectory);
   }
