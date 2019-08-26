@@ -17,6 +17,8 @@ extern "C"
 
 #include <QDebug>
 #include <QCheckBox>
+#include <QFileDialog>
+#include <QSettings>
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -191,6 +193,17 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(ui->readoutSpinBox, &QSpinBox::editingFinished, [=]
     {
       setReadout(ui->readoutSpinBox->value());
+    }
+  );
+
+  connect(ui->actionExportTrajectory, &QAction::triggered, [=]()
+    {
+      exportTrajectory();
+    }
+  );
+  connect(ui->actionImportTrajectory, &QAction::triggered, [=]()
+    {
+      importTrajectory();
     }
   );
 
@@ -379,3 +392,64 @@ void MainWindow::updateReadoutIndex(Trajectory *trajectory)
   ui->readoutSpinBox->setMaximum(maxIndex);
 }
 
+/*!
+ * \brief Save a trajectory to disk.
+ * \param filepath  The file path to save the trajectory to.
+ * \return True, if saving succeeded.
+ */
+bool MainWindow::exportTrajectory(QString filepath)
+{
+  if(filepath.isEmpty())
+    filepath = QFileDialog::getSaveFileName(this, tr("Save trajectory"), lastDirectory(), tr("Trajectory file (*.trj)"));
+
+  return m_generator->save(filepath.toStdString());
+}
+
+/*!
+ * \brief Read a trajectory from disk.
+ * \param filepath  The file path to load the trajectory from.
+ * \return  True, if successfully loaded.
+ */
+bool MainWindow::importTrajectory(QString filepath)
+{
+  if(filepath.isEmpty())
+    filepath = QFileDialog::getOpenFileName(this, tr("Save trajectory"), lastDirectory(), tr("Trajectory file (*.trj)"));
+
+  struct Trajectory* trajectory = m_generator->load(filepath.toStdString());
+
+  if (!trajectory)
+    return false;
+  else
+  {
+    bool autoUpdateStatus = m_generator->autoUpdate();
+    setAutoUpdate(false);
+    for (int d=0; d<trajectory->numDimensions; d++)
+    {
+      setSpatialResolution(trajectory->spatialResolution[d], d);
+      setFieldOfView(trajectory->fieldOfView[d], d);
+      m_generator->setTrajectory(trajectory->type);
+      setReadoutDuration(trajectory->numReadoutPoints*trajectory->samplingInterval*1e3);
+    }
+    setAutoUpdate(autoUpdateStatus);
+    if(autoUpdateStatus)
+      m_generator->update();
+    deleteTrajectory(&trajectory);
+
+    setLastDirectory(QFileInfo(filepath).absoluteDir().path());
+
+    return true;
+  }
+}
+
+QString MainWindow::lastDirectory()
+{
+  QSettings settings;
+
+  return settings.value("lastDirectory").toString();
+}
+
+void MainWindow::setLastDirectory(QString directory)
+{
+  QSettings settings;
+  settings.setValue("lastDirectory", directory);
+}

@@ -43,8 +43,12 @@ private slots:
 	void updateGradientsPlot(Trajectory* trajectory);
 	void updateSlewRatePlot(Trajectory* trajectory);
   void updateReadoutIndex(Trajectory* trajectory);
+  bool exportTrajectory(QString filepath=QString());
+  bool importTrajectory(QString filepath=QString());
 
 private:
+  QString lastDirectory();
+  void setLastDirectory(QString directory);
 	Ui::MainWindow *ui;
 	QPointer<QSlider> m_fieldOfViewSlider[3];
 	QSpinBox* m_fieldOfViewSpinBox[3];

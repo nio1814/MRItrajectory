@@ -520,9 +520,7 @@ struct Trajectory* readTrajectory(FILE* file, enum Endian endian)
  */
 struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
 {
-	FILE* file;
-
-	file = fopen(filename, "rb");
+  FILE* file = fopen(filename, "rb");
 	if(!file)
 	{
 	   fprintf(stderr, "saveTrajectory: Error opening %s for read\n", filename);

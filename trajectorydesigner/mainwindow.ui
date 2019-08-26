@@ -456,6 +456,14 @@
      <height>23</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImportTrajectory"/>
+    <addaction name="actionExportTrajectory"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -466,6 +474,26 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionExportGradientWaveforms">
+   <property name="text">
+    <string>Gradient Waveforms</string>
+   </property>
+  </action>
+  <action name="actionExportTrajectory">
+   <property name="text">
+    <string>Export Trajectory</string>
+   </property>
+  </action>
+  <action name="actionExportAll">
+   <property name="text">
+    <string>All</string>
+   </property>
+  </action>
+  <action name="actionImportTrajectory">
+   <property name="text">
+    <string>Import Trajectory</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

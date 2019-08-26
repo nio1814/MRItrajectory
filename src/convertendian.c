@@ -46,30 +46,30 @@ void swapArrayEndian(void* buffer, int length, int ptsize)
 	return;
 }
 
-void writeArray(void* array, unsigned long points, int pointSize, FILE* file)
+void writeArray(void* array, size_t numPoints, int pointSize, FILE* file)
 {
   if(array)
   {
-    fwrite(&points, sizeof(unsigned long), 1, file);
-    fwrite(array, pointSize, points, file);
+    fwrite(&numPoints, sizeof(size_t), 1, file);
+    fwrite(array, pointSize, numPoints, file);
   }
   else
   {
-    points = 0;
-    fwrite(&points, sizeof(unsigned long), 1, file);
+    numPoints = 0;
+    fwrite(&numPoints, sizeof(size_t), 1, file);
   }
 }
 
 void readArray(void** array, int pointSize, FILE* file, enum Endian endian)
 {
-  unsigned long points;
-  fread(&points, sizeof(unsigned long), 1, file);
-  if(points)
+  size_t numPoints;
+  fread(&numPoints, sizeof(size_t), 1, file);
+  if(numPoints)
   {
-    *array = malloc(points*pointSize);
-    fread(*array, pointSize, points, file);
+    *array = malloc(numPoints*pointSize);
+    fread(*array, pointSize, numPoints, file);
     if(needEndianSwap(endian))
-      swapArrayEndian(*array, points, pointSize);
+      swapArrayEndian(*array, numPoints, pointSize);
   }
   else
     *array = NULL;
