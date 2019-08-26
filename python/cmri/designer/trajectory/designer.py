@@ -1,3 +1,7 @@
+# This source code is under a BSD 3-Clause License.
+# See LICENSE for more information.
+
+# To distribute this file, substitute the full license for the above reference.
 from enum import Enum
 import os
 import sys
@@ -32,6 +36,7 @@ class Designer(QtWidgets.QMainWindow):
         for trajectory_type in TrajectoryType:
             self.ui.trajectoryComboBox.addItem(trajectory_type.value, trajectory_type);
         
+        self.generator.
     def set_trajectory_type(self, trajectory_type):
         if isinstance(trajectory_type, int):
             trajectory_type = list(TrajectoryType)[trajectory_type]
