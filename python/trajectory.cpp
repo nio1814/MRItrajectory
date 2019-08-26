@@ -8,6 +8,7 @@
 extern "C"
 {
 #include "cones.h"
+#include "spiral.h"
 }
 #include "trajectorygenerator.h"
 
@@ -68,39 +69,36 @@ private:
   Trajectory* m_trajectory;
 };
 
-pybind11::dict loadTrajectory(std::string filepath)
+pybind11::dict trajectoryToDict(const Trajectory* trajectory, const std::unique_ptr<TrajectoryGenerator> loader=nullptr)
 {
-  TrajectoryGenerator loader;
-  Trajectory* trajectoryLoaded = loader.load(filepath);
-
-  pybind11::dict trajectory;
+  pybind11::dict pyTrajectory;
 
   pybind11::list fieldOfView;
   pybind11::list spatialResolution;
-  for(int d=0; d<trajectoryLoaded->numDimensions; d++)
+  for(int d=0; d<trajectory->numDimensions; d++)
   {
-    fieldOfView.append(trajectoryLoaded->fieldOfView[d]);
-    spatialResolution.append(trajectoryLoaded->spatialResolution[d]);
+    fieldOfView.append(trajectory->fieldOfView[d]);
+    spatialResolution.append(trajectory->spatialResolution[d]);
   }
-  trajectory["field_of_view"] = fieldOfView;
-  trajectory["spatial_resolution"] = spatialResolution;
-  trajectory["sampling_interval"] = trajectoryLoaded->samplingInterval;
+  pyTrajectory["field_of_view"] = fieldOfView;
+  pyTrajectory["spatial_resolution"] = spatialResolution;
+  pyTrajectory["sampling_interval"] = trajectory->samplingInterval;
 
-  std::vector<int> size = {trajectoryLoaded->numReadouts, trajectoryLoaded->numDimensions, trajectoryLoaded->numWaveformPoints};
-  trajectory["gradients"] = createNumpyArray(trajectoryLoaded->gradientWaveforms, size);
+  std::vector<int> size = {trajectory->numReadouts, trajectory->numDimensions, trajectory->numWaveformPoints};
+  pyTrajectory["gradients"] = createNumpyArray(trajectory->gradientWaveforms, size);
 
-  size = {trajectoryLoaded->numReadouts, trajectoryLoaded->numDimensions, trajectoryLoaded->numReadoutPoints};
-  trajectory["kspace"] =  createNumpyArray(trajectoryLoaded->kSpaceCoordinates, size);
+  size = {trajectory->numReadouts, trajectory->numDimensions, trajectory->numReadoutPoints};
+  pyTrajectory["kspace"] =  createNumpyArray(trajectory->kSpaceCoordinates, size);
 
-  if(trajectoryLoaded->densityCompensation)
+  if(trajectory->densityCompensation)
   {
-    size = {trajectoryLoaded->numReadouts, trajectoryLoaded->numReadoutPoints};
-    trajectory["density_compensation"] =  createNumpyArray(trajectoryLoaded->densityCompensation, size);
+    size = {trajectory->numReadouts, trajectory->numReadoutPoints};
+    pyTrajectory["density_compensation"] =  createNumpyArray(trajectory->densityCompensation, size);
   }
 
-  if(trajectoryLoaded->type == CONES)
+  if(trajectory->type == CONES)
   {
-    Cones* cones = loader.cones();
+    Cones* cones = loader->cones();
     if(cones && cones->interpolation)
     {
       pybind11::list readout;
@@ -137,27 +135,36 @@ pybind11::dict loadTrajectory(std::string filepath)
       interpolation["phi"] = phi;
       interpolation["num_interleaves_on_cone"] = numInterleavesOnCone;
       interpolation["interleaf_on_cone"] = interleafOnCone;
-      trajectory["interpolation"] = interpolation;
+      pyTrajectory["interpolation"] = interpolation;
       deleteCones(&cones);
     }
   }
 
+  return pyTrajectory;
+}
 
-  /*switch(loader.trajectoryType())
-  {
-    case CONES:
-      break;
-    default:
-      break;
-  }*/
+pybind11::dict loadTrajectory(std::string filepath)
+{
+  std::unique_ptr<TrajectoryGenerator> loader = std::make_unique<TrajectoryGenerator>();
+  Trajectory* trajectory = loader->load(filepath);
 
+  return trajectoryToDict(trajectory);
+}
 
-  return trajectory;
+pybind11::dict pyGenerateSpirals(float fieldOfView, float spatialResolution, float readoutDuration, bool rewindTrajectory, float samplingInterval, int numInterleaves, float readoutFieldOfView, float gradientLimit, float slewLimit)
+{
+  const SpiralType spiralType = ARCHIMEDEAN;
+  const float floretAngle = 0;
+  if(!readoutFieldOfView)
+    readoutFieldOfView = fieldOfView;
+  const Trajectory* trajectory = generateSpirals(NULL, fieldOfView, spatialResolution, readoutDuration, rewindTrajectory, samplingInterval, numInterleaves, spiralType, floretAngle, readoutFieldOfView, gradientLimit, slewLimit);
+
+  return trajectoryToDict(trajectory);
 }
 
 }
 
-PYBIND11_MODULE(cmri, module)
+PYBIND11_MODULE(_trajectory, module)
 {
 /*  pybind11::class_<CTrajectory>("Trajectory", pybind11::init<std::string>())
       .def_readonly("sampling_interval", &CTrajectory::samplingInterval)
@@ -167,4 +174,13 @@ PYBIND11_MODULE(cmri, module)
       .def_readonly("kspace", &CTrajectory::kSpace)
       ;*/
   module.def("load_trajectory", &py::loadTrajectory);
+  module.def("generate_spiral", &py::pyGenerateSpirals,
+             pybind11::arg("fieldOfView"), pybind11::arg("spatialResolution"),
+             pybind11::arg("readoutDuration"),
+             pybind11::arg("rewindTrajectory") = true,
+             pybind11::arg("samplingInterval") = 4e-6,
+             pybind11::arg("numInterleaves") = 0,
+             pybind11::arg("readoutFieldOfView") = 0,
+             pybind11::arg("gradientLimit") = 4,
+             pybind11::arg("slewLimit") = 15e3);
 }

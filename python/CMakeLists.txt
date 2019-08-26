@@ -7,13 +7,12 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra")
 
-set(SOURCE
-  cmri.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory/trajectorygenerator.cpp
-)
-
 add_subdirectory(pybind11)
 
-pybind11_add_module(${PROJECT_NAME} ${SOURCE})
-target_link_libraries(${PROJECT_NAME} trajectory)
+set(SOURCE_TRAJECTORY
+  trajectory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/trajectory/trajectorygenerator.cpp
+)
+pybind11_add_module(_trajectory ${SOURCE_TRAJECTORY})
+target_link_libraries(_trajectory trajectory)
 #set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

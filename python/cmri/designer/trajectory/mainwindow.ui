@@ -79,6 +79,9 @@
               <property name="buttonSymbols">
                <enum>QAbstractSpinBox::NoButtons</enum>
               </property>
+              <property name="minimum">
+               <number>14</number>
+              </property>
              </widget>
             </item>
             <item>
@@ -110,6 +113,9 @@
              <widget class="QSpinBox" name="fieldOfViewYSpinBox">
               <property name="buttonSymbols">
                <enum>QAbstractSpinBox::NoButtons</enum>
+              </property>
+              <property name="minimum">
+               <number>14</number>
               </property>
              </widget>
             </item>
