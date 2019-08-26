@@ -1,7 +1,11 @@
+from enum import Enum
 import os
 import sys
 from PySide2 import QtWidgets, QtUiTools
 from PySide2.QtCore import QFile
+
+from generator import QGenerator, TrajectoryType
+
 
 class Designer(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -20,7 +24,19 @@ class Designer(QtWidgets.QMainWindow):
         file_ui.close()
 
         self.setCentralWidget(self.ui)
+        self.generator = QGenerator(self)
+        self.auto_update = True
+
+        self.ui.trajectoryComboBox.currentIndexChanged[int].connect(self.set_trajectory_type)
+
+        for trajectory_type in TrajectoryType:
+            self.ui.trajectoryComboBox.addItem(trajectory_type.value, trajectory_type);
         
+    def set_trajectory_type(self, trajectory_type):
+        if isinstance(trajectory_type, int):
+            trajectory_type = list(TrajectoryType)[trajectory_type]
+        self.generator.trajectory_type = trajectory_type
+
 
 if __name__ == "__main__":
     application = QtWidgets.QApplication()
