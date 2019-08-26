@@ -17,4 +17,4 @@ pybind11_add_module(_trajectory ${SOURCE_TRAJECTORY})
 target_link_libraries(_trajectory trajectory)
 #set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 
-configure_file(setup.py ${CMAKE_BINARY_DIR})
+configure_file(setup.py ${CMAKE_CURRENT_BINARY_DIR})

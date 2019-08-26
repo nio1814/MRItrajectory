@@ -69,7 +69,7 @@ void TrajectoryGenerator::setSpatialResolution(double *spatialRes, int numDims)
 
 void TrajectoryGenerator::setSpatialResolution(std::vector<float> resolution)
 {
-  memcpy(m_spatialResolution, resolution.data(), resolution.size()*sizeof(float));
+  std::copy(resolution.data(), resolution.data() + resolution.size(),  m_spatialResolution);
 }
 
 void TrajectoryGenerator::resetVariableDensity()
