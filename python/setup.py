@@ -10,5 +10,4 @@ setup(
     name="cmri",
     version='0.0.1',
     author="O Addy",
-    ext_modules=[CMakeExtension('_trajectory')],
 )
