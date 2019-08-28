@@ -66,7 +66,7 @@ protected:
   float m_slewRateLimit = 15000;
   int m_numReadouts;
   bool m_rotatable = true;
-  bool m_numBases = 32;
+  int m_numBases = 32;
   bool m_fullProjection = true;
   WaveformStorageType m_storage = STORE_ALL;
 

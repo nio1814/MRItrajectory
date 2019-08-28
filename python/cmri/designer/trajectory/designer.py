@@ -36,7 +36,8 @@ class Designer(QtWidgets.QMainWindow):
         for trajectory_type in TrajectoryType:
             self.ui.trajectoryComboBox.addItem(trajectory_type.value, trajectory_type);
         
-        self.generator.
+        self.generator.generate()
+
     def set_trajectory_type(self, trajectory_type):
         if isinstance(trajectory_type, int):
             trajectory_type = list(TrajectoryType)[trajectory_type]

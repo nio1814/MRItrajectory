@@ -2,7 +2,6 @@
 
 #include <math.h>
 
-const float TWO_PI = 2*M_PI;
 
 int roundToInteger(float num)
 {
@@ -73,9 +72,9 @@ void unwrapPhase(float *phasedata, float* uPhaseData, int numPoints, int frsize,
 		else
 		{
 			if(phaseDiff<-tol)
-				offset += TWO_PI;
+        offset += (float)(2 * M_PI);
 			else if(phaseDiff>tol)
-				offset -= TWO_PI;
+        offset -= (float)(2 * M_PI);
 		}
 
 		uPhaseData[i+1] = phasedata[i+1] + offset;
