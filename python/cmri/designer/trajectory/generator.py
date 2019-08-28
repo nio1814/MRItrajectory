@@ -1,8 +1,16 @@
-from PySide2.QtCore import QObject
+from PySide2.QtCore import QObject, Signal
 
 from cmri.trajectory.generator import Generator
 
 
 class QGenerator(Generator, QObject):
-    def __init__(self, parent=None):
-        super(QObject, self).__init__()
+    generated = Signal(dict)
+
+    def __init__(self):
+        super().__init__()
+        QObject.__init__(self)
+
+    def generate(self):
+        trajectory = super().generate()
+        if trajectory:
+            self.generated.emit(trajectory)

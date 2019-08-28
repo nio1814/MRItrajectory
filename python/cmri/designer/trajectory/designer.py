@@ -8,7 +8,8 @@ import sys
 from PySide2 import QtWidgets, QtUiTools
 from PySide2.QtCore import QFile
 
-from generator import QGenerator, TrajectoryType
+from cmri.designer.trajectory.generator import QGenerator
+from cmri.trajectory.types import TrajectoryType
 
 
 class Designer(QtWidgets.QMainWindow):
@@ -28,7 +29,7 @@ class Designer(QtWidgets.QMainWindow):
         file_ui.close()
 
         self.setCentralWidget(self.ui)
-        self.generator = QGenerator(self)
+        self.generator = QGenerator()
         self.auto_update = True
 
         self.ui.trajectoryComboBox.currentIndexChanged[int].connect(self.set_trajectory_type)
