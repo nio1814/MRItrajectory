@@ -7,6 +7,8 @@ import os
 import sys
 from PySide2 import QtWidgets, QtUiTools
 from PySide2.QtCore import QFile
+import pyqtgraph as pg
+import numpy as np
 
 from cmri.designer.trajectory.generator import QGenerator
 from cmri.trajectory.types import TrajectoryType
@@ -33,6 +35,10 @@ class Designer(QtWidgets.QMainWindow):
         self.setCentralWidget(self.ui)
         self.generator = QGenerator()
 
+        self.gradients_plot = pg.PlotWidget(name='Gradients')
+        self.gradients_plot.setXRange(0, self.ui.readoutDurationSpinBox.maximum())
+        self.gradients_plot.setYRange(-4, 4)
+        self.ui.plotGridLayout.addWidget(self.gradients_plot, 0, 1);
         self.ui.trajectoryComboBox.currentIndexChanged[int].connect(self.set_trajectory_type)
 
         for trajectory_type in TrajectoryType:
@@ -44,7 +50,7 @@ class Designer(QtWidgets.QMainWindow):
             self.ui.fieldOfViewZSpinBox
         ]
         for axis, spin_box in enumerate(self.field_of_view_spin_boxes):
-            spin_box.valueChanged.connect(lambda fov, dimension=axis: self.set_field_of_view(fov, dimension))
+            spin_box.editingFinished.connect(lambda dimension=axis: self.set_field_of_view(None, dimension, 'spin'))
 
         self.field_of_view_sliders = [
             self.ui.fieldOfViewXSlider, 
@@ -52,9 +58,10 @@ class Designer(QtWidgets.QMainWindow):
             self.ui.fieldOfViewZSlider
         ]
         for axis, slider in enumerate(self.field_of_view_sliders):
-            slider.valueChanged.connect(lambda fov, dimension=axis: self.set_field_of_view(fov, dimension))
+            slider.sliderMoved.connect(lambda fov, dimension=axis: self.set_field_of_view(fov, dimension))
 
         self.ui.generatePushButton.clicked.connect(self.generator.generate)
+        self.generator.generated.connect(self.update_plots)
 
         field_of_view_min = 140
         field_of_view_max = 400
@@ -69,20 +76,22 @@ class Designer(QtWidgets.QMainWindow):
 
         self.set_trajectory_type(TrajectoryType.SPIRAL)
 
-    def set_field_of_view(self, field_of_view, axis):
+    def set_field_of_view(self, field_of_view, axis, source=None):
+        if source == 'spin':
+            field_of_view = self.field_of_view_spin_boxes[axis].value()
         self.generator.field_of_view[axis] = field_of_view
 
         spin_box = self.field_of_view_spin_boxes[axis]
         slider = self.field_of_view_sliders[axis]
         for element in [spin_box, slider]:
-            if element.value != field_of_view:
+            if element.value() != field_of_view:
                 element.setValue(field_of_view)
         
         if self.link_xy:
             other_axis = 1 - axis
             other_elments = [
                 self.field_of_view_spin_boxes[other_axis],
-                self.field_of_view_spin_boxes[other_axis]
+                self.field_of_view_sliders[other_axis]
             ]
             if any([element.value() != field_of_view for element in other_elments]):
                 self.set_field_of_view(field_of_view, other_axis)
@@ -95,6 +104,15 @@ class Designer(QtWidgets.QMainWindow):
         if trajectory_type == TrajectoryType.SPIRAL:
             self.link_xy = True
 
+    def update_plots(self, trajectory):
+        readout_index = self.ui.readoutSlider.value()
+        self.gradients_plot.clear()
+        time = 1e3 * trajectory['sampling_interval'] * np.arange(data.shape[-1])
+        for axis, gradient in enumerate(trajectory['gradients'][readout_index]):
+            curve = self.gradients_plot.plot(x=time, y=gradient)
+            color = [255] * 3
+            color[axis] = 0
+            curve.setPen(color)
 
 if __name__ == "__main__":
     application = QtWidgets.QApplication()

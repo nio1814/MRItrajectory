@@ -310,9 +310,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="readoutDurationDoubleSpinBox">
+         <widget class="QDoubleSpinBox" name="readoutDurationSpinBox">
           <property name="buttonSymbols">
            <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="maximum">
+           <double>14.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -417,15 +420,15 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
-      <widget class="QWidget" name="tab">
+      <widget class="QWidget" name="tabWaveforms">
        <attribute name="title">
         <string>Waveforms</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QGridLayout" name="gridLayout"/>
+         <layout class="QGridLayout" name="plotGridLayout"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_10">
