@@ -75,12 +75,12 @@ class Designer(QtWidgets.QMainWindow):
             self.set_field_of_view(280, axis)
 
         self.set_trajectory_type(TrajectoryType.SPIRAL)
+        self.generator.generate()
 
     def set_field_of_view(self, field_of_view, axis, source=None):
         if source == 'spin':
             field_of_view = self.field_of_view_spin_boxes[axis].value()
-        self.generator.field_of_view[axis] = field_of_view
-
+        
         spin_box = self.field_of_view_spin_boxes[axis]
         slider = self.field_of_view_sliders[axis]
         for element in [spin_box, slider]:
@@ -96,6 +96,8 @@ class Designer(QtWidgets.QMainWindow):
             if any([element.value() != field_of_view for element in other_elments]):
                 self.set_field_of_view(field_of_view, other_axis)
 
+        self.generator.set_axis_field_of_view(field_of_view, axis)
+
     def set_trajectory_type(self, trajectory_type):
         if isinstance(trajectory_type, int):
             trajectory_type = list(TrajectoryType)[trajectory_type]
@@ -107,8 +109,9 @@ class Designer(QtWidgets.QMainWindow):
     def update_plots(self, trajectory):
         readout_index = self.ui.readoutSlider.value()
         self.gradients_plot.clear()
+        data = trajectory['gradients'][readout_index]
         time = 1e3 * trajectory['sampling_interval'] * np.arange(data.shape[-1])
-        for axis, gradient in enumerate(trajectory['gradients'][readout_index]):
+        for axis, gradient in enumerate(data):
             curve = self.gradients_plot.plot(x=time, y=gradient)
             color = [255] * 3
             color[axis] = 0
