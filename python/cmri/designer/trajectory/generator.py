@@ -25,3 +25,9 @@ class QGenerator(Generator, QObject):
             self.field_of_view = field_of_view_new
             if self.auto_update:
                 self.generate()
+
+    def set_readout_duration(self, readout_duration):
+        if self.readout_duration != readout_duration:
+            self.readout_duration = readout_duration
+            if self.auto_update:
+                self.generate()
