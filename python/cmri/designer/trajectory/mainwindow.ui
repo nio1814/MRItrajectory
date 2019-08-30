@@ -69,6 +69,12 @@
             </item>
             <item>
              <widget class="QSlider" name="fieldOfViewXSlider">
+              <property name="minimum">
+               <number>140</number>
+              </property>
+              <property name="maximum">
+               <number>400</number>
+              </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -80,7 +86,10 @@
                <enum>QAbstractSpinBox::NoButtons</enum>
               </property>
               <property name="minimum">
-               <number>14</number>
+               <number>140</number>
+              </property>
+              <property name="maximum">
+               <number>400</number>
               </property>
              </widget>
             </item>
@@ -115,7 +124,10 @@
                <enum>QAbstractSpinBox::NoButtons</enum>
               </property>
               <property name="minimum">
-               <number>14</number>
+               <number>140</number>
+              </property>
+              <property name="maximum">
+               <number>400</number>
               </property>
              </widget>
             </item>
@@ -193,6 +205,9 @@
             <widget class="QDoubleSpinBox" name="spatialResolutionXDoubleSpinBox">
              <property name="buttonSymbols">
               <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="minimum">
+              <double>0.500000000000000</double>
              </property>
             </widget>
            </item>
@@ -357,7 +372,7 @@
          <enum>QLayout::SetMaximumSize</enum>
         </property>
         <item>
-         <widget class="QPushButton" name="updatePushButton">
+         <widget class="QPushButton" name="generatePushButton">
           <property name="maximumSize">
            <size>
             <width>200</width>

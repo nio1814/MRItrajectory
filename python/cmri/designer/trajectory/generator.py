@@ -9,6 +9,7 @@ class QGenerator(Generator, QObject):
     def __init__(self):
         super().__init__()
         QObject.__init__(self)
+        self.auto_update = True
 
     def generate(self):
         trajectory = super().generate()
