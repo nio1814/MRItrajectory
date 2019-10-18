@@ -256,7 +256,7 @@ void MRdata::pad(std::vector<int> newSize)
 	bool doPad = true;	// perform padding
 	for(int d=0; d<m_numImagingDimensions; d++)
 	{
-		doPad += (m_dimensions[d]<newSize[d]);
+    doPad |= (m_dimensions[d]<newSize[d]);
 		pointsPad *= newSize[d];
 		shift[d] = std::ceil((newSize[d]-m_dimensions[d])/2.0f);
 	}

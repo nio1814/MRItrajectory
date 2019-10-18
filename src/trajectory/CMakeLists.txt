@@ -17,7 +17,7 @@ set(TRAJECTORY_SOURCE
 )
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra")
 
 add_library(trajectory ${TRAJECTORY_SOURCE})
 
+add_subdirectory(generate)
