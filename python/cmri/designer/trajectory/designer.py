@@ -99,7 +99,8 @@ class Designer(QtWidgets.QMainWindow):
                     element.setValue(field_of_view)
                 element.blockSignals(False)
         
-        self.generator.set_axis_field_of_view(field_of_view, axis)
+        self.generator.set_axis_field_of_view(field_of_view, axes)
+        
 
     def set_readout_duration(self, readout_duration):
         if readout_duration is None:
