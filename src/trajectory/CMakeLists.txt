@@ -20,3 +20,4 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_library(trajectory ${TRAJECTORY_SOURCE})
 
+add_subdirectory(generate)

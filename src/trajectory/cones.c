@@ -583,7 +583,7 @@ void makeConesInterpolation(struct Cones *cones)
 	{
     singleInterleafInterpolation->theta[c] = cones->coneAngles[c];
 //		singleInterleafSchedule.coneIndex[c] = fmin(trajectory->numBases, fmax(1,ceil(fabs(singleInterleafSchedule.theta[c])/(M_PI_2)*trajectory->numBases)))-1;
-    singleInterleafInterpolation->basis[c] = (int)(1-fabs(1-singleInterleafInterpolation->theta[c]*M_2_PI)) * trajectory->numBases;
+    singleInterleafInterpolation->basis[c] = (int)((1-fabs(1-singleInterleafInterpolation->theta[c]*M_2_PI)) * trajectory->numBases);
     singleInterleafInterpolation->cone[c] = c;
 
     coneCoverageStart = singleInterleafInterpolation->basis[c]/(1.0*trajectory->numBases)*thetaMax;
