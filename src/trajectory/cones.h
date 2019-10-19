@@ -40,7 +40,7 @@ struct Cones
 int saveCones(const char* filename, const struct Cones* cones);
 struct Cones* loadCones(const char* filename, enum Endian endian, enum WaveformStorageType storage);
 
-struct Cones* newCones(int bases);
+struct Cones* newCones(const int numBases);
 void deleteCones(struct Cones **cones);
 
 struct Cones* generateCones(float xyFieldOfView, float zFieldOfView, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int bases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage);
