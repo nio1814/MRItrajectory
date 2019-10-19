@@ -7,6 +7,7 @@ extern "C"
 }
 
 #include <math.h>
+#include <algorithm>
 
 /*
  * SheppLogan3D.java

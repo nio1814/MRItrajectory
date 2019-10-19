@@ -320,7 +320,7 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 {
 	float kSpaceCoordinatesFinal[3] = {0,0,0};
 
-	return traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
+  traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
 }
 
 int writeTrajectory(FILE *file, const struct Trajectory *trajectory)

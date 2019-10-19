@@ -20,7 +20,7 @@ To distribute this file, substitute the full license for the above reference.
 #include <stdlib.h>
 #include <string.h>
 
-const int MAX_ANGLES = 1000;
+#define MAX_ANGLES 1000
 
 /*!
  * \brief Ellipse with diameters of X and Y

@@ -80,7 +80,7 @@ void PhantomReconstruction::reconstruct(Trajectory* trajectory)
 	float maxMagnitude = 0;
 	foreach(complexFloat value, imageReconstructed->signal())
 	{
-		float magnitude = fabs(value);
+    float magnitude = std::abs(value);
 		maxMagnitude = qMax(maxMagnitude, magnitude);
 		imageMagnitude.append(magnitude);
 	}

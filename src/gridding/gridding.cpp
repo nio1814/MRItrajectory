@@ -18,7 +18,7 @@ extern "C" {
 #include "arrayops.h"
 }
 
-#include <cmath>
+#include <algorithm>
 
 Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int kernelWidth) :
 	m_trajectory(trajectory), m_oversamplingFactor(oversamplingRatio),
