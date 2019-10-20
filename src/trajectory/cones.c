@@ -680,9 +680,9 @@ int generateConesBasis(struct Cones *cones)
 	float elevationAngleParametric;
 	float scaleXY;
 	float scaleZ;
-	float interleavesLow;
-	float interleavesHigh;
-	float interleaves;
+  float interleavesLow;
+  float interleavesHigh;
+  float interleaves;
 	float *basisReadoutGradientWaveforms;
 	int currentReadoutPoints;
 	float *currentKspaceCoordinates = NULL;
@@ -712,8 +712,8 @@ int generateConesBasis(struct Cones *cones)
   calculateAngles(initialElevationAngleDelta, (float)M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
 
 	printf("Number of cones:\t%d\n", cones->numCones);
-  const int interpolateCones = cones->trajectory->numBases < 1;
-  if(interpolateCones)
+  const int interpolateCones = cones->trajectory->numBases > 0;
+  if(!interpolateCones)
   {
     cones->trajectory->numBases = cones->numCones;
     cones->numBasisReadoutPoints = (int*)malloc(cones->numCones*sizeof(int));
