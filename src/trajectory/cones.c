@@ -680,9 +680,9 @@ int generateConesBasis(struct Cones *cones)
 	float elevationAngleParametric;
 	float scaleXY;
 	float scaleZ;
-  float interleavesLow;
-  float interleavesHigh;
-  float interleaves;
+//  float interleavesLow;
+//  float interleavesHigh;
+//  float interleaves;
 	float *basisReadoutGradientWaveforms;
 	int currentReadoutPoints;
 	float *currentKspaceCoordinates = NULL;
@@ -746,13 +746,13 @@ int generateConesBasis(struct Cones *cones)
     scaleZ = interpolateCones ? cos(elevationAngleParametric)/cos(fromElevationAngle) : 1;
     scaleXY = interpolateCones ? sin(elevationAngleParametric)/sin(toElevationAngle) : 1;
 
-    interleavesLow = .01f;
-    interleavesHigh = 100*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
+    float numInterleavesLowerLimit = .01f;
+    float numInterleavesUpperLimit = fabs(20*M_PI*kSpaceMaxRadial*sin(cones->basisConeAngles[b]) * fieldOfViewRadial);
 
     cones->numBasisReadoutPoints[b] = -1;
-    while(interleavesHigh-interleavesLow>.03 && cones->numBasisReadoutPoints[b]!=cones->trajectory->numReadoutPoints)
+    while(numInterleavesUpperLimit-numInterleavesLowerLimit>.03 && cones->numBasisReadoutPoints[b]!=cones->trajectory->numReadoutPoints)
 		{
-			interleaves = .5*(interleavesLow+interleavesHigh);
+      const float numInterleavesCurrent = .5f * (numInterleavesLowerLimit + numInterleavesUpperLimit);
 
 			if(currentKspaceCoordinates)
 			{
@@ -766,9 +766,9 @@ int generateConesBasis(struct Cones *cones)
 				currentGradientWaveforms = NULL;
 			}
 
-      if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, cones->trajectory->variableDensity, kSpaceMaxRadial, interleaves, cones->interconeCompensation, cones->basisConeAngles[b], cones->trajectory->numReadoutPoints, cones->trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, cones->trajectory->maxReadoutGradientAmplitude, cones->trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->numBasisReadoutPoints[b]<=cones->trajectory->numReadoutPoints)
+      if(generateCone(fieldOfViewRadial, fieldOfViewCircumferential, cones->trajectory->variableDensity, kSpaceMaxRadial, numInterleavesCurrent, cones->interconeCompensation, cones->basisConeAngles[b], cones->trajectory->numReadoutPoints, cones->trajectory->samplingInterval, cones->rotatable, scaleXY, scaleZ, cones->trajectory->maxReadoutGradientAmplitude, cones->trajectory->maxSlewRate, &currentReadoutPoints, &currentKspaceCoordinates, &currentGradientWaveforms) && cones->numBasisReadoutPoints[b]<=cones->trajectory->numReadoutPoints)
 			{
-				interleavesHigh = interleaves;
+        numInterleavesUpperLimit = numInterleavesCurrent;
         cones->numBasisReadoutPoints[b] = currentReadoutPoints;
 				for (d=0; d<3; d++)
 				{
@@ -778,9 +778,9 @@ int generateConesBasis(struct Cones *cones)
 			}
 			else
 			{
-				interleavesLow = interleaves;
+        numInterleavesLowerLimit = numInterleavesCurrent;
 			}
-      printf("Basis %d interleaves %f readout points %d\n", b+1, interleaves, cones->numBasisReadoutPoints[b]);
+      printf("Basis %d interleaves %f readout points %d\n", b+1, numInterleavesCurrent, cones->numBasisReadoutPoints[b]);
 		}
 	
   if(cones->numBasisReadoutPoints[b]==-1)
