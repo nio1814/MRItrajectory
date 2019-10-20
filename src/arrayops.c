@@ -190,7 +190,7 @@ float interpfloat(float *arrx, float *arry, int npts, float x)
 
 	do
 	{
-		n = .5*(nLo+nHi);
+    n = (int)(.5 * (nLo + nHi));
 		if(x>arrx[n])
 			nLo = n;
 		else

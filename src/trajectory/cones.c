@@ -25,7 +25,7 @@ To distribute this file, substitute the full license for the above reference.
 #include <stdio.h>
 #include <string.h>
 
-const float DESIGN_SAMPLING_INTERVAL = 1e-6;
+const float DESIGN_SAMPLING_INTERVAL = (float)1e-6;
 
 #ifndef GYROMAGNETIC_RATIO
 #define GYROMAGNETIC_RATIO 4257
@@ -87,7 +87,7 @@ int generateCone(float fieldOfViewRadial, float fieldOfViewCircumferential, cons
 
 	float maxGradientAmplitudeXY = scaleXY*maxGradientAmplitude;
 	float maxGradientAmplitudeZ = scaleZ*maxGradientAmplitude;
-	maxSlewRate *= .996;
+  maxSlewRate *= .996f;
 	float maxSlewRateXY = scaleXY*maxSlewRate;
 	float maxSlewRateZ = scaleZ*maxSlewRate;
 	float maxGradientDeltaXY = maxSlewRateXY*DESIGN_SAMPLING_INTERVAL;
@@ -419,7 +419,7 @@ void interpolateCone(float fieldOfViewXY, float fieldOfViewZ, float spatialResol
 
 	calculatePhase(kSpaceCoordinate[0], kSpaceCoordinate[1], kPhaseXY, readoutPoints, 0, 1.0);
 	calculateMagnitude(kSpaceCoordinate[0], kSpaceCoordinate[1], kMagXY, readoutPoints);
-	unwrapPhase(kPhaseXY, Gtwist, readoutPoints, readoutPoints, M_PI);
+  unwrapPhase(kPhaseXY, Gtwist, readoutPoints, readoutPoints, (float)M_PI);
 	for(n=0; n<readoutPoints-1; n++)
         Gtwist[n] = fmax((Gtwist[n+1]-Gtwist[n])/(kr[n+1]-kr[n])*kMagXY[n], 0);
 
@@ -472,9 +472,9 @@ void interpolateCone(float fieldOfViewXY, float fieldOfViewZ, float spatialResol
 		}
 	}
 		
-	*interleaves = ceil(interleavesAtKr[0]);
+  *interleaves = (int)ceil(interleavesAtKr[0]);
     for(n=1; n<readoutPoints-1; n++)
-	   *interleaves = fmax(*interleaves, ceil(interleavesAtKr[n]));
+     *interleaves = (int)fmax(*interleaves, ceil(interleavesAtKr[n]));
 	/*(*nint)++;*/
 	
 	//*nint += *nint%2;
@@ -564,9 +564,7 @@ void deleteConesInterpolation(struct ConesInterpolation** interpolation)
 void makeConesInterpolation(struct Cones *cones)
 {
   struct Trajectory *trajectory = cones->trajectory;
-	float thetaMax = M_PI_2;
-//	float coneCoverageStart;
-//	float coneCoverageEnd;
+  float thetaMax = (float)M_PI_2;
 	float deltaConeAngle;
 	const float *basisGradientWaveforms;
   float *interpolatedGradientWaveforms = (float*)malloc(3*trajectory->numWaveformPoints*sizeof(float));
@@ -711,7 +709,7 @@ int generateConesBasis(struct Cones *cones)
 	else
 		memcpy(finalFieldOfView, fieldOfView, 2*sizeof(float));
 
-	calculateAngles(initialElevationAngleDelta, M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
+  calculateAngles(initialElevationAngleDelta, (float)M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
 
 	printf("Number of cones:\t%d\n", cones->numCones);
   const int interpolateCones = cones->trajectory->numBases < 1;
@@ -748,7 +746,7 @@ int generateConesBasis(struct Cones *cones)
     scaleZ = interpolateCones ? cos(elevationAngleParametric)/cos(fromElevationAngle) : 1;
     scaleXY = interpolateCones ? sin(elevationAngleParametric)/sin(toElevationAngle) : 1;
 
-		interleavesLow = .01;
+    interleavesLow = .01f;
     interleavesHigh = 100*M_PI*kSpaceMaxRadial*fieldOfViewRadial*cos(cones->basisConeAngles[b]);
 
     cones->numBasisReadoutPoints[b] = -1;
@@ -808,7 +806,7 @@ int generateConesBasis(struct Cones *cones)
 			gradientRewoundZ = NULL;
 		}*/
 traverseKspaceToZero(&basisReadoutGradientWaveforms[b*cones->trajectory->numReadoutPoints*3], &basisReadoutGradientWaveforms[(b*3+1)*cones->trajectory->numReadoutPoints], &basisReadoutGradientWaveforms[(b*3+2) * cones->trajectory->numReadoutPoints], cones->numBasisReadoutPoints[b], cones->trajectory->samplingInterval, cones->trajectory->maxGradientAmplitude, cones->trajectory->maxSlewRate, &basisGradientRewoundX[b], &basisGradientRewoundY[b], &basisGradientRewoundZ[b], &cones->numBasisWaveformPoints[b]);
-    cones->trajectory->numWaveformPoints = fmax(cones->trajectory->numWaveformPoints, cones->numBasisWaveformPoints[b]);
+    cones->trajectory->numWaveformPoints = (int)fmax(cones->trajectory->numWaveformPoints, cones->numBasisWaveformPoints[b]);
 	}
 
   cones->trajectory->numWaveformPoints += cones->trajectory->numWaveformPoints%2;

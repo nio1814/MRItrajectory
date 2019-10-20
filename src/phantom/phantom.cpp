@@ -6,7 +6,6 @@ extern "C"
 #include "arrayops.h"
 }
 
-#include <math.h>
 #include <algorithm>
 
 /*
@@ -64,23 +63,28 @@ Phantom::Phantom(std::vector<float> fieldOfView)
 	if(fieldOfView.size()==3)
 	{
 		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,       0,       0,     0.69*scale,    0.92*scale,     0.9*scale,              0,      0,    0,      2.));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,       0,       0,   0.6624*scale,   0.874*scale,    0.88*scale,              0,      0,    0,    -0.8));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, -0.22*scale,      0.,   -0.25*scale,     0.41*scale,    0.16*scale,    0.21*scale, (3*M_PI)/5.,      0,    0,    -0.2));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.22*scale,      0.,   -0.25*scale,     0.31*scale,    0.11*scale,    0.22*scale, (2*M_PI)/5.,      0,    0,    -0.2));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,    0.35*scale,   -0.25*scale,     0.21*scale,    0.25*scale,     0.5*scale,              0,      0,    0,     0.2));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0,     0.1*scale,   -0.25*scale,    0.046*scale,   0.046*scale,   0.046*scale,              0,      0,    0,     0.2));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, -0.08*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,  -0.105*scale,   0.625*scale,    0.056*scale,    0.04*scale,     0.1*scale,     M_PI/2.,      0,    0,     0.2));
-		m_shapes.push_back(Shape(Shape::Ellipsoid, 0.,     0.1*scale,   0.625*scale,    0.056*scale,   0.056*scale,     0.1*scale,     M_PI/2.,      0,    0,    -0.2));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0,       0,       0,   0.6624*scale,   0.874*scale,    0.88*scale,              0,      0,    0,    -0.8f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, -0.22*scale,      0.,   -0.25*scale,     0.41*scale,    0.16*scale,    0.21*scale, static_cast<float>(3*M_PI)/5,      0,    0,    -0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0.22*scale,      0.,   -0.25*scale,     0.31*scale,    0.11*scale,    0.22*scale, static_cast<float>(2*M_PI)/5,      0,    0,    -0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0,    0.35*scale,   -0.25*scale,     0.21*scale,    0.25*scale,     0.5*scale,              0,      0,    0,     0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0,     0.1*scale,   -0.25*scale,    0.046*scale,   0.046*scale,   0.046*scale,              0,      0,    0,     0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, -0.08*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,   -0.65*scale,   -0.25*scale,    0.046*scale,   0.023*scale,    0.02*scale,              0,      0,    0,     0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0.06*scale,  -0.105*scale,   0.625*scale,    0.056*scale,    0.04*scale,     0.1*scale,     static_cast<float>(M_PI/2),      0,    0,     0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipsoid, 0.,     0.1*scale,   0.625*scale,    0.056*scale,   0.056*scale,     0.1*scale,     static_cast<float>(M_PI/2),      0,    0,    -0.2f));
 	}
 	else
 	{
-		m_shapes.push_back(Shape(Shape::Ellipse, 0,       0,        0.92*scale,    0.69*scale,     M_PI_2,       2));
-		m_shapes.push_back(Shape(Shape::Ellipse,        0, -0.0184*scale,        0.874*scale,   0.6624*scale,   M_PI_2,     -0.8));
-		m_shapes.push_back(Shape(Shape::Ellipse,     0.22*scale,      0.,        0.31,    0.11*scale,  (2*M_PI)/5.,     -0.2));
-		m_shapes.push_back(Shape(Shape::Ellipse,    -0.22*scale,      0.,        0.41*scale,    0.16,  (3*M_PI)/5.,     -0.2));
-		m_shapes.push_back(Shape(Shape::Ellipse,        0,    0.35*scale,        0.25*scale,    0.21*scale,     M_PI_2,     -0.2)); m_shapes.push_back(Shape(Shape::Ellipse,        0,     0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1)); m_shapes.push_back(Shape(Shape::Ellipse,       0.,    -0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1)); m_shapes.push_back(Shape(Shape::Ellipse,    -0.08*scale,   -0.605*scale,       0.046*scale,   0.023*scale,              0,      0.1));			   m_shapes.push_back(Shape(Shape::Ellipse,       0.,   -0.605*scale,       0.023*scale,   0.023*scale,              0,      0.1 ));	m_shapes.push_back(Shape(Shape::Ellipse,     0.06*scale,   -0.605*scale,       0.046*scale,   0.023*scale,    M_PI_2,      0.1 ));
+    m_shapes.push_back(Shape(Shape::Ellipse, 0,       0,        0.92*scale,    0.69*scale,     static_cast<float>(M_PI_2),       2));
+    m_shapes.push_back(Shape(Shape::Ellipse,        0, -0.0184*scale,        0.874*scale,   0.6624*scale,   static_cast<float>(M_PI_2),     -0.8f));
+    m_shapes.push_back(Shape(Shape::Ellipse,     0.22*scale,      0.,        0.31f,    0.11*scale,  static_cast<float>(2*M_PI/5),     -0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipse,    -0.22*scale,      0.,        0.41*scale,    0.16f,  static_cast<float>(3*M_PI/5),     -0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipse,        0,    0.35*scale,        0.25*scale,    0.21*scale,     static_cast<float>(M_PI_2),     -0.2f));
+    m_shapes.push_back(Shape(Shape::Ellipse,        0,     0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipse,       0.,    -0.1*scale,        0.046*scale,   0.046*scale,              0,      0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipse,    -0.08*scale,   -0.605*scale,       0.046*scale,   0.023*scale,              0,      0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipse,       0.,   -0.605*scale,       0.023*scale,   0.023*scale,              0,      0.1f));
+    m_shapes.push_back(Shape(Shape::Ellipse,     0.06*scale,   -0.605*scale,       0.046*scale,   0.023*scale,    static_cast<float>(M_PI_2),      0.1f));
 
 	}
 }
@@ -228,15 +232,15 @@ complexFloat Phantom::fourierDomainSignal(const float& kx, const float& ky, cons
 		 { // K>0.002
 			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
-				 double temp = sinf(arg)-arg*cosf(arg);
-						temp /= (2.0*powf(M_PI,2)*powf(K,3));
+         float temp = sinf(arg)-arg*cosf(arg);
+            temp /= (2*std::powf(static_cast<float>(M_PI),2) * std::powf(K,3));
 
          signal += shape.intensity()*principalAxesProduct*temp;
 
 			 }else{  // displacement vector is not zero
 				 double kd = dot(k, shape.displacement().data(), 3);
-				 double temp = sinf(arg)-arg*cosf(arg);
-						temp /= (2.0*powf(M_PI,2)*powf(K,3));
+         float temp = sinf(arg)-arg*cosf(arg);
+            temp /= (2.0*powf(static_cast<float>(M_PI), 2)*powf(K,3));
 
 						temp *= shape.intensity()*principalAxesProduct;
 

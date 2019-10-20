@@ -71,7 +71,7 @@ void GriddingTest::kernelTest_data()
 
 	fieldOfView = QVector<float>() << randomNumber(10, 48);
 	fieldOfView << fieldOfView;
-	spatialResolution = QVector<float>() << randomNumber(.8, 4.0);
+  spatialResolution = QVector<float>() << randomNumber(.8f, 4.0f);
 	spatialResolution << spatialResolution;
 
 	QTest::newRow("Isotropic") << fieldOfView << spatialResolution << randomNumber(1.0, 3.0);
@@ -113,7 +113,7 @@ void GriddingTest::testForward_data()
 
 	fieldOfView = QVector<float>() << randomNumber(10, 48);
 	fieldOfView << fieldOfView;
-	spatialResolution = QVector<float>() << randomNumber(.8, 4.0);
+  spatialResolution = QVector<float>() << randomNumber(.8f, 4.0f);
 	spatialResolution << spatialResolution;
 
 	float kSpaceExtent[3];

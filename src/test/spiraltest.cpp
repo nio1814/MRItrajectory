@@ -51,7 +51,7 @@ void SpiralTest::testGenerate()
 			addLinearVariableDensityStep(variableDensity, fieldOfViewScalePoint.x(), fieldOfViewScalePoint.y());
 		}
 	}
-  Trajectory* spiral = generateSpirals(variableDensity, fieldOfView, spatialResolution, duration, 1, samplingInterval, 0, Archimedean , 0, fieldOfView, maxGradient, maxSlew);
+  Trajectory* spiral = generateSpirals(variableDensity, fieldOfView, spatialResolution, duration, 1, samplingInterval, 0, ARCHIMEDEAN , 0, fieldOfView, maxGradient, maxSlew);
 
 	saveTrajectory("spiral.trj", spiral);
 
@@ -127,7 +127,7 @@ void SpiralTest::testPhantom()
 	{
 		fieldOfView.push_back(28);
 	}
-  Trajectory* spiral = generateSpirals(NULL, fieldOfView[0], 2, 5e-3, 1, 4e-6, 0, Archimedean , 0, fieldOfView[0], 4, 15000);
+  Trajectory* spiral = generateSpirals(NULL, fieldOfView[0], 2, 5e-3, 1, 4e-6, 0, ARCHIMEDEAN , 0, fieldOfView[0], 4, 15000);
 
 	std::vector<int> acquisitionSize;
   acquisitionSize.push_back(spiral->numReadoutPoints);

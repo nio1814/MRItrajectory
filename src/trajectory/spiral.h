@@ -29,7 +29,7 @@ To distribute this file, substitute the full license for the above reference.
 
 enum SpiralDirection{spOUT, spINOUT};
 enum spMETHOD{spmVDS, spmMINTIME};
-enum SpiralType{Archimedean, spFERMAT};
+enum SpiralType{ARCHIMEDEAN, spFERMAT};
 
 struct StackOfSpirals
 {

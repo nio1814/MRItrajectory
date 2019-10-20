@@ -92,7 +92,7 @@ void MRdata::fftShift()
 	int indexOriginal[3] = {0,0,0};
 	int shift[3] = {0,0,0};
 
-	int numShifts = points()/m_dimensions[0];
+  int numShifts = static_cast<int>(points()) / m_dimensions[0];
 
 	for(n=0; n<numShifts; n++)
 	{
@@ -121,12 +121,12 @@ FFTplan MRdata::planFFT(int direction, std::vector<int> outputDimensions)
 		if(m_dimensions[n]!=outputDimensions[n])
 			inPlace = false;
 
-	size_t pointsOutput = dimensionsToPoints(outputDimensions);
+  const size_t pointsOutput = dimensionsToPoints(outputDimensions);
 
 	fftwf_iodim transformStrides[1];
 	transformStrides[0].n = 1;
-	transformStrides[0].is = points();
-	transformStrides[0].os = pointsOutput;
+  transformStrides[0].is = static_cast<int>(points());
+  transformStrides[0].os = static_cast<int>(pointsOutput);
 
 	fftwf_iodim transformDimensions[3];
 	int n = m_numImagingDimensions-1;
@@ -211,7 +211,7 @@ void MRdata::fft(int direction, std::vector<int> outputDimensions)
 
 	m_dimensions = outputDimensions;
 
-	scalefloats((float*)m_signal.data(), 2*points(), 1/sqrt(points()));
+  scalefloats(reinterpret_cast<float*>(m_signal.data()), 2*points(), 1.0 / std::sqrt(points()));
 }
 
 void MRdata::crop(std::vector<int> newSize)
@@ -258,7 +258,7 @@ void MRdata::pad(std::vector<int> newSize)
 	{
     doPad |= (m_dimensions[d]<newSize[d]);
 		pointsPad *= newSize[d];
-		shift[d] = std::ceil((newSize[d]-m_dimensions[d])/2.0f);
+    shift[d] = static_cast<int>(std::ceil((newSize[d] - m_dimensions[d])/2.0));
 	}
 
 	if(!doPad)
