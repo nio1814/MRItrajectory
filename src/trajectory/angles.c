@@ -20,7 +20,7 @@ To distribute this file, substitute the full license for the above reference.
 #include <stdlib.h>
 #include <string.h>
 
-const int MAX_ANGLES = 1000;
+#define MAX_ANGLES 1000
 
 /*!
  * \brief Ellipse with diameters of X and Y
@@ -197,8 +197,8 @@ void calculateAngles3D(int halfProjection, enum AngleShape thetaShape, enum Angl
 
 
 /* FOVphi */
-	Ft[0] = N[2];
-	Ft[1] = N[0];
+  Ft[0] = (float)N[2];
+  Ft[1] = (float)N[0];
 
 //	KFCNtheta = &shapeConst;
 	Kt[0] = 1.0f;

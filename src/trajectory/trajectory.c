@@ -20,8 +20,8 @@ To distribute this file, substitute the full license for the above reference.
 #include <string.h>
 #include <stdio.h>
 
-const float GYROMAGNETIC_RATIO = 4257.59;
-const float REWIND_SAMPLING_INTERVAL = 1e-6;
+const float GYROMAGNETIC_RATIO = 4257.59f;
+const float REWIND_SAMPLING_INTERVAL = (float)1e-6;
 const int MAX_REWIND_POINTS = 4096;
 
 struct Trajectory* newTrajectory()
@@ -38,7 +38,7 @@ struct Trajectory* newTrajectory()
 
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution)
 {
-	*imageDimension = ceil(10.0*fieldOfView/(*spatialResolution));
+  *imageDimension = (int)ceil(10.0*fieldOfView/(*spatialResolution));
 	*imageDimension += (*imageDimension)%2;
 
 	*spatialResolution = 10.0f*fieldOfView/ *imageDimension;
@@ -320,7 +320,7 @@ void traverseKspaceToZero(float *gradientOriginalX, float *gradientOriginalY, fl
 {
 	float kSpaceCoordinatesFinal[3] = {0,0,0};
 
-	return traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
+	traverseKspaceFromWaveform(gradientOriginalX, gradientOriginalY, gradientOriginalZ, pointsOriginal, kSpaceCoordinatesFinal, samplingInterval, maxGradientAmplitude, maxSlewRate, gradientRewoundX, gradientRewoundY, gradientRewoundZ, pointsRewound);
 }
 
 int writeTrajectory(FILE *file, const struct Trajectory *trajectory)

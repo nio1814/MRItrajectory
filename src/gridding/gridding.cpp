@@ -18,6 +18,10 @@ extern "C" {
 #include "arrayops.h"
 }
 
+#include <cmath>
+#include <algorithm>
+
+
 Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int kernelWidth) :
 	m_trajectory(trajectory), m_oversamplingFactor(oversamplingRatio),
 	m_kernelWidth(kernelWidth)
@@ -49,7 +53,7 @@ Gridding::Gridding(const Trajectory *trajectory, float oversamplingRatio, int ke
 	m_coordinateScale = .5*minSpatialResolution/5;
 	for(int d=0; d<numDimensions(); d++)
 	{
-		int dimension = m_oversamplingFactor*m_trajectory->imageDimensions[d];
+    int dimension = static_cast<int>(std::roundf(m_oversamplingFactor*m_trajectory->imageDimensions[d]));
 		dimension += dimension%2;
 		m_gridDimensions.push_back(dimension);
 		m_normalizedToGridScale.push_back(m_trajectory->spatialResolution[d]/minSpatialResolution*m_gridDimensions[d]);
@@ -196,7 +200,7 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 
 		for(int d=0; d<numDimensions(); d++)
 		{
-			int gridPointCenter = round((griddedPoint[d]+.5)*m_normalizedToGridScale[d]);
+      const int gridPointCenter = static_cast<int>(std::round((griddedPoint[d]+.5)*m_normalizedToGridScale[d]));
 			int start = gridPointCenter-m_kernelWidth/2;
 			start += ungriddedPoint[d]>=griddedPoint[d] ? 1 : 0;
 			dimensionStart[d] = std::max(0, start);
@@ -271,7 +275,7 @@ MRdata *Gridding::conjugatePhaseForward(const MRdata &ungriddedData)
 				int p = r[d]-imageCenter[d];
 				exponentArgument += k[d]*p*axisScale[d];
 			}
-			exponentArgument *= 2*M_PI;
+      exponentArgument *= static_cast<float>(2.0f * M_PI);
 			complexFloat griddedValue = complexFloat(std::cos(exponentArgument), std::sin(exponentArgument))*ungriddedValue*imageScale;
 			griddedData->addSignalValue(g, griddedValue);
 		}

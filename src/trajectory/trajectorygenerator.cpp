@@ -39,6 +39,12 @@ void TrajectoryGenerator::setFieldOfView(double* fov, int numDims)
     m_fieldOfView[n] = fov[n];
 }
 
+void TrajectoryGenerator::setFieldOfView(std::vector<float> fov)
+{
+  int numDims = std::min(fov.size(), (size_t)3);
+  for(int n=0; n<numDims; n++)
+    m_fieldOfView[n] = fov[n];
+}
 float TrajectoryGenerator::maxFieldOfView()
 {
   return *std::max_element(m_fieldOfView, m_fieldOfView + numDimensions());
@@ -59,6 +65,11 @@ void TrajectoryGenerator::setSpatialResolution(double *spatialRes, int numDims)
   for(int n=0; n<numDims; n++)
     m_spatialResolution[n] = spatialRes[n];
 
+}
+
+void TrajectoryGenerator::setSpatialResolution(std::vector<float> resolution)
+{
+  std::copy(resolution.data(), resolution.data() + resolution.size(),  m_spatialResolution);
 }
 
 void TrajectoryGenerator::resetVariableDensity()
@@ -128,7 +139,7 @@ bool TrajectoryGenerator::generate()
   switch(m_trajectoryType)
   {
     case SPIRAL:
-      m_trajectory = generateSpirals(m_variableDensity, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, 1, m_samplingInterval, m_numReadouts, Archimedean, 0, m_fieldOfView[0], m_gradientLimit, m_slewRateLimit);
+      m_trajectory = generateSpirals(m_variableDensity, m_fieldOfView[0], m_spatialResolution[0], m_readoutDuration, 1, m_samplingInterval, m_numReadouts, ARCHIMEDEAN, 0, m_fieldOfView[0], m_gradientLimit, m_slewRateLimit);
       break;
     case RADIAL:
       m_trajectory = generateRadial2D(m_fieldOfView[0], m_fieldOfView[1], EllipticalShape, m_spatialResolution[0], m_spatialResolution[1], EllipticalShape, m_fullProjection, 1, m_gradientLimit, m_slewRateLimit, m_samplingInterval);
@@ -242,7 +253,7 @@ Trajectory *TrajectoryGenerator::trajectory()
   return m_trajectory;
 }
 
-Cones *TrajectoryGenerator::cones()
+Cones *TrajectoryGenerator::cones() const
 {
   if(m_trajectoryType==CONES)
     return m_cones;

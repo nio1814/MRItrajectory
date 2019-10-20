@@ -69,11 +69,10 @@ void RadialTest::testGenerate()
 
 	float fieldOfViewMax = fmax(fieldOfView[0], fieldOfView[1]);
 	float maxReadoutGradient = qMin(1/(fieldOfViewMax*samplingInterval*4257), maxGradient);
-	int waveforms;
 
 	char message[128];
 	float krMax = 0;
-	for(int r=0; r<waveforms; r++)
+	for(int r=0; r<radial->numReadouts; r++)
 	{
 		for(int n=0; n<radial->numWaveformPoints; n++)
 		{

@@ -2,6 +2,7 @@
 #define TRAJECTORYGENERATOR_H
 
 #include <string>
+#include <vector>
 
 extern "C"
 {
@@ -22,6 +23,8 @@ public:
 
   void setTrajectoryType(TrajectoryType type);
   void setFieldOfView(double* fov, int numDims);
+  void setFieldOfView(std::vector<float> fov);
+  std::vector<float> fieldOfView();
   float maxFieldOfView();
   float maxFieldOfViewXY();
   void setFilterFieldOfView(float filterFOV);
@@ -31,6 +34,7 @@ public:
    */
   void resetVariableDensity();
   void setSpatialResolution(double* spatialRes, int numDims);
+  void setSpatialResolution(std::vector<float> resolution);
   float minSpatialResolution();
   float minSpatialResolutionXY();
   void setSamplingInterval(float interval);
@@ -47,7 +51,7 @@ public:
   bool save(std::string filepath);
   Trajectory *load(std::string filepath);
   Trajectory* trajectory();
-  Cones* cones();
+  Cones* cones() const;
   Cones* getConesTrajectory();
 
   int numDimensions();
@@ -62,7 +66,7 @@ protected:
   float m_slewRateLimit = 15000;
   int m_numReadouts;
   bool m_rotatable = true;
-  bool m_numBases = 32;
+  int m_numBases = 32;
   bool m_fullProjection = true;
   WaveformStorageType m_storage = STORE_ALL;
 
