@@ -162,6 +162,13 @@ pybind11::dict pyGenerateSpirals(float fieldOfView, float spatialResolution, flo
   return trajectoryToDict(trajectory);
 }
 
+pybind11::dict pyGenerateCones(float fieldOfViewXY, float fieldOfViewZ, float spatialResolutionXY, float spatialResolutionZ, float readoutDuration, int numBases, bool rotatable, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate)
+{
+  Cones* cones = generateCones(fieldOfViewXY, fieldOfViewZ, nullptr, spatialResolutionXY, spatialResolutionZ, numBases, rotatable, InterConeCompensation::NO_COMPENSATION, readoutDuration, samplingInterval, filterFieldOfView, maxGradientAmplitude, maxSlewRate, STORE_ALL);
+
+  return trajectoryToDict(cones->trajectory);
+}
+
 }
 
 PYBIND11_MODULE(_trajectory, module)
@@ -174,13 +181,27 @@ PYBIND11_MODULE(_trajectory, module)
       .def_readonly("kspace", &CTrajectory::kSpace)
       ;*/
   module.def("load_trajectory", &py::loadTrajectory);
+
+  const float gradientLimitDefault = 4;
+  const float slewLimitDefault = 15e3;
+  const float samplingIntervalDefault = 4e-6;
   module.def("generate_spiral", &py::pyGenerateSpirals,
              pybind11::arg("fieldOfView"), pybind11::arg("spatialResolution"),
              pybind11::arg("readoutDuration"),
              pybind11::arg("rewindTrajectory") = true,
-             pybind11::arg("samplingInterval") = 4e-6,
+             pybind11::arg("samplingInterval") = samplingIntervalDefault,
              pybind11::arg("numInterleaves") = 0,
              pybind11::arg("readoutFieldOfView") = 0,
-             pybind11::arg("gradientLimit") = 4,
-             pybind11::arg("slewLimit") = 15e3);
+             pybind11::arg("gradientLimit") = gradientLimitDefault,
+             pybind11::arg("slewLimit") = slewLimitDefault);
+  module.def("generate_cones", &py::pyGenerateCones,
+             pybind11::arg("fieldOfViewXY"), pybind11::arg("fieldOfViewZ"),
+             pybind11::arg("spatialResolutionXY"), pybind11::arg("spatialResolutionZ"),
+             pybind11::arg("readoutDuration"),
+             pybind11::arg("numBases") = 0,
+             pybind11::arg("rotatable") = true,
+             pybind11::arg("samplingInterval") = samplingIntervalDefault,
+             pybind11::arg("filterFieldOfView") = 0,
+             pybind11::arg("gradientLimit") = gradientLimitDefault,
+             pybind11::arg("slewLimit") = slewLimitDefault);
 }

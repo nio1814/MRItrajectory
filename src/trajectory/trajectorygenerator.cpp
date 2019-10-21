@@ -155,7 +155,7 @@ bool TrajectoryGenerator::generate()
 
       if(m_cones)
         deleteCones(&m_cones);
-      m_cones = generateCones(maxFieldOfViewXY(), m_fieldOfView[2], m_variableDensity, m_spatialResolution[0], m_spatialResolution[2], 48, 1, NoCompensation, m_readoutDuration, m_samplingInterval, maxFieldOfView(), m_gradientLimit, m_slewRateLimit, STORE_ALL);
+      m_cones = generateCones(maxFieldOfViewXY(), m_fieldOfView[2], m_variableDensity, m_spatialResolution[0], m_spatialResolution[2], 48, 1, NO_COMPENSATION, m_readoutDuration, m_samplingInterval, maxFieldOfView(), m_gradientLimit, m_slewRateLimit, STORE_ALL);
       if(!m_cones)
         return false;
       m_trajectory = m_cones->trajectory;

@@ -19,7 +19,7 @@ struct ConesInterpolation
 	int *interleafOnCone;
 };
 
-enum InterConeCompensation{NoCompensation, Compensation1, Compensation2};
+enum InterConeCompensation{NO_COMPENSATION, Compensation1, Compensation2};
 
 struct Cones
 {
