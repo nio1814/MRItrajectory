@@ -605,7 +605,11 @@ void makeConesInterpolation(struct Cones *cones)
        deltaConeAngle = 2*singleInterleafInterpolation->theta[c];
 
     basisGradientWaveforms = &cones->basisGradientWaveforms[3*trajectory->numWaveformPoints*singleInterleafInterpolation->basis[c]];
-    interpolateCone(trajectory->fieldOfView[0], trajectory->fieldOfView[2], trajectory->spatialResolution[0], trajectory->spatialResolution[2], basisGradientWaveforms, cones->numBasisWaveformPoints[singleInterleafInterpolation->basis[c]], cones->numBasisReadoutPoints[singleInterleafInterpolation->basis[c]], trajectory->numWaveformPoints, singleInterleafInterpolation->theta[c], singleInterleafInterpolation->scaleXY[c], singleInterleafInterpolation->scaleZ[c], trajectory->variableDensity, cones->interconeCompensation, deltaConeAngle, trajectory->samplingInterval, &singleInterleafInterpolation->numInterleavesOnCone[c], &cones->coneAngleDensityCompensation[c*trajectory->numReadoutPoints], interpolatedGradientWaveforms);
+    if(interpolateCones)
+      interpolateCone(trajectory->fieldOfView[0], trajectory->fieldOfView[2], trajectory->spatialResolution[0], trajectory->spatialResolution[2], basisGradientWaveforms, cones->numBasisWaveformPoints[singleInterleafInterpolation->basis[c]], cones->numBasisReadoutPoints[singleInterleafInterpolation->basis[c]], trajectory->numWaveformPoints, singleInterleafInterpolation->theta[c], singleInterleafInterpolation->scaleXY[c], singleInterleafInterpolation->scaleZ[c], trajectory->variableDensity, cones->interconeCompensation, deltaConeAngle, trajectory->samplingInterval, &singleInterleafInterpolation->numInterleavesOnCone[c], &cones->coneAngleDensityCompensation[c*trajectory->numReadoutPoints], interpolatedGradientWaveforms);
+    else
+      singleInterleafInterpolation->numInterleavesOnCone = cones->numBasisInterleaves[c];
+
     trajectory->numReadouts += singleInterleafInterpolation->numInterleavesOnCone[c];
 
     printf("theta %f\tbasis %d\tnintl %d\n", singleInterleafInterpolation->theta[c], singleInterleafInterpolation->basis[c], singleInterleafInterpolation->numInterleavesOnCone[c]);
@@ -709,7 +713,7 @@ int generateConesBasis(struct Cones *cones)
 	else
 		memcpy(finalFieldOfView, fieldOfView, 2*sizeof(float));
 
-  calculateAngles(initialElevationAngleDelta, (float)M_PI, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
+  calculateAngles(initialElevationAngleDelta, (float)M_PI - initialElevationAngleDelta, elevationAngleFieldOfViewShape, finalFieldOfView, EllipticalShape, kSpaceExtent, &cones->coneAngles, NULL, NULL, &cones->numCones);
 
 	printf("Number of cones:\t%d\n", cones->numCones);
   const int interpolateCones = cones->trajectory->numBases > 0;
@@ -728,6 +732,9 @@ int generateConesBasis(struct Cones *cones)
   basisGradientRewoundX = (float**)malloc(cones->trajectory->numBases*sizeof(float*));
   basisGradientRewoundY = (float**)malloc(cones->trajectory->numBases*sizeof(float*));
   basisGradientRewoundZ = (float**)malloc(cones->trajectory->numBases*sizeof(float*));
+
+  const float interleafThreshold = interpolateCones ? .03 : 1;
+
   for(b=0; b<cones->trajectory->numBases; b++)
 	{
 		printf("Waveform %d\n", b+1);
@@ -746,13 +753,15 @@ int generateConesBasis(struct Cones *cones)
     scaleZ = interpolateCones ? cos(elevationAngleParametric)/cos(fromElevationAngle) : 1;
     scaleXY = interpolateCones ? sin(elevationAngleParametric)/sin(toElevationAngle) : 1;
 
-    float numInterleavesLowerLimit = .01f;
-    float numInterleavesUpperLimit = fabs(20*M_PI*kSpaceMaxRadial*sin(cones->basisConeAngles[b]) * fieldOfViewRadial);
+    float numInterleavesLowerLimit = interpolateCones ? .01f : 0;
+    float numInterleavesUpperLimit = MAX(fabs(20*M_PI*kSpaceMaxRadial*sin(cones->basisConeAngles[b]) * fieldOfViewRadial), 2);
 
     cones->numBasisReadoutPoints[b] = -1;
-    while(numInterleavesUpperLimit-numInterleavesLowerLimit>.03 && cones->numBasisReadoutPoints[b]!=cones->trajectory->numReadoutPoints)
+    while(numInterleavesUpperLimit-numInterleavesLowerLimit > interleafThreshold && cones->numBasisReadoutPoints[b]!=cones->trajectory->numReadoutPoints)
 		{
-      const float numInterleavesCurrent = .5f * (numInterleavesLowerLimit + numInterleavesUpperLimit);
+      float numInterleavesCurrent = .5f * (numInterleavesLowerLimit + numInterleavesUpperLimit);
+      if(!interpolateCones)
+        numInterleavesCurrent = round(numInterleavesCurrent);
 
 			if(currentKspaceCoordinates)
 			{
