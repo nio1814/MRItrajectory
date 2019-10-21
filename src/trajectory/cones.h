@@ -32,6 +32,7 @@ struct Cones
 	float* basisConeAngles;
 	int *numBasisReadoutPoints;
 	int *numBasisWaveformPoints;
+  int *numBasisInterleaves;
 	float *basisGradientWaveforms;
 	float *basisKspaceCoordinates;
   struct ConesInterpolation* interpolation;

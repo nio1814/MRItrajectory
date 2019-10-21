@@ -608,7 +608,7 @@ void makeConesInterpolation(struct Cones *cones)
     if(interpolateCones)
       interpolateCone(trajectory->fieldOfView[0], trajectory->fieldOfView[2], trajectory->spatialResolution[0], trajectory->spatialResolution[2], basisGradientWaveforms, cones->numBasisWaveformPoints[singleInterleafInterpolation->basis[c]], cones->numBasisReadoutPoints[singleInterleafInterpolation->basis[c]], trajectory->numWaveformPoints, singleInterleafInterpolation->theta[c], singleInterleafInterpolation->scaleXY[c], singleInterleafInterpolation->scaleZ[c], trajectory->variableDensity, cones->interconeCompensation, deltaConeAngle, trajectory->samplingInterval, &singleInterleafInterpolation->numInterleavesOnCone[c], &cones->coneAngleDensityCompensation[c*trajectory->numReadoutPoints], interpolatedGradientWaveforms);
     else
-      singleInterleafInterpolation->numInterleavesOnCone = cones->numBasisInterleaves[c];
+      singleInterleafInterpolation->numInterleavesOnCone[c] = cones->numBasisInterleaves[c];
 
     trajectory->numReadouts += singleInterleafInterpolation->numInterleavesOnCone[c];
 
@@ -653,6 +653,8 @@ void freeCones(struct Cones *cones)
     free(cones->numBasisReadoutPoints);
   if(cones->numBasisWaveformPoints)
     free(cones->numBasisWaveformPoints);
+  if(cones->numBasisInterleaves)
+    free(cones->numBasisInterleaves);
   if(cones->basisGradientWaveforms)
     free(cones->basisGradientWaveforms);
   if(cones->basisKspaceCoordinates)
@@ -668,11 +670,7 @@ int generateConesBasis(struct Cones *cones)
 
 	float kSpaceExtent[2];
 	float initialElevationAngleDelta;
-//  struct Trajectory *trajectory = cones->trajectory;
-//  struct VariableDensity *variableDensity = trajectory->variableDensity;
-
   float fieldOfView[2] = {cones->trajectory->fieldOfView[2], cones->trajectory->fieldOfView[0]};
-
 	float finalFieldOfView[2];
 
 	int d;
@@ -684,9 +682,6 @@ int generateConesBasis(struct Cones *cones)
 	float elevationAngleParametric;
 	float scaleXY;
 	float scaleZ;
-//  float interleavesLow;
-//  float interleavesHigh;
-//  float interleaves;
 	float *basisReadoutGradientWaveforms;
 	int currentReadoutPoints;
 	float *currentKspaceCoordinates = NULL;
@@ -722,6 +717,7 @@ int generateConesBasis(struct Cones *cones)
     cones->trajectory->numBases = cones->numCones;
     cones->numBasisReadoutPoints = (int*)malloc(cones->numCones*sizeof(int));
     cones->numBasisWaveformPoints = (int*)malloc(cones->numCones*sizeof(int));
+    cones->numBasisInterleaves = (int*)malloc(cones->numCones*sizeof(int));
   }
 
   cones->basisConeAngles = (float*)malloc(cones->trajectory->numBases*sizeof(float));
@@ -755,6 +751,8 @@ int generateConesBasis(struct Cones *cones)
 
     float numInterleavesLowerLimit = interpolateCones ? .01f : 0;
     float numInterleavesUpperLimit = MAX(fabs(20*M_PI*kSpaceMaxRadial*sin(cones->basisConeAngles[b]) * fieldOfViewRadial), 2);
+    if(!interpolateCones)
+      numInterleavesUpperLimit = ceil(numInterleavesUpperLimit);
 
     cones->numBasisReadoutPoints[b] = -1;
     while(numInterleavesUpperLimit-numInterleavesLowerLimit > interleafThreshold && cones->numBasisReadoutPoints[b]!=cones->trajectory->numReadoutPoints)
@@ -779,17 +777,20 @@ int generateConesBasis(struct Cones *cones)
 			{
         numInterleavesUpperLimit = numInterleavesCurrent;
         cones->numBasisReadoutPoints[b] = currentReadoutPoints;
+        cones->numBasisInterleaves[b] = numInterleavesCurrent;
 				for (d=0; d<3; d++)
 				{
           memcpy(&basisReadoutGradientWaveforms[(b*3+d)*cones->trajectory->numReadoutPoints], &currentGradientWaveforms[d*currentReadoutPoints], currentReadoutPoints*sizeof(float));
           memcpy(&cones->basisKspaceCoordinates[(b*3+d)*cones->trajectory->numReadoutPoints], &currentKspaceCoordinates[d*currentReadoutPoints], currentReadoutPoints*sizeof(float));
 				}
+        printf("Basis %d interleaves %f readout points %d\n", b+1, numInterleavesCurrent, currentReadoutPoints);
 			}
 			else
 			{
         numInterleavesLowerLimit = numInterleavesCurrent;
+        printf("Basis %d interleaves %f invalid\n", b+1, numInterleavesCurrent);
 			}
-      printf("Basis %d interleaves %f readout points %d\n", b+1, numInterleavesCurrent, cones->numBasisReadoutPoints[b]);
+
 		}
 	
   if(cones->numBasisReadoutPoints[b]==-1)
@@ -852,7 +853,6 @@ void generateReadoutWaveforms(int index, const struct Cones* cones, float* gradi
 struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struct VariableDensity *variableDensity, float xySpatialResolution, float zSpatialResolution, int numBases, int rotatable, enum InterConeCompensation interConeCompensation, float readoutDuration, float samplingInterval, float filterFieldOfView, float maxGradientAmplitude, float maxSlewRate, enum WaveformStorageType storage)
 {
   struct Cones* cones = newCones(numBases);
-//  struct Trajectory *trajectory = cones->trajectory;
 	int s;
 	int d;
 
@@ -1054,6 +1054,7 @@ struct Cones *newCones(const int numBases)
 
   cones->numBasisReadoutPoints = numBases ? (int*)malloc(numBases*sizeof(int)) : NULL;
   cones->numBasisWaveformPoints = numBases ? (int*)malloc(numBases*sizeof(int)) : NULL;
+  cones->numBasisInterleaves = numBases ? (int*)malloc(numBases*sizeof(int)) : NULL;
 
   cones->trajectory = newTrajectory(0, 0, 3, numBases, 0, STORE_BASIS);
   cones->trajectory->type = CONES;
