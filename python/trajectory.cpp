@@ -180,7 +180,7 @@ PYBIND11_MODULE(_trajectory, module)
       .def_readonly("gradients", &CTrajectory::gradients)
       .def_readonly("kspace", &CTrajectory::kSpace)
       ;*/
-  module.def("load_trajectory", &py::loadTrajectory);
+  module.def("load", &py::loadTrajectory);
 
   const float gradientLimitDefault = 4;
   const float slewLimitDefault = 15e3;
