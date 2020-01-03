@@ -25,6 +25,10 @@ extern "C"{
 enum ConvType {ctCONST=0, ctSEP};
 
 const char savePath[] = "/home_local/noaddy/research/data/code/dcfjcu/";
+enum CompartmentSize{
+  COMPARTMENT_64=64, 
+  COMPARTMENT_128=128
+};
 
 Timer timer;
 
@@ -675,7 +679,7 @@ int findDataSize(int target, int max1, int max2, unsigned int *dim1, unsigned in
  \param[in]	ndim	Number of dimensions
  \param[in]	FOV	Field of View (cm)
 */
-void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDim, ConvType convType, int numLobes, int *numCt, int ctSize, int numIter, float *dcf)
+void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDim, ConvType convType, int numLobes, int *numCt, int compartmentSize, int numIter, float *dcf)
 {
 	unsigned int *binIdx;
 	unsigned int *binCount1;
@@ -713,7 +717,7 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 	
 	printf("\n%d iterations\n", numIter);
 	printf("%d lobes\n", numLobes);
-	printf("Compartment size %d\n", ctSize);
+	printf("Compartment size %d\n", compartmentSize);
 
 	//Setup kernels
 	for(n=0; n<ndim; n++)
@@ -826,16 +830,16 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 		else
 			binStartIdx[n] = binStartIdx[n-1]+binReps[n-1];
 		
-		binReps[n] = ceil(binCount1[n]/(float)ctSize);
+		binReps[n] = ceil(binCount1[n]/(float)compartmentSize);
 		numBins2 += binReps[n];
 	}
 
-	bins = (int*)malloc(ctSize*numBins2*sizeof(int));
+	bins = (int*)malloc(compartmentSize *numBins2*sizeof(int));
 
 	binCurrentIdx = (unsigned int*)malloc(numBins1*sizeof(unsigned int));
 	memset(binCurrentIdx, 0, numBins1*sizeof(unsigned int));
 
-	for(n=0; n<ctSize*numBins2; n++)
+	for(n=0; n< compartmentSize *numBins2; n++)
 		bins[n] = -1;
 
 	for(n=0; n<npts; n++)
@@ -844,16 +848,16 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 		{
 			bi = binIdx[n];
 			bci = binCurrentIdx[bi];
-			bsi = ctSize*binStartIdx[bi];
+			bsi = compartmentSize *binStartIdx[bi];
 			bins[bsi+bci++] = n;
 			binCurrentIdx[bi] = bci;
 		}
 	}
 
 	pctBinFull = 0;
-	for(n=0; n<ctSize*numBins2; n++)
+	for(n=0; n< compartmentSize *numBins2; n++)
 		if(bins[n]!=-1)
-			pctBinFull += 1.0f/(ctSize*numBins2);
+			pctBinFull += 1.0f/(compartmentSize *numBins2);
 
 	printf("%d bins\n", numBins2);
 	printf("%f%% of binspace is full\n", 100*pctBinFull);
@@ -947,7 +951,7 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 	printf("Max compartment offset  %d %d %d\n", maxCtOffset[0], maxCtOffset[1], maxCtOffset[2]);
 	printf("%d connections\n", numConnections);
 	
-	block_size.x = ctSize;
+	block_size.x = compartmentSize;
 // 	block_size.y = BINSIZE;
 	grid_size.x = numConnections;
 	if(!findDataSize(numConnections, 65536, 65536, &grid_size.x, &grid_size.y))
@@ -969,14 +973,14 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 // 	Allocate gpu memory
   timer.start();
 	cudaMalloc((void**)&binConnections_dev, 2*numConnections*sizeof(unsigned int));
-	cudaMalloc((void**)&bins_dev, ctSize*numBins2*sizeof(int));
+	cudaMalloc((void**)&bins_dev, compartmentSize*numBins2*sizeof(int));
 	cudaMalloc((void**)&k_dev, ndim*npts*sizeof(float));
 	cudaMalloc((void**)&Win_dev, npts*sizeof(float));
 	cudaMalloc((void**)&Wout_dev, npts*sizeof(float));
 	
 // 	Copy to gpu
 	cudaMemcpy(binConnections_dev, binConnections, 2*numConnections*sizeof(unsigned int), cudaMemcpyHostToDevice);
-	cudaMemcpy(bins_dev, bins, ctSize*numBins2*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(bins_dev, bins, compartmentSize*numBins2*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(k_dev, k, ndim*npts*sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(Win_dev, dcf, npts*sizeof(float), cudaMemcpyHostToDevice);
   timer.stop("Allocate and copy to gpu");
@@ -992,7 +996,15 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 				if(ndim==2)
 					conv_kernelt<2, 128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, *kernelRad, *F, Win_dev, Wout_dev);
 				else
-					conv_kernelt<3, 128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, *kernelRad, *F, Win_dev, Wout_dev);
+          switch (compartmentSize)
+          {
+            case COMPARTMENT_128:
+					    conv_kernelt<3, COMPARTMENT_128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, *kernelRad, *F, Win_dev, Wout_dev);
+              break;
+            case COMPARTMENT_64:
+              conv_kernelt<3, COMPARTMENT_64><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, *kernelRad, *F, Win_dev, Wout_dev);
+              break;
+          }
 				break;
 			case ctSEP:
 				cudaMalloc((void**)&kernelRad_dev, 3*sizeof(float));
@@ -1003,23 +1015,23 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 				checkLaunch("copy");
 
 				if(ndim==2)
-					switch(ctSize)
+					switch(compartmentSize)
 					{
-						case 64:
-							conv_kernel_sep<2, 64><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
+						case COMPARTMENT_64:
+							conv_kernel_sep<2, COMPARTMENT_64><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
 							break;
-						case 128:
-							conv_kernel_sep<2, 128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
+						case COMPARTMENT_128:
+							conv_kernel_sep<2, COMPARTMENT_128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
 							break;
 					}
 				else
-					switch(ctSize)
+					switch(compartmentSize)
 					{
-						case 64:
-							conv_kernel_sep<3, 64><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
+						case COMPARTMENT_64:
+							conv_kernel_sep<3, COMPARTMENT_64><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
 							break;
-						case 128:
-							conv_kernel_sep<3, 128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
+						case COMPARTMENT_128:
+							conv_kernel_sep<3, COMPARTMENT_128><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
 							break;
 						case 256:
 							conv_kernel_sep<3, 256><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
@@ -1028,7 +1040,7 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 							conv_kernel_sep<3, 512><<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, kernelRad_dev, F_dev, Win_dev, Wout_dev);
 							break;
 						default:
-							fprintf(stderr, "Unsupported bin size %d {64,128,256,512}\n", ctSize);
+							fprintf(stderr, "Unsupported bin size %d {64,128,256,512}\n", compartmentSize);
 							abort();
 					}
 				break;
@@ -1063,7 +1075,7 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 	file = fopen(filename, "wb");
 	if(file!=NULL)
 	{
-		fwrite(bins, ctSize*numBins2, sizeof(int), file);
+		fwrite(bins, compartmentSize*numBins2, sizeof(int), file);
 		fclose(file);
 	}
 	
@@ -1105,7 +1117,6 @@ int main(int argc, char *argv[])
 	int npts;
 	int numLobes = 2;
 	int numCt[] = {-1,-1,-1};
-	int binSize = 64;
 	int numIter = 1;
 	ConvType cType = ctCONST;
 	
@@ -1416,7 +1427,7 @@ int main(int argc, char *argv[])
     fieldOfView[d] = atoi(argv[d + fieldOfViewArgumentIndex]);
     spatialResolution[d] = atoi(argv[d + fieldOfViewArgumentIndex + trajectory->numDimensions]);
   }
-  jdcfcu(densityCompensation.size(), coordinates.data(), trajectory->numDimensions, NULL, fieldOfView, spatialResolution, cType, numLobes, numCt, binSize, numIter, densityCompensation.data());
+  jdcfcu(densityCompensation.size(), coordinates.data(), trajectory->numDimensions, NULL, fieldOfView, spatialResolution, cType, numLobes, numCt, COMPARTMENT_64, numIter, densityCompensation.data());
 	
 	/*sprintf(filename, "/home_local/noaddy/research/data/code/dcfjcu/test.ks");
 	file = fopen(filename, "wb");
