@@ -173,7 +173,7 @@ PYBIND11_MODULE(_trajectory, module)
       .def_readonly("gradients", &CTrajectory::gradients)
       .def_readonly("kspace", &CTrajectory::kSpace)
       ;*/
-  module.def("load_trajectory", &py::loadTrajectory);
+  module.def("load", &py::loadTrajectory);
   module.def("generate_spiral", &py::pyGenerateSpirals,
              pybind11::arg("fieldOfView"), pybind11::arg("spatialResolution"),
              pybind11::arg("readoutDuration"),

@@ -22,11 +22,14 @@ set_target_properties(_trajectory PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CU
 
 configure_file(setup.py ${CMAKE_CURRENT_BINARY_DIR})
 #file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cmri DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(GLOB PY_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/cmri/**/*.py)
 
-set(PY_SOURCE
-  cmri/trajectory/generator.py
-)
+#set(PY_SOURCE
+#  cmri/trajectory/generator.py
+#)
 message(STATUS ${PY_SOURCE})
 add_custom_target(${PROJECT_NAME}
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/cmri ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS ${PY_SOURCE} _trajectory)
+  DEPENDS ${PY_SOURCE} _trajectory
+  SOURCES ${PY_SOURCE}
+)
