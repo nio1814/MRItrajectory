@@ -5,10 +5,13 @@
 
 #include "cuComplex.h"
 
-struct event_pair
+struct Timer
 {
-  cudaEvent_t start;
-  cudaEvent_t end;
+  void start();
+  float stop(char* kernel_name);
+
+  cudaEvent_t startEvent;
+  cudaEvent_t endEvent;
 };
 
 /**
@@ -24,9 +27,6 @@ int check_launch(char * kernel_name);
  \param[in]	msg	Exit message
 */
 void printExit(char* msg);
-
-void start_timer(struct event_pair * p);
-float stop_timer(struct event_pair * p, char * kernel_name);
 
 bool AlmostEqual2sComplement(float A, float B, int maxUlps);
 

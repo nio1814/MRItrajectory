@@ -26,7 +26,7 @@ enum ConvType {ctCONST=0, ctSEP};
 
 const char savePath[] = "/home_local/noaddy/research/data/code/dcfjcu/";
 
-event_pair t;
+Timer timer;
 
 FILE* file;
 char filename[128];
@@ -967,7 +967,7 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 	printf("Divide block size [%d,%d,%d]\n", block_size_div.x, block_size_div.y, block_size_div.z);
 	
 // 	Allocate gpu memory
-	start_timer(&t);
+  timer.start();
 	cudaMalloc((void**)&binConnections_dev, 2*numConnections*sizeof(unsigned int));
 	cudaMalloc((void**)&bins_dev, ctSize*numBins2*sizeof(int));
 	cudaMalloc((void**)&k_dev, ndim*npts*sizeof(float));
@@ -979,11 +979,11 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 	cudaMemcpy(bins_dev, bins, ctSize*numBins2*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(k_dev, k, ndim*npts*sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(Win_dev, dcf, npts*sizeof(float), cudaMemcpyHostToDevice);
-	stop_timer(&t, "Allocate and copy to gpu");
+  timer.stop("Allocate and copy to gpu");
 	
 	for(n=0; n<numIter; n++)
 	{
-		start_timer(&t);
+    timer.start();
 		cudaMemset(Wout_dev, 0, npts*sizeof(float));
 //		conv_kernel<<<grid_size, block_size>>>(binConnections_dev, numConnections, bins_dev, k_dev, ndim, kernelRad, F, Win_dev, Wout_dev);
 		switch(convType)
@@ -1036,7 +1036,7 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 		check_launch("convolution");
 		divideArray<<<grid_size_div, block_size_div>>>(Win_dev, Wout_dev, npts);
 		check_launch("division");
-		stop_timer(&t, "convolution");
+    timer.stop("convolution");
 	}
 	
 	

@@ -535,7 +535,7 @@ struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
 }
 
 struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, const int numReadoutPoints, const int numAxes, enum Endian endian)
-
+{
   FILE* file;
   //int status = 1;     /*0 if file successfully loaded */
   //int doSwapE;

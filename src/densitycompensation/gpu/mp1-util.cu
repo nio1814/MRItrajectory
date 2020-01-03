@@ -46,36 +46,34 @@ void printExit(char* msg)
 }
 
 
-void start_timer(event_pair * p)
+void Timer::start()
 {
 	int gpuIDcurrent;	//Gpu device called from
-	
 	cudaGetDevice(&gpuIDcurrent);
 	cudaSetDevice(0);
 	
-  cudaEventCreate(&p->start);
-  cudaEventCreate(&p->end);
-  cudaEventRecord(p->start, 0);
+  cudaEventCreate(&this->startEvent);
+  cudaEventCreate(&this->endEvent);
+  cudaEventRecord(this->startEvent, 0);
   
 	cudaSetDevice(gpuIDcurrent);
 }
 
 
-float stop_timer(event_pair * p, char * kernel_name)
+float Timer::stop(char * kernel_name)
 {
 	int gpuIDcurrent;	//Gpu device called from
-	
 	cudaGetDevice(&gpuIDcurrent);
 	cudaSetDevice(0);
 	
-  cudaEventRecord(p->end, 0);
-  cudaEventSynchronize(p->end);
+  cudaEventRecord(this->endEvent, 0);
+  cudaEventSynchronize(this->endEvent);
   
   float elapsed_time;
-  cudaEventElapsedTime(&elapsed_time, p->start, p->end);
-  printf("%s took %.1f ms\n",kernel_name, elapsed_time);
-  cudaEventDestroy(p->start);
-  cudaEventDestroy(p->end);
+  cudaEventElapsedTime(&elapsed_time, this->startEvent, this->endEvent);
+  printf("%s took %.1f ms\n", kernel_name, elapsed_time);
+  cudaEventDestroy(this->startEvent);
+  cudaEventDestroy(this->endEvent);
   
   cudaSetDevice(gpuIDcurrent);
   
