@@ -1419,7 +1419,7 @@ int main(int argc, char *argv[])
 
   const char* filePathOutput = argv[12];
   printf("Writing new file %s\n", filePathOutput);
-  saveKSPaceFile(filePathOutput, trajectory);
+  saveKSPaceFile(filePathOutput, trajectory, endian);
 }
 
 #else

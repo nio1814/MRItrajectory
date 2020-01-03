@@ -688,18 +688,24 @@ int axisNameToIndex(const char name)
 }
 
 
-void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory)
+void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory, const enum Endian endian)
 {
   FILE* file = fopen(filePath, "wb");
   if(!file)
     fprintf(stderr, "Error opening %s for read", filePath);
 
+  int swapEndian = needEndianSwap(endian);
   for(int r=0; r<trajectory->numReadouts; r++)
     for(int n=0; n<trajectory->numReadoutPoints; n++)
       {
         float coordinates[3];
         float density;
         trajectoryCoordinates(n, r, trajectory, coordinates, &density);
+        if(swapEndian)
+        {
+          swapArrayEndian(coordinates, 3, sizeof(float));
+          swapArrayEndian(&density, 1, sizeof(float));
+        }
         fwrite(coordinates, sizeof(float), trajectory->numDimensions, file);
         fwrite(&density, sizeof(float), 1, file);
       }
