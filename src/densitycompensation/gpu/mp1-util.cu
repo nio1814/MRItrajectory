@@ -60,7 +60,7 @@ void Timer::start()
 }
 
 
-float Timer::stop(char * kernel_name)
+float Timer::stop(const std::string description)
 {
 	int gpuIDcurrent;	//Gpu device called from
 	cudaGetDevice(&gpuIDcurrent);
@@ -71,7 +71,7 @@ float Timer::stop(char * kernel_name)
   
   float elapsed_time;
   cudaEventElapsedTime(&elapsed_time, this->startEvent, this->endEvent);
-  printf("%s took %.1f ms\n", kernel_name, elapsed_time);
+  printf("%s took %.1f ms\n", description.c_str(), elapsed_time);
   cudaEventDestroy(this->startEvent);
   cudaEventDestroy(this->endEvent);
   

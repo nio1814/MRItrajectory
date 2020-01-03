@@ -5,10 +5,13 @@
 
 #include "cuComplex.h"
 
+#include <string>
+
+
 struct Timer
 {
   void start();
-  float stop(char* kernel_name);
+  float stop(const std::string description);
 
   cudaEvent_t startEvent;
   cudaEvent_t endEvent;
