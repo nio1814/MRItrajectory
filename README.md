@@ -1,5 +1,14 @@
 # MRI Trajectory
 
+## Setup
+
+### Linux
+Install the required packages
+
+```
+sudo apt install qtbase5-dev libfftw3-dev cmake libqwt-dev 
+```
+
 ## Reference Articles
 
 ### Spirals

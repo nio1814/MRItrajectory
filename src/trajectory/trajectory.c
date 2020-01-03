@@ -534,6 +534,54 @@ struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
   return trajectory;
 }
 
+struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, const int numReadoutPoints, const int numAxes, enum Endian endian)
+{
+  FILE* file;
+  //int status = 1;     /*0 if file successfully loaded */
+  //int doSwapE;
+  //int n;
+
+  //float* k, * dcf;
+
+  struct Trajectory* trajectory = newTrajectory();
+  allocateTrajectory(trajectory, numReadoutPoints, numReadoutPoints, numAxes, numReadouts, numReadouts, STORE_ALL);
+
+  file = fopen(filePath, "rb");
+  if (file == NULL)
+    fprintf(stderr, "loadks: Error opening file %s\n", filePath);
+  else
+  {
+    const int swapEndian = needEndianSwap(endian);
+
+    for(int r = 0; r < numReadouts; r++)
+      for(int n=0; n<numReadoutPoints; n++)
+      {
+      /*if (kIn)
+        k = &kIn[numAxes * n];*/
+        float pointCoordinates[3];
+        fread(pointCoordinates, sizeof(float), numAxes, file);
+
+        float density;
+        fread(&density, sizeof(float), 1, file);
+
+        if (swapEndian)
+        {
+          swapArrayEndian(pointCoordinates, numAxes, sizeof(float));
+          swapArrayEndian(&density, 1, sizeof(float));
+        }
+        setTrajectoryPoint(n, r, trajectory, pointCoordinates, density);
+
+        //if (dcfIn)
+          //dcf = &(dcfIn[n]);
+        
+      }
+
+    fclose(file);
+  }
+
+  return trajectory;
+}
+
 int numTrajectoryWaveforms(const struct Trajectory *trajectory)
 {
   return trajectory->storage==STORE_BASIS ? trajectory->numBases : trajectory->numReadouts;
@@ -550,10 +598,11 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation)
 {
-	int d;
-  for(d=0; d<trajectory->numDimensions; d++)
-    trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint] = coordinates[d];
-  trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
+  if(coordinates)
+    for(int d=0; d<trajectory->numDimensions; d++)
+      trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint] = coordinates[d];
+  if(densityCompensation >= 0)
+    trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
 }
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
@@ -636,3 +685,26 @@ int axisNameToIndex(const char name)
   return -1;
 }
 
+
+void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory, const enum Endian endian)
+{
+  FILE* file = fopen(filePath, "wb");
+  if(!file)
+    fprintf(stderr, "Error opening %s for read", filePath);
+
+  int swapEndian = needEndianSwap(endian);
+  for(int r=0; r<trajectory->numReadouts; r++)
+    for(int n=0; n<trajectory->numReadoutPoints; n++)
+      {
+        float coordinates[3];
+        float density;
+        trajectoryCoordinates(n, r, trajectory, coordinates, &density);
+        if(swapEndian)
+        {
+          swapArrayEndian(coordinates, 3, sizeof(float));
+          swapArrayEndian(&density, 1, sizeof(float));
+        }
+        fwrite(coordinates, sizeof(float), trajectory->numDimensions, file);
+        fwrite(&density, sizeof(float), 1, file);
+      }
+}

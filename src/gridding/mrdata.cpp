@@ -253,10 +253,10 @@ void MRdata::pad(std::vector<int> newSize)
 	/* Calculate new total number of points */
 	size_t pointsPad = 1;
 	int shift[3] = {0,0,0};
-	bool doPad = true;	// perform padding
+	bool doPad = false;	// perform padding
 	for(int d=0; d<m_numImagingDimensions; d++)
 	{
-    doPad |= (m_dimensions[d]<newSize[d]);
+    doPad |= m_dimensions[d] < newSize[d];
 		pointsPad *= newSize[d];
     shift[d] = static_cast<int>(std::ceil((newSize[d] - m_dimensions[d])/2.0));
 	}

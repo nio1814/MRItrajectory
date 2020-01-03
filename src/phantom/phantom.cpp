@@ -232,7 +232,7 @@ complexFloat Phantom::fourierDomainSignal(const float& kx, const float& ky, cons
 			 if( norm2(shape.displacement().data(),3)==0.0 ){ // if displacement vector is zero
 
          float temp = sinf(arg)-arg*cosf(arg);
-            temp /= (2*std::powf(static_cast<float>(M_PI),2) * std::powf(K,3));
+            temp /= (2*std::pow(static_cast<float>(M_PI), 2) * std::pow(K, 3));
 
          signal += shape.intensity()*principalAxesProduct*temp;
 
