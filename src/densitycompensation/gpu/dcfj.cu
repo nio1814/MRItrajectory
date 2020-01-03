@@ -1093,6 +1093,24 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 
 #ifndef MATLAB_MEX_FILE
 
+/*!
+ * \brief Iteratively calculate the density compensation weights for a k-space trajectory.
+ *
+ * \param argc The number of command line arguments (including the executable).
+ * \param argv  Parameters
+ * 1: File path to the k-space file with data stored as kx, ky, kz, dcf (3D) or kx, ky, dcf (2D).
+ * 2: The number of readouts in the trajectory.
+ * 3: The number of readout points per readout.
+ * 4: The number of dimensions of the trajectory.
+ * 5: X field of view (cm).
+ * 6: Y field of view (cm).
+ * 7: Z field of view (cm).
+ * 8: X spatial resolution (mm).
+ * 9: Y spatial resolution (mm).
+ * 10: Z spatial resolution (mm).
+ * 11: Endian mode. 'b' for big endian, 'l' for little.
+ * 12: File path to save updated trajectory.
+ */
 int main(int argc, char *argv[])
 {
 	int numLobes = 2;
