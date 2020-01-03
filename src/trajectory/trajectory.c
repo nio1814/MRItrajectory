@@ -534,6 +534,56 @@ struct Trajectory* loadTrajectory(const char *filename, enum Endian endian)
   return trajectory;
 }
 
+struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, const int numReadoutPoints, const int numAxes, enum Endian endian)
+
+  FILE* file;
+  //int status = 1;     /*0 if file successfully loaded */
+  //int doSwapE;
+  //int n;
+
+  //float* k, * dcf;
+
+  struct Trajectory* trajectory = newTrajectory();
+  allocateTrajectory(trajectory, numReadoutPoints, numReadoutPoints, numAxes, numReadouts, numReadouts, STORE_ALL);
+
+  file = fopen(filePath, "rb");
+  if (file == NULL)
+    fprintf(stderr, "loadks: Error opening file %s\n", filePath);
+  else
+  {
+    const int swapEndian = needEndianSwap(endian);
+
+    const int numPoints = numReadoutPoints * numReadouts;
+    for(int r = 0; r < numReadouts; r++)
+      for(int n=0; n<numReadoutPoints; n++)
+      {
+      /*if (kIn)
+        k = &kIn[numAxes * n];*/
+        float pointCoordinates[3];
+        fread(pointCoordinates, sizeof(float), numAxes, file);
+
+        float density;
+        fread(&density, sizeof(float), 1, file);
+
+        const int swapEndian = needEndianSwap(endian);
+        if (swapEndian)
+        {
+          swapArrayEndian(pointCoordinates, numAxes, sizeof(float));
+          swapArrayEndian(&density, 1, sizeof(float));
+        }
+        setTrajectoryPoint(n, r, trajectory, pointCoordinates, density);
+
+        //if (dcfIn)
+          //dcf = &(dcfIn[n]);
+        
+      }
+
+    fclose(file);
+  }
+
+  return trajectory;
+}
+
 int numTrajectoryWaveforms(const struct Trajectory *trajectory)
 {
   return trajectory->storage==STORE_BASIS ? trajectory->numBases : trajectory->numReadouts;

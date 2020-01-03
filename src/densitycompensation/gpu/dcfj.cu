@@ -4,9 +4,11 @@
 
 #include "mp1-util.h"
 
+#include <vector>
+
+
 extern "C"{
-//#include "trajectory.h"
-//#include "cmatrix.h"
+#include "trajectory.h"
 }
 
 #define MAXBINS 500000
@@ -1079,8 +1081,6 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 
 #ifndef MATLAB_MEX_FILE
 
-#include <getopt.h>
-
 extern "C"{
 //#include "cones.h"
 //#include "spiral.h"
@@ -1088,9 +1088,6 @@ extern "C"{
 
 int main(int argc, char *argv[])
 {
-	struct Trajectory traj;
-	struct ConesInfo cinfo;
-	char ksfile[128];
 	char infofile[128] = {'\0'};
 	char outfile[256];
 	char trajTypeStr[32] = {'\0'};
@@ -1103,11 +1100,10 @@ int main(int argc, char *argv[])
 	float *k;
 	float *dcf;
 	int padfront = 0;
-	int dim, intl, n;
 	int nk;
 	int *nInclude;
 	int npts;
-	int numLobes = 4;
+	int numLobes = 2;
 	int numCt[] = {-1,-1,-1};
 	int binSize = 64;
 	int numIter = 1;
@@ -1119,272 +1115,264 @@ int main(int argc, char *argv[])
 //	Set input parsing parameters
 //	Long options
 	int option_index = 0;
-	struct option long_options[] = 
-	{
-		{"type", required_argument, 0, 't'},
-		{"ks", required_argument, 0, 'k'},
-		{"info", required_argument, 0, 'i'},
-		{"niter", required_argument, 0, 'I'},
-		{"nlobes", required_argument, 0, 'l'}
-	};
 	
 	char tempstr[128];
 
 //	Short options	
-	while((n = getopt_long(argc, argv, "t:k:i:l:o:Rr:v:b:n:", long_options, &option_index)) != -1)
-		switch(n)
-		{
-			case 'k':
-				sprintf(ksfile, optarg);
-				testID = -1;
-				break;
-			case 't':
-				sprintf(trajTypeStr, optarg);
-				break;
-			case 'n':
-				testID = atoi(optarg);
-				break;
-			case 'i':
-				sprintf(infofile, optarg);
-				break;
-			case 'l':
-				numLobes = atoi(optarg);
-				break;
-			case 'o':
-				sprintf(outfile, optarg);
-				doOutput = 1;
-				break;
-			case 'R':
-				doGetResolution = 2;
-				break;
-			case 'r':
-				doGetResolution = 1;
-				sscanf(optarg, "%f%f%f", &res[0], &res[1], &res[2]);
-				break;
-			case 'v':
-//				Specify initial or final fov
-				v = atoi(optarg);
-				break;
-			case 'b':
-				binSize = atoi(optarg);
-				break;
-			default:
-				abort();
-		}
+//	while((n = getopt_long(argc, argv, "t:k:i:l:o:Rr:v:b:n:", long_options, &option_index)) != -1)
+//		switch(n)
+//		{
+//			case 'k':
+//				sprintf(ksfile, optarg);
+//				testID = -1;
+//				break;
+//			case 't':
+//				sprintf(trajTypeStr, optarg);
+//				break;
+//			case 'n':
+//				testID = atoi(optarg);
+//				break;
+//			case 'i':
+//				sprintf(infofile, optarg);
+//				break;
+//			case 'l':
+//				numLobes = atoi(optarg);
+//				break;
+//			case 'o':
+//				sprintf(outfile, optarg);
+//				doOutput = 1;
+//				break;
+//			case 'R':
+//				doGetResolution = 2;
+//				break;
+//			case 'r':
+//				doGetResolution = 1;
+//				sscanf(optarg, "%f%f%f", &res[0], &res[1], &res[2]);
+//				break;
+//			case 'v':
+////				Specify initial or final fov
+//				v = atoi(optarg);
+//				break;
+//			case 'b':
+//				binSize = atoi(optarg);
+//				break;
+//			default:
+//				abort();
+//		}
 	
-	initTrajectory(&traj);
+	//initTrajectory(&traj);
 	
-	if(testID==-1)
-		if(trajTypeStr[0]=='\0')
-		{
-			fprintf(stderr, "Must also specify trajectory type with -t trajectoryname\n");
-			return -1;
-		}
-		else if(infofile[0]=='\0')
-		{
-			fprintf(stderr, "Must also specify info file with -i infofile\n");
-			return -1;
-		}
-		else if(!strcmp(trajTypeStr, "cones"))
-		{
-			traj.trajType = tjCONES;
-			cType = ctSEP;
-		}
-		else if(!strcmp(trajTypeStr, "spiral"))
-		{
-			traj.trajType = tjSPIRAL;
-			cType = ctCONST;
-		}
-		else
-		{
-			fprintf(stderr, "Unrecognized trajectory type %s\n", trajTypeStr);
-			return -1;
-		}
-
-	switch(testID)
-	{
-		case 1:
-			sprintf(ksfile, "/home/noaddy/research/data/spiralr/wav/RTH_spiral_N_16_FOV_24.0_S_4338_20100416.ks");
-			sprintf(infofile, "/home/noaddy/research/data/spiralr/wav/RTH_spiral_N_16_FOV_24.0_S_4338_20100416.ks");
-			traj.naxes = 2;
-			traj.ninter = 16;
-			traj.FOV[0] = 24;
-			traj.FOV[1] = 24;
-			traj.acqLength = 4338;
-			traj.res[0] = .821f;
-			traj.res[1] = .821f;
-			traj.trajType = tjSPIRAL;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'b';
-			padfront = 10;
-			/*numCt[0] = 56;
-			numCt[1] = 56;
-			numCt[2] = 56;*/
-			break;
-		case 2:
-			sprintf(ksfile, "/home/noaddy/research/data/cones/wav/wav_FOVxy24z16_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.ks");
-			sprintf(infofile, "/home/noaddy/research/data/cones/wav/wav_FOVxy24z16_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.info");
-			traj.naxes = 3;
-			traj.ninter = 8942;
-			traj.FOV[0] = 24;
-			traj.FOV[1] = 24;
-			traj.FOV[2] = 16;
-			traj.acqLength = 539;
-			traj.res[0] = 1.2f;
-			traj.res[1] = 1.2f;
-			traj.res[2] = 1.25f;
-			traj.trajType = tjCONES;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'b';
-			padfront = 4;
-			/*numCt[0] = 80;
-			numCt[1] = numCt[0];
-			numCt[2] = 80;*/
-			cType = ctSEP;
-			break;
-		case 3:
-			sprintf(ksfile, "/home_local/noaddy/research/data/spi/traj/spi_28_10_503_704.ks");
-			traj.naxes = 3;
-			traj.ninter = 33440;
-			//traj.ninter = 8000;
-			traj.FOV[0] = 28;
-			traj.FOV[1] = 28;
-			traj.FOV[2] = 28;
-			traj.acqLength = 503;
-			traj.res[0] = 1.0f;
-			traj.res[1] = 1.0f;
-			traj.res[2] = 1.0f;
-			traj.trajType = tjSPI;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'b';
-			padfront = 0;
-			numCt[0] = 110;
-			numCt[1] = numCt[1];
-			numCt[0] = 110;
-			break;
-		case 4:
-			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/vd/wav_FOVxyi28f5zi16f5exp_RES1_N32_GL700_TS4_M0p98_vd/cones0.ks");
-			traj.naxes = 3;
-			traj.ninter = 9100;
-			traj.FOV[0] = 28;
-			traj.FOV[1] = 28;
-			traj.FOV[2] = 16;
-			traj.acqLength = 451;
-			traj.res[0] = 1.0f;
-			traj.res[1] = 1.0f;
-			traj.res[2] = 1.0f;
-			traj.trajType = tjCONES;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'b';
-			padfront = 4;
-			/*numCt[0] = 138;
-			numCt[1] = numCt[0];
-			numCt[2] = 70;*/
-			cType = ctSEP;
-			break;
-		case 5:
-			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/vd/wav_FOVxyi25p20f4p74zi14p40f4p21exp_RESp80_N32_GL700_TS4_M0p98_vd/cones0.ks");
-			traj.naxes = 3;
-			traj.ninter = 9040;
-			traj.FOV[0] = 28;
-			traj.FOV[1] = 28;
-			traj.FOV[2] = 16;
-			traj.acqLength = 425;
-			traj.res[0] = 0.8f;
-			traj.res[1] = 0.8f;
-			traj.res[2] = 0.8f;
-			traj.trajType = tjCONES;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'b';
-			padfront = 4;
-			/*numCt[0] = 168;
-			numCt[1] = numCt[0];
-			numCt[2] = 90;
-
-			numCt[0] = 2*84;
-			numCt[1] = numCt[0];
-			numCt[2] = 2*48;*/
-			cType = ctSEP;
-			break;
-		case 6:
-			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/wav_FOVxy28z14_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.ks");
-			sprintf(infofile, "/home_local/noncartesian/data/cones/wav/wav_FOVxy28z14_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.info");
-			traj.naxes = 3;
-			traj.ninter = 9142;
-			traj.FOV[0] = 28;
-			traj.FOV[1] = 28;
-			traj.FOV[2] = 14;
-			traj.acqLength = 539;
-			traj.res[0] = 1.2f;
-			traj.res[1] = 1.2f;
-			traj.res[2] = 1.25f;
-			traj.trajType = tjCONES;
-			traj.kmax = 5/traj.res[0];
-			emodek = 'l';
-			padfront = 4;
-			/*numCt[0] = 80;
-			numCt[1] = numCt[0];
-			numCt[2] = 80;*/
-			cType = ctSEP;
-			break;
-		case -1:
-//			k-space trajectory file given
-			break;
-		case -100:
-			fprintf(stderr, "No test ID or k-space trajectory given\n");
-			fprintf(stderr, "Example 1:\tdcfjcu -t #\n");
-			fprintf(stderr, "Example 2:\tdcfjcu -k test.ks -i infofile\n");
-			return -1;
-		default:
-			fprintf(stderr, "Invalid test ID %d\n", testID);
-			
-			return -1;
-	}
+//	if(testID==-1)
+//		if(trajTypeStr[0]=='\0')
+//		{
+//			fprintf(stderr, "Must also specify trajectory type with -t trajectoryname\n");
+//			return -1;
+//		}
+//		else if(infofile[0]=='\0')
+//		{
+//			fprintf(stderr, "Must also specify info file with -i infofile\n");
+//			return -1;
+//		}
+//		else if(!strcmp(trajTypeStr, "cones"))
+//		{
+//			traj.trajType = tjCONES;
+//			cType = ctSEP;
+//		}
+//		else if(!strcmp(trajTypeStr, "spiral"))
+//		{
+//			traj.trajType = tjSPIRAL;
+//			cType = ctCONST;
+//		}
+//		else
+//		{
+//			fprintf(stderr, "Unrecognized trajectory type %s\n", trajTypeStr);
+//			return -1;
+//		}
+//
+//	switch(testID)
+//	{
+//		case 1:
+//			sprintf(ksfile, "/home/noaddy/research/data/spiralr/wav/RTH_spiral_N_16_FOV_24.0_S_4338_20100416.ks");
+//			sprintf(infofile, "/home/noaddy/research/data/spiralr/wav/RTH_spiral_N_16_FOV_24.0_S_4338_20100416.ks");
+//			traj.naxes = 2;
+//			traj.ninter = 16;
+//			traj.FOV[0] = 24;
+//			traj.FOV[1] = 24;
+//			traj.acqLength = 4338;
+//			traj.res[0] = .821f;
+//			traj.res[1] = .821f;
+//			traj.trajType = tjSPIRAL;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'b';
+//			padfront = 10;
+//			/*numCt[0] = 56;
+//			numCt[1] = 56;
+//			numCt[2] = 56;*/
+//			break;
+//		case 2:
+//			sprintf(ksfile, "/home/noaddy/research/data/cones/wav/wav_FOVxy24z16_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.ks");
+//			sprintf(infofile, "/home/noaddy/research/data/cones/wav/wav_FOVxy24z16_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.info");
+//			traj.naxes = 3;
+//			traj.ninter = 8942;
+//			traj.FOV[0] = 24;
+//			traj.FOV[1] = 24;
+//			traj.FOV[2] = 16;
+//			traj.acqLength = 539;
+//			traj.res[0] = 1.2f;
+//			traj.res[1] = 1.2f;
+//			traj.res[2] = 1.25f;
+//			traj.trajType = tjCONES;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'b';
+//			padfront = 4;
+//			/*numCt[0] = 80;
+//			numCt[1] = numCt[0];
+//			numCt[2] = 80;*/
+//			cType = ctSEP;
+//			break;
+//		case 3:
+//			sprintf(ksfile, "/home_local/noaddy/research/data/spi/traj/spi_28_10_503_704.ks");
+//			traj.naxes = 3;
+//			traj.ninter = 33440;
+//			//traj.ninter = 8000;
+//			traj.FOV[0] = 28;
+//			traj.FOV[1] = 28;
+//			traj.FOV[2] = 28;
+//			traj.acqLength = 503;
+//			traj.res[0] = 1.0f;
+//			traj.res[1] = 1.0f;
+//			traj.res[2] = 1.0f;
+//			traj.trajType = tjSPI;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'b';
+//			padfront = 0;
+//			numCt[0] = 110;
+//			numCt[1] = numCt[1];
+//			numCt[0] = 110;
+//			break;
+//		case 4:
+//			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/vd/wav_FOVxyi28f5zi16f5exp_RES1_N32_GL700_TS4_M0p98_vd/cones0.ks");
+//			traj.naxes = 3;
+//			traj.ninter = 9100;
+//			traj.FOV[0] = 28;
+//			traj.FOV[1] = 28;
+//			traj.FOV[2] = 16;
+//			traj.acqLength = 451;
+//			traj.res[0] = 1.0f;
+//			traj.res[1] = 1.0f;
+//			traj.res[2] = 1.0f;
+//			traj.trajType = tjCONES;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'b';
+//			padfront = 4;
+//			/*numCt[0] = 138;
+//			numCt[1] = numCt[0];
+//			numCt[2] = 70;*/
+//			cType = ctSEP;
+//			break;
+//		case 5:
+//			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/vd/wav_FOVxyi25p20f4p74zi14p40f4p21exp_RESp80_N32_GL700_TS4_M0p98_vd/cones0.ks");
+//			traj.naxes = 3;
+//			traj.ninter = 9040;
+//			traj.FOV[0] = 28;
+//			traj.FOV[1] = 28;
+//			traj.FOV[2] = 16;
+//			traj.acqLength = 425;
+//			traj.res[0] = 0.8f;
+//			traj.res[1] = 0.8f;
+//			traj.res[2] = 0.8f;
+//			traj.trajType = tjCONES;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'b';
+//			padfront = 4;
+//			/*numCt[0] = 168;
+//			numCt[1] = numCt[0];
+//			numCt[2] = 90;
+//
+//			numCt[0] = 2*84;
+//			numCt[1] = numCt[0];
+//			numCt[2] = 2*48;*/
+//			cType = ctSEP;
+//			break;
+//		case 6:
+//			sprintf(ksfile, "/home_local/noncartesian/data/cones/wav/wav_FOVxy28z14_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.ks");
+//			sprintf(infofile, "/home_local/noncartesian/data/cones/wav/wav_FOVxy28z14_RESxy1p20z1p25_N32_GL2p80_TS4_Sp98_v2d_IC/cones.info");
+//			traj.naxes = 3;
+//			traj.ninter = 9142;
+//			traj.FOV[0] = 28;
+//			traj.FOV[1] = 28;
+//			traj.FOV[2] = 14;
+//			traj.acqLength = 539;
+//			traj.res[0] = 1.2f;
+//			traj.res[1] = 1.2f;
+//			traj.res[2] = 1.25f;
+//			traj.trajType = tjCONES;
+//			traj.kmax = 5/traj.res[0];
+//			emodek = 'l';
+//			padfront = 4;
+//			/*numCt[0] = 80;
+//			numCt[1] = numCt[0];
+//			numCt[2] = 80;*/
+//			cType = ctSEP;
+//			break;
+//		case -1:
+////			k-space trajectory file given
+//			break;
+//		case -100:
+//			fprintf(stderr, "No test ID or k-space trajectory given\n");
+//			fprintf(stderr, "Example 1:\tdcfjcu -t #\n");
+//			fprintf(stderr, "Example 2:\tdcfjcu -k test.ks -i infofile\n");
+//			return -1;
+//		default:
+//			fprintf(stderr, "Invalid test ID %d\n", testID);
+//			
+//			return -1;
+//	}
+//	
+//	/*for(dim=0; dim<3; dim++)
+//		traj.FOV[dim] *= .5f;*/
+//	
+////	traj.ks = matrix3f(traj.naxes, traj.ninter, traj.acqLength);
+////	traj.dcf = matrix2f(traj.ninter, traj.acqLength);
+//	
+//	switch(traj.trajType)
+//	{
+//		case tjCONES:
+//			if(conesLoadTraj(ksfile, infofile, &traj, &cinfo, emodek))
+//				return 1;
+//			break;
+//		case tjSPIRAL:
+//			if(!spiralLoadTrajRth(ksfile, infofile, &traj, 'b', 'b'))
+//				return 1;
+//			if(doGetResolution==0 && !traj.res[0])
+//				doGetResolution = 2;
+//			break;
+//		default:
+//			fprintf(stderr, "Unrecognized trajectory type %d\n", traj.trajType);
+//			return -1;
+//	}
+//	
+//	if(doGetResolution==1)
+//	{
+//		for(n=0; n<traj.naxes; n++)
+//			traj.res[n] = res[n];
+//	}
+//	else if(doGetResolution==2)
+//	{
+//		printf("\nEnter x resolution (mm): ");
+//		scanf("%f", &traj.res[0]);
+//		
+//		printf("\nEnter y resolution (mm): ");
+//		scanf("%f", &traj.res[1]);
+//		
+//		if(traj.naxes>2)
+//		{
+//			printf("\nEnter z resolution (mm): ");
+//			scanf("%f", &traj.res[2]);
+//		}
+//	}
 	
-	/*for(dim=0; dim<3; dim++)
-		traj.FOV[dim] *= .5f;*/
-	
-//	traj.ks = matrix3f(traj.naxes, traj.ninter, traj.acqLength);
-//	traj.dcf = matrix2f(traj.ninter, traj.acqLength);
-	
-	switch(traj.trajType)
-	{
-		case tjCONES:
-			if(conesLoadTraj(ksfile, infofile, &traj, &cinfo, emodek))
-				return 1;
-			break;
-		case tjSPIRAL:
-			if(!spiralLoadTrajRth(ksfile, infofile, &traj, 'b', 'b'))
-				return 1;
-			if(doGetResolution==0 && !traj.res[0])
-				doGetResolution = 2;
-			break;
-		default:
-			fprintf(stderr, "Unrecognized trajectory type %d\n", traj.trajType);
-			return -1;
-	}
-	
-	if(doGetResolution==1)
-	{
-		for(n=0; n<traj.naxes; n++)
-			traj.res[n] = res[n];
-	}
-	else if(doGetResolution==2)
-	{
-		printf("\nEnter x resolution (mm): ");
-		scanf("%f", &traj.res[0]);
-		
-		printf("\nEnter y resolution (mm): ");
-		scanf("%f", &traj.res[1]);
-		
-		if(traj.naxes>2)
-		{
-			printf("\nEnter z resolution (mm): ");
-			scanf("%f", &traj.res[2]);
-		}
-	}
-	
-	printTrajectoryInfo(&traj, NULL);
+	//printTrajectoryInfo(&traj, NULL);
 
 /*	printf("Loading k-space file from %s\n", ksfile);
 	if(!loadks(ksfile, traj.ks, traj.dcf, traj.acqLength, traj.ninter, traj.naxes, emode))
@@ -1393,43 +1381,42 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}*/
 
-	npts = traj.ninter*traj.acqLength;
-	k = (float*)malloc(traj.naxes*npts*sizeof(float));
+  Trajectory* trajectory = loadKSpaceFile(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), Endian::LittleEndian);
+	npts = trajectory->numReadouts * trajectory->numReadoutPoints;
+  std::vector<float> coordinates;
+  std::vector<float> densityCompensation;
 	nInclude = (int*)malloc(npts*sizeof(int));
 // 	for(n=0; n<traj.acqLength*traj.ninter*traj.naxes; n++)
-	for(intl=0; intl<traj.ninter; intl++)
-		for(dim=0; dim<traj.naxes; dim++)
-			for(n=0; n<traj.acqLength; n++)
+	for(int r=0; r<trajectory->numReadouts; r++)
+		//for(int d=0; d< trajectory->numDimensions; d++)
+			for(int n=0; n< trajectory->numReadoutPoints; n++)
 			{
-				nk = (intl*traj.acqLength + n)*traj.naxes + dim;
-				k[nk] = traj.ks[dim][intl][n];
-				nk = intl*traj.acqLength + n;
-				if(traj.dcf[intl][n]>0 && n>padfront)
-					nInclude[nk] = 1;
-				else
-					nInclude[nk] = 0;
+        float pointCoordinates[3];
+        float density;
+        trajectoryCoordinates(n, r, trajectory, pointCoordinates, &density);
+        for (int d = 0; d < trajectory->numDimensions; d++)
+          coordinates.push_back(pointCoordinates[d]);
+        densityCompensation.push_back(density);
+				//nk = (intl* trajectory->numReadouts + n) * trajectory->numDimensions + dim;
+				////k[nk] = traj.ks[dim][intl][n];
+    //    k[nk] = trajectory->kSpaceCoordinates[nk];
+				//nk = intl* trajectory->numReadouts + n;
+				//if(trajectory->densityCompensation[nk]>0 && n>padfront)
+				//	nInclude[nk] = 1;
+				//else
+				//	nInclude[nk] = 0;
 			}
 	
-	dcf = (float*)malloc(traj.ninter*traj.acqLength*sizeof(float));
-	for(n=0; n<traj.ninter*traj.acqLength; n++)
-	{
-// 		dcf[n] = 1.0f;
-		intl = n/traj.acqLength;
-		nk = n%traj.acqLength;
-		dcf[n] = traj.dcf[intl][nk];
-	}
-	
 //	Check that FOV is specified
-	if(v)
-	{
-		if(traj.FOV[traj.naxes*v]<=0.0f)
-		{
-			printf("Only one FOV set specified, using original FOV\n");
-			v = 0;
-		}
-	}
-
-	jdcfcu(traj.acqLength*traj.ninter, k, traj.naxes, nInclude, &traj.FOV[traj.naxes*v], traj.res, cType, numLobes, numCt, binSize, numIter, dcf);
+  float fieldOfView[3];
+  float spatialResolution[3];
+  const int fieldOfViewArgumentIndex = 5;
+  for (int d = 0; d < trajectory->numDimensions; d++)
+  {
+    fieldOfView[d] = atoi(argv[d + fieldOfViewArgumentIndex]);
+    spatialResolution[d] = atoi(argv[d + fieldOfViewArgumentIndex + trajectory->numDimensions]);
+  }
+  jdcfcu(densityCompensation.size(), coordinates.data(), trajectory->numDimensions, NULL, fieldOfView, spatialResolution, cType, numLobes, numCt, binSize, numIter, densityCompensation.data());
 	
 	/*sprintf(filename, "/home_local/noaddy/research/data/code/dcfjcu/test.ks");
 	file = fopen(filename, "wb");
@@ -1442,22 +1429,22 @@ int main(int argc, char *argv[])
 	if(doOutput)
 	{
 //		Copy dcf to trajectory struct
-		for(n=0; n<traj.ninter*traj.acqLength; n++)
-		{
-			intl = n/traj.acqLength;
-			nk = n%traj.acqLength;
-			traj.dcf[intl][nk] = dcf[n];
-		}
+		//for(n=0; n<npts; n++)
+		//{
+		//	intl = n/traj.acqLength;
+		//	nk = n%traj.acqLength;
+		//	traj.dcf[intl][nk] = dcf[n];
+		//}
 		
-		traj.kmax = 0.0f;
+		float kmax = 0.0f;
 		
-		for(n=0; n<traj.naxes; n++)
+		for(int d=0; d<trajectory->numDimensions; d++)
 		{
-			traj.kmax = max(traj.kmax, 5/traj.res[n]);
+			kmax = max(kmax, 5/trajectory->spatialResolution[d]);
 		}
 		
 		printf("Writing new file %s\n", outfile);
-		saveks(outfile, traj.ks, traj.dcf, traj.acqLength, traj.ninter, traj.naxes, traj.kmax, emodek);
+		//saveks(outfile, traj.ks, traj.dcf, traj.acqLength, traj.ninter, traj.naxes, traj.kmax, emodek);
 	}
 	
 	free(k);
