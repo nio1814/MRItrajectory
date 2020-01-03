@@ -675,7 +675,7 @@ int findDataSize(int target, int max1, int max2, unsigned int *dim1, unsigned in
  \param[in]	ndim	Number of dimensions
  \param[in]	FOV	Field of View (cm)
 */
-int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDim, ConvType convType, int numLobes, int *numCt, int ctSize, int numIter, float *dcf)
+void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDim, ConvType convType, int numLobes, int *numCt, int ctSize, int numIter, float *dcf)
 {
 	unsigned int *binIdx;
 	unsigned int *binCount1;
@@ -805,7 +805,7 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 			if(binIdx[n]>numBins1)
 			{
 				fprintf(stderr, "Error numbins=%d, current bin idx=%d, n= %d\n", numBins1, binIdx[n], n);
-				return 3;
+				return;
 			}
 			binCount1[binIdx[n]]++;
 			nptsActual++;
@@ -1000,7 +1000,7 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 
 				cudaMemcpy(kernelRad_dev, kernelRad, 3*sizeof(float), cudaMemcpyHostToDevice);
 				cudaMemcpy(F_dev, F, 3*sizeof(float), cudaMemcpyHostToDevice);
-				check_launch("copy");
+				checkLaunch("copy");
 
 				if(ndim==2)
 					switch(ctSize)
@@ -1033,9 +1033,9 @@ int jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxDi
 					}
 				break;
 		}
-		check_launch("convolution");
+		checkLaunch("convolution");
 		divideArray<<<grid_size_div, block_size_div>>>(Win_dev, Wout_dev, npts);
-		check_launch("division");
+		checkLaunch("division");
     timer.stop("convolution");
 	}
 	
@@ -1446,9 +1446,6 @@ int main(int argc, char *argv[])
 		printf("Writing new file %s\n", outfile);
 		//saveks(outfile, traj.ks, traj.dcf, traj.acqLength, traj.ninter, traj.naxes, traj.kmax, emodek);
 	}
-	
-	free(k);
-	free(dcf);
 
 	return 0;
 }

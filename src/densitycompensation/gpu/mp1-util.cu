@@ -7,7 +7,7 @@
 #include "mex.h"
 #endif
 
-int check_launch(char * kernel_name)
+int checkLaunch(const std::string kernel_name)
 {
 	char msg[128];
 	
@@ -16,10 +16,10 @@ int check_launch(char * kernel_name)
   
 #ifndef MATLAB_MEX_FILE
   if(lastErr == cudaSuccess)
-		printf("done with %s kernel\n",kernel_name);
+		printf("done with %s kernel\n", kernel_name.c_str());
 	else
 	{
-		printf("error %d '%s' on %s kernel\n", lastErr, cudaGetErrorString(lastErr), kernel_name);
+		printf("error %d '%s' on %s kernel\n", lastErr, cudaGetErrorString(lastErr), kernel_name.c_str());
 		exit(1);
 	}
 #else

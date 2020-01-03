@@ -23,7 +23,7 @@ struct Timer
  \param[in]	kernel_name	Check point name
  \return	Last cuda error
 */
-int check_launch(char * kernel_name);
+int checkLaunch(const std::string kernel_name);
 
 /**
  \brief	Print message and exit
