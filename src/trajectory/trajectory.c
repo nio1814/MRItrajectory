@@ -553,7 +553,6 @@ struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, c
   {
     const int swapEndian = needEndianSwap(endian);
 
-    const int numPoints = numReadoutPoints * numReadouts;
     for(int r = 0; r < numReadouts; r++)
       for(int n=0; n<numReadoutPoints; n++)
       {
@@ -565,7 +564,6 @@ struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, c
         float density;
         fread(&density, sizeof(float), 1, file);
 
-        const int swapEndian = needEndianSwap(endian);
         if (swapEndian)
         {
           swapArrayEndian(pointCoordinates, numAxes, sizeof(float));

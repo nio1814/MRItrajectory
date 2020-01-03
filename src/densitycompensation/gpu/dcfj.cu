@@ -25,7 +25,7 @@ extern "C"{
 enum ConvType {ctCONST=0, ctSEP};
 
 const char savePath[] = "/home_local/noaddy/research/data/code/dcfjcu/";
-enum CompartmentSize{
+enum CompartmentSize {
   COMPARTMENT_64=64, 
   COMPARTMENT_128=128
 };
@@ -1092,11 +1092,6 @@ void jdcfcu(int npts, float *k, int ndim, int *nInclude, float *FOV, float *voxD
 }
 
 #ifndef MATLAB_MEX_FILE
-
-extern "C"{
-//#include "cones.h"
-//#include "spiral.h"
-}
 
 int main(int argc, char *argv[])
 {
