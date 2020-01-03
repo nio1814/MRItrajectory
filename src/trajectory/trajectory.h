@@ -75,8 +75,9 @@ int saveTrajectory(const char* filename, const struct Trajectory* trajectory);
 
 struct Trajectory* readTrajectory(FILE* file, enum Endian endian);
 struct Trajectory* loadTrajectory(const char *filename, enum Endian endian);
-struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, const int numReadoutPoints, const int numAxes, enum Endian endian);
 enum TrajectoryType loadTrajectoryType(const char *filename);
+struct Trajectory* loadKSpaceFile(const char* filePath, const int numReadouts, const int numReadoutPoints, const int numAxes, enum Endian endian);
+void saveKSPaceFile(const char* filePath, const struct Trajectory *trajectory);
 
 int saveGradientWaveforms(const char *filename, const float* grad, short dimensions, short interleaves, short points, int numReadoutPoints, float FOV, float maxGradientAmplitude, float maxGradientAmplitudeScanner, float samplingInterval, const char* description, enum Endian endian);
 

@@ -600,10 +600,11 @@ void trajectoryCoordinates(int readoutPoint, int readout, const struct Trajector
 
 void setTrajectoryPoint(int readoutPoint, int readout, struct Trajectory *trajectory, const float *coordinates, float densityCompensation)
 {
-	int d;
-  for(d=0; d<trajectory->numDimensions; d++)
-    trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint] = coordinates[d];
-  trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
+  if(coordinates)
+    for(int d=0; d<trajectory->numDimensions; d++)
+      trajectory->kSpaceCoordinates[(trajectory->numDimensions*readout+d)*trajectory->numReadoutPoints+readoutPoint] = coordinates[d];
+  if(densityCompensation >= 0)
+    trajectory->densityCompensation[readout*trajectory->numReadoutPoints+readoutPoint] = densityCompensation;
 }
 
 void rotateBasis(float* gxBasis, float* gyBasis, struct Trajectory* trajectory, float angleRange)
@@ -686,3 +687,20 @@ int axisNameToIndex(const char name)
   return -1;
 }
 
+
+void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory)
+{
+  FILE* file = fopen(filePath, "wb");
+  if(!file)
+    fprintf(stderr, "Error opening %s for read", filePath);
+
+  for(int r=0; r<trajectory->numReadouts; r++)
+    for(int n=0; n<trajectory->numReadoutPoints; n++)
+      {
+        float coordinates[3];
+        float density;
+        trajectoryCoordinates(n, r, trajectory, coordinates, &density);
+        fwrite(coordinates, sizeof(float), trajectory->numDimensions, file);
+        fwrite(&density, sizeof(float), 1, file);
+      }
+}

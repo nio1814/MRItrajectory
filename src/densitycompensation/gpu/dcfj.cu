@@ -1101,16 +1101,11 @@ extern "C"{
 int main(int argc, char *argv[])
 {
 	char infofile[128] = {'\0'};
-	char outfile[256];
 	char trajTypeStr[32] = {'\0'};
 	int testID = -100;
 	char emodek = 'b';
 	char emodeg = 'b';
-	float res[3];
-	float *FOV;
 	int v = 0;
-	float *k;
-	float *dcf;
 	int padfront = 0;
 	int nk;
 	int *nInclude;
@@ -1120,15 +1115,12 @@ int main(int argc, char *argv[])
 	int numIter = 1;
 	ConvType cType = ctCONST;
 	
-	int doOutput = 0;
 	int doGetResolution = 0;
 	
 //	Set input parsing parameters
 //	Long options
 	int option_index = 0;
 	
-	char tempstr[128];
-
 //	Short options	
 //	while((n = getopt_long(argc, argv, "t:k:i:l:o:Rr:v:b:n:", long_options, &option_index)) != -1)
 //		switch(n)
@@ -1392,14 +1384,13 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}*/
 
-  Trajectory* trajectory = loadKSpaceFile(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), Endian::BigEndian);
+  Endian endian = argv[11][0] == 'b' ? BigEndian : LittleEndian;
+  Trajectory* trajectory = loadKSpaceFile(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), endian);
 	npts = trajectory->numReadouts * trajectory->numReadoutPoints;
   std::vector<float> coordinates;
   std::vector<float> densityCompensation;
 	nInclude = (int*)malloc(npts*sizeof(int));
-// 	for(n=0; n<traj.acqLength*traj.ninter*traj.naxes; n++)
 	for(int r=0; r<trajectory->numReadouts; r++)
-		//for(int d=0; d< trajectory->numDimensions; d++)
 			for(int n=0; n< trajectory->numReadoutPoints; n++)
 			{
         float pointCoordinates[3];
@@ -1408,17 +1399,8 @@ int main(int argc, char *argv[])
         for (int d = 0; d < trajectory->numDimensions; d++)
           coordinates.push_back(pointCoordinates[d]);
         densityCompensation.push_back(density);
-				//nk = (intl* trajectory->numReadouts + n) * trajectory->numDimensions + dim;
-				////k[nk] = traj.ks[dim][intl][n];
-    //    k[nk] = trajectory->kSpaceCoordinates[nk];
-				//nk = intl* trajectory->numReadouts + n;
-				//if(trajectory->densityCompensation[nk]>0 && n>padfront)
-				//	nInclude[nk] = 1;
-				//else
-				//	nInclude[nk] = 0;
 			}
 	
-//	Check that FOV is specified
   float fieldOfView[3];
   float spatialResolution[3];
   const int fieldOfViewArgumentIndex = 5;
@@ -1428,37 +1410,16 @@ int main(int argc, char *argv[])
     spatialResolution[d] = atoi(argv[d + fieldOfViewArgumentIndex + trajectory->numDimensions]);
   }
   jdcfcu(densityCompensation.size(), coordinates.data(), trajectory->numDimensions, NULL, fieldOfView, spatialResolution, cType, numLobes, numCt, COMPARTMENT_64, numIter, densityCompensation.data());
-	
-	/*sprintf(filename, "/home_local/noaddy/research/data/code/dcfjcu/test.ks");
-	file = fopen(filename, "wb");
-	if(file!=NULL)
-	{
-		fwrite(dcf, traj.ninter*traj.acqLength, sizeof(float), file);
-		fclose(file);
-	}*/
-	
-	if(doOutput)
-	{
-//		Copy dcf to trajectory struct
-		//for(n=0; n<npts; n++)
-		//{
-		//	intl = n/traj.acqLength;
-		//	nk = n%traj.acqLength;
-		//	traj.dcf[intl][nk] = dcf[n];
-		//}
-		
-		float kmax = 0.0f;
-		
-		for(int d=0; d<trajectory->numDimensions; d++)
-		{
-			kmax = max(kmax, 5/trajectory->spatialResolution[d]);
-		}
-		
-		printf("Writing new file %s\n", outfile);
-		//saveks(outfile, traj.ks, traj.dcf, traj.acqLength, traj.ninter, traj.naxes, traj.kmax, emodek);
-	}
+  for(int n=0; n<densityCompensation.size(); n++)
+  {
+    const int readout = n / trajectory->numReadoutPoints;
+    const int point = n % trajectory->numReadoutPoints;
+    setTrajectoryPoint(point, readout, trajectory, NULL, densityCompensation[n]);
+  }
 
-	return 0;
+  const char* filePathOutput = argv[12];
+  printf("Writing new file %s\n", filePathOutput);
+  saveKSPaceFile(filePathOutput, trajectory);
 }
 
 #else
