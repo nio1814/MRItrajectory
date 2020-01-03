@@ -1381,7 +1381,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}*/
 
-  Trajectory* trajectory = loadKSpaceFile(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), Endian::LittleEndian);
+  Trajectory* trajectory = loadKSpaceFile(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), Endian::BigEndian);
 	npts = trajectory->numReadouts * trajectory->numReadoutPoints;
   std::vector<float> coordinates;
   std::vector<float> densityCompensation;
