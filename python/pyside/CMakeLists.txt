@@ -76,6 +76,7 @@ set(MODULE cmri)
 
 set(PHANTOM_CLASSES
   Shape
+  Phantom
 )
 
 set(CLASSES_WRAPPED ${PHANTOM_CLASSES})

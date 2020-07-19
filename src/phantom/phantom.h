@@ -5,7 +5,7 @@
 
 #include <complex>
 
-typedef std::complex<float> complexFloat;
+using complexFloat = std::complex<float>;
 
 class Phantom
 {
