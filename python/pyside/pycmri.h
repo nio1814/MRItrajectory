@@ -3,5 +3,6 @@
 
 #include "shape.h"
 #include "phantom.h"
+#include "trajectorygenerator.h"
 
 #endif // PYCMRI_H

@@ -54,6 +54,8 @@ endif(PySide2_FOUND)
 
 set(SHIBOKEN_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/phantom
+  ${CMAKE_SOURCE_DIR}/src/trajectory
+  ${CMAKE_SOURCE_DIR}/src
 )
 
 # colon separated format for shiboken
@@ -79,7 +81,11 @@ set(PHANTOM_CLASSES
   Phantom
 )
 
-set(CLASSES_WRAPPED ${PHANTOM_CLASSES})
+set(TRAJECTORY_GENERATOR_CLASSES
+  TrajectoryGenerator
+)
+
+set(CLASSES_WRAPPED ${PHANTOM_CLASSES} ${TRAJECTORY_GENERATOR_CLASSES})
 list(APPEND CLASSES_WRAPPED "${MODULE}_module")
 
 list(TRANSFORM CLASSES_WRAPPED TOLOWER)
@@ -96,7 +102,10 @@ add_custom_target(
   BYPRODUCTS ${CLASSES_WRAPPED}
 )
 
-add_library(${PROJECT_NAME} MODULE ${CLASSES_WRAPPED})
+add_library(${PROJECT_NAME} MODULE ${CLASSES_WRAPPED}
+  ${CMAKE_SOURCE_DIR}/src/trajectory/trajectorygenerator.cpp
+)
+
 add_dependencies(${PROJECT_NAME} wrapcmri)
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${SHIBOKEN_INCLUDE_DIR}
@@ -109,6 +118,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   ${SHIBOKEN2_LIBRARY}
   Qt5::Core
   phantom
+  trajectory
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE

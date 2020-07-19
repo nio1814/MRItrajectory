@@ -2,4 +2,5 @@
 <typesystem package="cmri">
   <load-typesystem name="typesystem_core.xml" generate="no" />
   <load-typesystem name="phantom.xml" />
+  <load-typesystem name="trajectory.xml" />
 </typesystem>

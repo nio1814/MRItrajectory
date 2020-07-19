@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<typesystem>
+  <object-type name="TrajectoryGenerator">
+    <modify-field name="m_fieldOfView" remove="all" />
+    <modify-field name="m_spatialResolution" remove="all" />
+  </object-type>
+</typesystem>
