@@ -1,0 +1,124 @@
+project(pycmri)
+
+find_package(Python3 REQUIRED)
+find_package(PySide2)
+find_package(Qt5 REQUIRED COMPONENTS Core)
+
+if(PySide2_FOUND)
+  get_target_property(PYSIDE2_INCLUDE_DIR PySide2::pyside2 INTERFACE_INCLUDE_DIRECTORIES)
+
+  find_package(Shiboken2 REQUIRED)
+  set(SHIBOKEN2 Shiboken2::shiboken2)
+  set(SHIBOKEN2_LIBRARY Shiboken2::libshiboken)
+  get_target_property(SHIBOKEN_INCLUDE_DIR ${SHIBOKEN2_LIBRARY} INTERFACE_INCLUDE_DIRECTORIES)
+  message(STATUS "shiboken include ${SHIBOKEN_INCLUDE_DIR}")
+else(PySide2_FOUND)
+  execute_process(
+    COMMAND python -c "import PySide2; print(PySide2.__path__[0])"
+    OUTPUT_VARIABLE PYSIDE2_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  find_path(PYSIDE_TYPESYSTEMS
+    PATHS ${PYSIDE2_DIR}/typesystems
+    NAMES "typesystem_core.xml"
+  )
+
+  message(STATUS ${PYSIDE_TYPESYSTEMS})
+
+  macro(pyside2_config option output_var)
+    if(${ARGC} GREATER 2)
+      set(is_list ${ARGV2})
+    else()
+      set(is_list "")
+    endif()
+
+    execute_process(
+      COMMAND ${Python3_EXECUTABLE} "${PYSIDE2_DIR}/examples/utils/pyside2_config.py" ${option}
+      OUTPUT_VARIABLE ${output_var}
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    if ("${${output_var}}" STREQUAL "")
+      message(FATAL_ERROR "Error: Calling pyside2_config.py ${option} returned no output.")
+    endif()
+    if(is_list)
+      string (REPLACE " " ";" ${output_var} "${${output_var}}")
+    endif()
+  endmacro()
+
+  pyside2_config(--shiboken2-generator-path SHIBOKEN2_GENERATOR_DIR)
+  set(SHIBOKEN2 ${SHIBOKEN2_GENERATOR_DIR}/shiboken2${CMAKE_EXECUTABLE_SUFFIX})
+endif(PySide2_FOUND)
+
+
+set(SHIBOKEN_INCLUDE_DIRS
+  ${CMAKE_SOURCE_DIR}/src/phantom
+)
+
+# colon separated format for shiboken
+list(JOIN SHIBOKEN_INCLUDE_DIRS ":" SHIBOKEN_INCLUDES)
+
+
+set(SHIBOKEN_OPTIONS
+  --generator-set=shiboken
+  --enable-parent-ctor-heuristic
+  --enable-return-value-heuristic
+  --use-isnull-as-nb_nonzero
+  --avoid-protected-hack
+  -I${SHIBOKEN_INCLUDES}
+  -T${CMAKE_SOURCE_DIR}
+  -T${PYSIDE_TYPESYSTEMS}
+  --output-directory=${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set(MODULE cmri)
+
+set(PHANTOM_CLASSES
+  Shape
+)
+
+set(CLASSES_WRAPPED ${PHANTOM_CLASSES})
+list(APPEND CLASSES_WRAPPED "${MODULE}_module")
+
+list(TRANSFORM CLASSES_WRAPPED TOLOWER)
+list(TRANSFORM CLASSES_WRAPPED APPEND _wrapper.cpp)
+list(TRANSFORM CLASSES_WRAPPED PREPEND ${CMAKE_CURRENT_BINARY_DIR}/${MODULE}/)
+
+set(TYPE_SYSTEM_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/pycmri.h)
+set(TYPE_SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/pycmri.xml)
+
+add_custom_target(
+  wrapcmri
+  COMMAND ${SHIBOKEN2} ${SHIBOKEN_OPTIONS} ${TYPE_SYSTEM_HEADER} ${TYPE_SYSTEM}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  BYPRODUCTS ${CLASSES_WRAPPED}
+)
+
+add_library(${PROJECT_NAME} MODULE ${CLASSES_WRAPPED})
+add_dependencies(${PROJECT_NAME} wrapcmri)
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${SHIBOKEN_INCLUDE_DIR}
+  ${SHIBOKEN_INCLUDE_DIRS}
+  ${PYSIDE2_INCLUDE_DIR}
+  ${PYSIDE2_INCLUDE_DIR}/QtCore
+  ${Qt5Core_INCLUDE_DIRS}
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  ${SHIBOKEN2_LIBRARY}
+  Qt5::Core
+  phantom
+)
+
+target_compile_options(${PROJECT_NAME} PRIVATE
+  -Wno-deprecated-copy
+  -Wno-missing-field-initializers
+  -Wno-unused-parameter
+  -Wno-cast-function-type
+)
+
+set_target_properties(
+  ${PROJECT_NAME} PROPERTIES
+  OUTPUT_NAME "${MODULE}${PYTHON_EXTENSION_SUFFIX}"
+  PREFIX ""
+)

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<typesystem>
+  <object-type name="Shape">
+    <enum-type name="Type" />
+  </object-type>
+</typesystem>
