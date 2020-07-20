@@ -4,4 +4,30 @@
     <modify-field name="m_fieldOfView" remove="all" />
     <modify-field name="m_spatialResolution" remove="all" />
   </object-type>
+  <object-type name="Trajectory">
+    <modify-field name="imageDimensions" remove="all" />
+    <modify-field name="fieldOfView" remove="all" />
+    <modify-field name="spatialResolution" remove="all" />
+    <modify-field name="gradientWaveformsShort" remove="all" />
+    <add-function signature="k_space_coordinates()" return-type="PyObject*">
+      <extra-includes>
+        <include location="global" file-name="numpy.h"/>
+      </extra-includes>
+      <inject-code>
+        initializeNumpy();
+
+        QVector&lt;npy_intp&gt; dimensions = {%CPPSELF.numReadoutPoints, %CPPSELF.numDimensions, %CPPSELF.numReadouts};
+        QVector&lt;npy_intp&gt; strides = {};
+        npy_intp stride = 1;
+        for (const npy_intp dimension : dimensions) {
+          strides.append(stride);
+          stride *= dimension;
+        }
+
+        std::reverse(std::begin(dimensions), std::end(dimensions));
+        %PYARG_0 = PyArray_NewFromDescr(&amp;PyArray_Type, PyArray_DescrFromType(NPY_FLOAT32), 3, dimensions.data(), NULL, %CPPSELF.kSpaceCoordinates, NPY_ARRAY_WRITEABLE, NULL);
+      </inject-code>
+    </add-function>
+  </object-type>
+  <enum-type name="TrajectoryType" />
 </typesystem>
