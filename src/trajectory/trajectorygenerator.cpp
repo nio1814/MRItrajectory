@@ -45,6 +45,11 @@ void TrajectoryGenerator::setFieldOfView(std::vector<float> fov)
   for(int n=0; n<numDims; n++)
     m_fieldOfView[n] = fov[n];
 }
+
+std::vector<float> TrajectoryGenerator::fieldOfView()
+{
+  return std::vector<float>(m_fieldOfView, m_fieldOfView + this->numDimensions());
+}
 float TrajectoryGenerator::maxFieldOfView()
 {
   return *std::max_element(m_fieldOfView, m_fieldOfView + numDimensions());

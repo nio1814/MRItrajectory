@@ -68,6 +68,7 @@ set(SHIBOKEN_OPTIONS
   --enable-return-value-heuristic
   --use-isnull-as-nb_nonzero
   --avoid-protected-hack
+  --no-suppress-warnings
   -I${SHIBOKEN_INCLUDES}
   -T${CMAKE_SOURCE_DIR}
   -T${PYSIDE_TYPESYSTEMS}
