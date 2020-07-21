@@ -59,8 +59,10 @@ set(SHIBOKEN_INCLUDE_DIRS
 )
 
 # colon separated format for shiboken
-list(JOIN SHIBOKEN_INCLUDE_DIRS ":" SHIBOKEN_INCLUDES)
 
+set(SHIBOKEN_INCLUDES "${SHIBOKEN_INCLUDE_DIRS}")
+list(TRANSFORM SHIBOKEN_INCLUDES PREPEND -I)
+message(STATUS ${SHIBOKEN_INCLUDES})
 
 set(SHIBOKEN_OPTIONS
   --generator-set=shiboken
@@ -69,11 +71,13 @@ set(SHIBOKEN_OPTIONS
   --use-isnull-as-nb_nonzero
   --avoid-protected-hack
   --no-suppress-warnings
-  -I${SHIBOKEN_INCLUDES}
   -T${CMAKE_SOURCE_DIR}
   -T${PYSIDE_TYPESYSTEMS}
   --output-directory=${CMAKE_CURRENT_BINARY_DIR}
 )
+
+list(APPEND SHIBOKEN_OPTIONS "${SHIBOKEN_INCLUDES}")
+message(STATUS ${SHIBOKEN_OPTIONS})
 
 set(MODULE cmri)
 
