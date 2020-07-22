@@ -9,12 +9,12 @@
 /*!
  * \brief Set up code for using the NumPy API.
  */
-void* initializeNumpy()
+inline void* initializeNumpy()
 {
   Py_Initialize();
   if (PyArray_API == NULL) {
-    import_array();
-  }
+      import_array();
+    }
 
   return NULL;
 }

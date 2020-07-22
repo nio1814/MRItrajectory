@@ -6,7 +6,7 @@
 
 #include <fftw3.h>
 
-typedef std::complex<float> complexFloat;
+using complexFloat = std::complex<float>;
 
 struct FFTplan
 {

@@ -3,6 +3,8 @@
   <load-typesystem name="typesystem_core.xml" generate="no" />
   <load-typesystem name="phantom.xml" />
   <load-typesystem name="trajectory.xml" />
+  <load-typesystem name="gridding.xml" />
+  <primitive-type name="size_t" />
   <container-type name="std::vector" type="vector">
     <include file-name="vector" location="global"/>
     <conversion-rule>
@@ -29,6 +31,12 @@
       return true;
     }
   </inject-code>
+  <!--<extra-includes>
+    <include location="global" file-name="numpy.h"/>
+  </extra-includes>
+  <inject-code class="target" position="end">
+    initializeNumpy();
+  </inject-code>-->
   <primitive-type name="complexFloat" target-lang-api-name="PyComplex">
     <conversion-rule>
       <native-to-target>

@@ -1,6 +1,6 @@
 project(pycmri)
 
-find_package(Python3 REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(PySide2)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 
@@ -56,6 +56,8 @@ set(SHIBOKEN_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/phantom
   ${CMAKE_SOURCE_DIR}/src/trajectory
   ${CMAKE_SOURCE_DIR}/src
+  ${CMAKE_SOURCE_DIR}/src/gridding
+  ${Python3_INCLUDE_DIRS}
 )
 
 # colon separated format for shiboken
@@ -91,7 +93,17 @@ set(TRAJECTORY_GENERATOR_CLASSES
   Trajectory
 )
 
-set(CLASSES_WRAPPED ${PHANTOM_CLASSES} ${TRAJECTORY_GENERATOR_CLASSES})
+set(GRIDDING_CLASSES
+  Gridding
+  MRdata
+)
+
+set(CLASSES_WRAPPED
+  ${PHANTOM_CLASSES}
+  ${TRAJECTORY_GENERATOR_CLASSES}
+  ${GRIDDING_CLASSES}
+)
+
 list(APPEND CLASSES_WRAPPED "${MODULE}_module")
 
 list(TRANSFORM CLASSES_WRAPPED TOLOWER)
@@ -101,11 +113,13 @@ list(TRANSFORM CLASSES_WRAPPED PREPEND ${CMAKE_CURRENT_BINARY_DIR}/${MODULE}/)
 set(TYPE_SYSTEM_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/pycmri.h)
 set(TYPE_SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/pycmri.xml)
 
+add_definitions(-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH)
 add_custom_target(
   wrapcmri
   COMMAND ${SHIBOKEN2} ${SHIBOKEN_OPTIONS} ${TYPE_SYSTEM_HEADER} ${TYPE_SYSTEM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   BYPRODUCTS ${CLASSES_WRAPPED}
+  DEPENDS gridding.xml
 )
 
 add_library(${PROJECT_NAME} MODULE ${CLASSES_WRAPPED}
@@ -126,6 +140,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   Qt5::Core
   phantom
   trajectory
+  gridding
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE

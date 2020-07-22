@@ -161,7 +161,7 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 	MRdata* ungriddedData;
 	MRdata* griddedData;
 
-	if(direction==Forward)
+	if(direction==FORWARD)
 	{
 		ungriddedData = &inputData;
 		griddedData = new MRdata(m_gridDimensions, numDimensions());
@@ -184,7 +184,7 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 	for(size_t n=0; n<ungriddedData->points(); n++)
 	{
 		complexFloat ungriddedDataValue;
-		if(direction==Forward)
+		if(direction==FORWARD)
 			ungriddedDataValue = ungriddedData->signalValue(n);
 		else
 			ungriddedDataValue = 0;
@@ -226,18 +226,18 @@ MRdata *Gridding::grid(MRdata &inputData, Direction direction)
 					gridIndex[0] = gx;
 					float kernelX = kernelValues[0][gx-dimensionStart[0]+offset[0]];
 					long griddedDataIndex = multiToSingleIndex(gridIndex, gridDimensions3);
-					if(direction==Forward)
+					if(direction==FORWARD)
 						griddedData->addSignalValue(griddedDataIndex, kernelX*kernelY*kernelZ*ungriddedDataValue);
 					else
 						ungriddedDataValue += kernelX*kernelY*kernelZ*griddedData->signalValue(griddedDataIndex);
 				}
 			}
 		}
-		if(direction==Inverse)
+		if(direction==INVERSE)
 			ungriddedData->setSignalValue(n, ungriddedDataValue);
 	}
 
-	if(direction==Forward)
+	if(direction==FORWARD)
 		return griddedData;
 	else
 		return ungriddedData;
@@ -300,7 +300,7 @@ void Gridding::deapodize(MRdata &oversampledImage)
 std::vector<MRdata *> Gridding::kSpaceToImage(MRdata &ungriddedData, bool returnGriddedKspace)
 {
 	std::vector<MRdata*> output;
-	MRdata* griddedKspace = grid(ungriddedData, Forward);
+	MRdata* griddedKspace = grid(ungriddedData, FORWARD);
 	MRdata* image;
 	if(returnGriddedKspace)
 	{
@@ -332,7 +332,7 @@ MRdata *Gridding::imageToKspace(const MRdata &image)
 	griddedKspace.fft(FFTW_FORWARD);
 	griddedKspace.fftShift();
 
-	MRdata* ungriddedKspace = grid(griddedKspace, Inverse);
+	MRdata* ungriddedKspace = grid(griddedKspace, INVERSE);
 
 	return ungriddedKspace;
 }
