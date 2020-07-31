@@ -7,7 +7,6 @@
     <extra-includes>
       <include location="global" file-name="numpy.h"/>
     </extra-includes>
-    <modify-function signature="MRdata(std::vector&lt;int&gt;, int, const std::vector&lt;complexFloat&gt;)" remove="all"/>
     <add-function signature="from_numpy(PyObject*)" return-type="MRdata" static="yes">
       <inject-code>
         initializeNumpy();
@@ -32,12 +31,21 @@
         %PYARG_0 = %CONVERTTOPYTHON[MRdata](data);
       </inject-code>
     </add-function>
-<!--    <conversion-rule>
-      <target-to-native>
-        <add-conversion type="PyArrayObject" check="%CHECKTYPE[MRdata](%in)">
+<!--    <modify-function signature="MRdata(std::vector&lt;int&gt;, int, const std::vector&lt;complexFloat&gt;)" remove="all"/>-->
+    <add-function signature="numpy()" return-type="PyObject*">
+      <inject-code>
+        initializeNumpy();
 
-        </add-conversion>
-      </target-to-native>
-    </conversion-rule>-->
+        std::vector&lt;npy_intp&gt; dimensions;
+        std::vector&lt;npy_intp&gt; strides;
+        npy_intp stride = 1;
+        for (int dimension : %CPPSELF.dimensions()) {
+          dimensions.push_back(dimension);
+          strides.push_back(stride);
+          stride *= dimension;
+        }
+        %PYARG_0 = PyArray_NewFromDescr(&amp;PyArray_Type, PyArray_DescrFromType(NPY_COMPLEX64), %CPPSELF.dimensions().size(), dimensions.data(), NULL, %CPPSELF.signal().data(), NPY_ARRAY_WRITEABLE, NULL);
+      </inject-code>
+    </add-function>
   </object-type>
 </typesystem>

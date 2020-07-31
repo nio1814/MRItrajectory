@@ -60,6 +60,13 @@ void deleteTrajectory(struct Trajectory** trajectory);
 
 void adjustSpatialResolution(float fieldOfView, int *imageDimension, float *spatialResolution);
 
+/*!
+ * \brief Calculate the maximum k-space coordinat values for the resolution.
+ * \param spatialResolution
+ * \param kSpaceExtent
+ */
+void kSpaceExtent(const float* spatialResolution, const int numDimensions, float* kMax);
+
 void gradientToKspace(float* gradient, float* k, float samplingInterval, int length);
 
 void allocateTrajectory(struct Trajectory *trajectory, int numReadoutPoints, int numWaveformPoints, int dimensions, int numBases, int numReadouts, enum WaveformStorageType storage);

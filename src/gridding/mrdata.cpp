@@ -33,13 +33,35 @@ MRdata::MRdata(const MRdata *from)
 	*this = *from;
 }
 
-MRdata::MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data) : m_dimensions(dimensions), m_numImagingDimensions(numImagingDimensions)
+MRdata::MRdata(const std::vector<int> dimensions, const int numImagingDimensions, const std::vector<complexFloat> &data) :
+  m_dimensions(dimensions), m_numImagingDimensions(numImagingDimensions)
 {
 	if(data.empty())
 		m_signal.resize(points());
 	else
-		m_signal = data;
+    m_signal = data;
 }
+
+//MRdata::MRdata(PyArrayObject *data)
+//{
+//  initializeNumpy();
+
+////  PyArrayObject* array = reinterpret_cast<PyArrayObject*>(PyArray_Cast(reinterpret_cast<PyArrayObject*>(data), NPY_COMPLEX64));
+//  PyArrayObject* array = reinterpret_cast<PyArrayObject*>(PyArray_Cast(data, NPY_COMPLEX64));
+//  const npy_intp *dimensions = PyArray_DIMS(array);
+//  int numPoints = 1;
+
+//  for (int d=0; d<PyArray_NDIM(array); d++) {
+//    m_dimensions.push_back(dimensions[d]);
+//    numPoints *= dimensions[d];
+//  }
+
+//  m_signal.reserve(numPoints);
+//  complexFloat* arrayData = reinterpret_cast<complexFloat*>(PyArray_DATA(array));
+//  std::copy(arrayData, arrayData + numPoints, std::back_inserter(m_signal));
+
+//  m_numImagingDimensions = m_dimensions.size() > 3 ? 3 : m_dimensions.size();
+//}
 
 size_t MRdata::points() const
 {

@@ -708,3 +708,11 @@ void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory, c
         fwrite(&density, sizeof(float), 1, file);
       }
 }
+
+
+void kSpaceExtent(const float *spatialResolution, const int numDimensions, float *kMax)
+{
+  for (int d=0; d<numDimensions; d++) {
+    kMax[d] = 5 / spatialResolution[d];
+  }
+}

@@ -13,8 +13,8 @@ inline void* initializeNumpy()
 {
   Py_Initialize();
   if (PyArray_API == NULL) {
-      import_array();
-    }
+    import_array();
+  }
 
   return NULL;
 }

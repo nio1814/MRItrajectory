@@ -18,7 +18,7 @@ class MRdata
 {
 public:
 	MRdata(const MRdata* from);
-	MRdata(std::vector<int> dimensions, int numImagingDimensions, const std::vector<complexFloat> &data=std::vector<complexFloat>());
+  MRdata(const std::vector<int> dimensions, const int numImagingDimensions, const std::vector<complexFloat> &data=std::vector<complexFloat>());
 	size_t points() const;
 
 	void setSignalValue(int index, const complexFloat& value);
