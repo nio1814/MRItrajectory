@@ -80,7 +80,7 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int nu
 		count = readouts;
 
   if(numWaveformPoints)
-    trajectory->gradientWaveforms = (float*)malloc(dimensions*count*numWaveformPoints*sizeof(float));
+    trajectory->gradientWaveforms = (float*)calloc(dimensions * count * numWaveformPoints, sizeof(float));
 	if(readoutPoints)
 	{
 		trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
