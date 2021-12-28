@@ -29,7 +29,9 @@ add_subdirectory(src)
 if(ENABLE_MATLAB)
 	add_subdirectory(matlab)
 endif(ENABLE_MATLAB)
-add_subdirectory(trajectorydesigner)
+
+add_subdirectory(trajectory)
+
 if(ENABLE_PYTHON)
   add_subdirectory(python)
 endif(ENABLE_PYTHON)
