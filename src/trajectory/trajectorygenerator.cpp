@@ -10,6 +10,8 @@ extern "C"
 }
 
 #include <algorithm>
+#include <sstream>
+
 
 TrajectoryGenerator::TrajectoryGenerator(TrajectoryType type) :
   m_trajectoryType(type),
@@ -129,6 +131,11 @@ void TrajectoryGenerator::setNumBases(int bases)
   m_numBases = bases;
 }
 
+void TrajectoryGenerator::setCompensation(const std::string compensation)
+{
+  m_compensation = compensation;
+}
+
 void TrajectoryGenerator::setStorage(WaveformStorageType type)
 {
   m_storage = type;
@@ -157,10 +164,18 @@ bool TrajectoryGenerator::generate()
       break;
     case CONES:
     {
-
       if(m_cones)
         deleteCones(&m_cones);
-      m_cones = generateCones(maxFieldOfViewXY(), m_fieldOfView[2], m_variableDensity, m_spatialResolution[0], m_spatialResolution[2], m_numBases, 1, NoCompensation, m_readoutDuration, m_samplingInterval, maxFieldOfView(), m_gradientLimit, m_slewRateLimit, STORE_ALL);
+
+      InterConeCompensation compensation = NO_COMPENSATION;
+      if(m_compensation == "none")
+        compensation = NO_COMPENSATION;
+      else if(m_compensation == "1")
+        compensation = Compensation1;
+      else if(m_compensation == "2")
+        compensation = Compensation2;
+
+      m_cones = generateCones(maxFieldOfViewXY(), m_fieldOfView[2], m_variableDensity, m_spatialResolution[0], m_spatialResolution[2], m_numBases, 1, compensation, m_readoutDuration, m_samplingInterval, maxFieldOfView(), m_gradientLimit, m_slewRateLimit, STORE_ALL);
       if(!m_cones)
         return false;
       m_trajectory = m_cones->trajectory;
@@ -255,9 +270,20 @@ int TrajectoryGenerator::numDimensions()
 
 std::string TrajectoryGenerator::info()
 {
-  std::string text;
+  std::ostringstream text;
 
-  return text;
+  std::string trajectoryName;
+  switch(m_trajectoryType)
+  {
+    case CONES:
+      trajectoryName = "Cones";
+      break;
+  }
+
+  text << trajectoryName << " trajectory" << std::endl;
+  text << "Readout duration: " << m_readoutDuration * 1e3 << " ms" << std::endl;
+
+  return text.str();
 }
 
 Trajectory *TrajectoryGenerator::trajectory()

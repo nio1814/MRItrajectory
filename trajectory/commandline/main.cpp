@@ -1,8 +1,10 @@
+#include "trajectorygenerator.h"
+
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QDebug>
 
-#include "trajectorygenerator.h"
+#include <iostream>
 
 
 int main(int argc, char *argv[])
@@ -63,6 +65,10 @@ int main(int argc, char *argv[])
   if(parser.isSet("bases"))
     generator.setNumBases(parser.value("bases").toInt());
 
+  if(parser.isSet("comp") && trajectoryType == CONES)
+    generator.setCompensation(parser.value("comp").toStdString());
+
+  std::cout << generator.info();
   generator.generate();
 
   return 0;
