@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
                      {"fov", "Field of view", "fieldOfView"},
                      {"res", "Spatial resolution", "spatialResolution"},
                      {"comp", "Cones compensation", "conesCompensation"},
-                     {"bases", "Number of basis waveforms", "numBases"}});
+                     {"bases", "Number of basis waveforms", "numBases"},
+                     {"to", "File path to save the trajectory to", "outputFilePath"}});
   parser.process(application);
 
   if(parser.positionalArguments().empty())
@@ -70,6 +71,13 @@ int main(int argc, char *argv[])
 
   std::cout << generator.info();
   generator.generate();
+
+  if(parser.isSet("to"))
+  {
+    const QString filePath = parser.value("to");
+    qInfo() << "Saving trajectory to " << filePath;
+    generator.save(filePath.toStdString());
+  }
 
   return 0;
 }

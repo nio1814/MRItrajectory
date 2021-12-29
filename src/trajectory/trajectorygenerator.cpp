@@ -278,6 +278,8 @@ std::string TrajectoryGenerator::info()
     case CONES:
       trajectoryName = "Cones";
       break;
+    default:
+      break;
   }
 
   text << trajectoryName << " trajectory" << std::endl;
