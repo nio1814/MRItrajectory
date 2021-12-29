@@ -615,6 +615,7 @@ void makeConesInterpolation(struct Cones *cones)
     printf("theta %f\tbasis %d\tnintl %d\n", singleInterleafInterpolation->theta[c], singleInterleafInterpolation->basis[c], singleInterleafInterpolation->numInterleavesOnCone[c]);
 	}
   printf("Max readout length:\t%d\n", trajectory->numReadoutPoints);
+  printf("Waveform duration:\t%f [ms]\n", trajectory->samplingInterval * trajectory->numWaveformPoints * 1e3);
   printf("readouts %d\n", trajectory->numReadouts);
 
   cones->interpolation = newConesInterpolation(trajectory->numReadouts);
@@ -902,6 +903,7 @@ struct Cones *generateCones(float fieldOfViewXY, float fieldOfViewZ, const struc
 	{
     memcpy(cones->trajectory->gradientWaveforms, cones->basisGradientWaveforms, numBases*3*cones->trajectory->numWaveformPoints*sizeof(float));
     memcpy(cones->trajectory->kSpaceCoordinates, cones->basisKspaceCoordinates, numBases*3*cones->trajectory->numReadoutPoints*sizeof(float));
+    memcpy(cones->trajectory->densityCompensation, cones->coneAngleDensityCompensation, numBases * cones->trajectory->numReadoutPoints * sizeof (float));
 	}
 	else
 	{

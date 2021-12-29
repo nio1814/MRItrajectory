@@ -44,6 +44,11 @@ public:
   void setNumReadouts(int numReadouts);
   void setRotatable(bool status);
   void setNumBases(int bases);
+  /*!
+   * \brief Set the trajectory compensation scheme.
+   * \param The compensation method (Dependent on trajectory).
+   */
+  void setCompensation(const std::string compensation);
   void setStorage(WaveformStorageType type);
   WaveformStorageType storage();
 
@@ -55,6 +60,11 @@ public:
   Cones* getConesTrajectory();
 
   int numDimensions();
+
+  /*!
+   * \brief Create description of trajectory parameters.
+   */
+  std::string info();
 protected:
   TrajectoryType m_trajectoryType;
   float m_fieldOfView[3] = {28,28,28};
@@ -75,6 +85,8 @@ protected:
   Cones* m_cones = 0;
   Swirl* m_swirl = 0;
   StackOfSpirals* m_stackOfSpirals = nullptr;
+private:
+  std::string m_compensation;
 };
 
 #endif // TRAJECTORYGENERATOR_H

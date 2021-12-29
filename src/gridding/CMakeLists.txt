@@ -17,6 +17,7 @@ INCLUDE_DIRECTORIES(${FFTW3_INCLUDE_DIR})
 setCXX11()
 
 add_library(gridding ${GRIDDING_SOURCE})
+set_target_properties(gridding PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(gridding ${FFTW3_LIBRARIES})
 
 add_subdirectory(test)

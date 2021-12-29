@@ -22,23 +22,24 @@ void ConesTest::generateTest_data()
 	QTest::addColumn<double>("maxSlew");
 	QTest::addColumn<WaveformStorageType>("storage");
 	QTest::addColumn<QVector<QPointF> >("fieldOfViewScale");
+  QTest::addColumn<int>("numReadouts");
 
 	QVector<QPointF> fieldOfViewScale;
 
-	QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_BASIS << fieldOfViewScale;
+  QTest::newRow("Isotropic - basis") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NO_COMPENSATION << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_BASIS << fieldOfViewScale << 16;
 
-  QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
+//  QTest::newRow("Isotropic - full") << (QVector<float>() << 28 << 28) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-  QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
+//  QTest::newRow("Anisotropic field of view") << (QVector<float>() << 28 << 14 ) << (QVector<float>() << 2 << 2) << 16 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-  QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
+//  QTest::newRow("Anisotropic spatial resolution") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 4) << 48 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-	fieldOfViewScale.append(QPointF(0,1));
-	fieldOfViewScale.append(QPointF(2.5,0.5));
+//	fieldOfViewScale.append(QPointF(0,1));
+//	fieldOfViewScale.append(QPointF(2.5,0.5));
 
-  QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
+//  QTest::newRow("Variable Density") << (QVector<float>() << 28 << 28 ) << (QVector<float>() << 2 << 2) << 32 << 1 << NoCompensation << 8.4e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale;
 
-//	QTest::newRow("Cones") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 32 << 1 << 1 << 2.8e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL;
+  QTest::newRow("Whole Heart Coronary") << (QVector<float>() << 28 << 14) << (QVector<float>() << 1.2 << 1.25) << 16 << 1 << Compensation1 << 2.18e-3 << 4e-6 << 4.0 << 15000.0 << STORE_ALL << fieldOfViewScale << 10405;
 }
 
 void ConesTest::generateTest()
@@ -54,10 +55,11 @@ void ConesTest::generateTest()
 	QFETCH(double, maxSlew);
 	QFETCH(WaveformStorageType, storage);
 	QFETCH(QVector<QPointF>, fieldOfViewScale);
+  QFETCH(int, numReadouts);
 
 	float filterFieldOfView = qMax(fieldOfView[0], fieldOfView[1]);
 
-	VariableDensity* variableDensity = NULL;
+  VariableDensity* variableDensity = nullptr;
 	if(fieldOfViewScale.size())
 	{
 		variableDensity = newVariableDensity();
@@ -83,17 +85,20 @@ void ConesTest::generateTest()
   QCOMPARE(trajectory->numBases, bases);
 
 	float maxReadoutGradient = 1/(filterFieldOfView*samplingInterval*4257);
-	int waveforms;
+  int numWaveformsTotal;
 	if(storage==STORE_BASIS)
-    waveforms = trajectory->numBases;
+    numWaveformsTotal = trajectory->numBases;
 	else
-		waveforms = trajectory->numReadouts;
+  {
+    numWaveformsTotal = trajectory->numReadouts;
+    QVERIFY(abs(numWaveformsTotal - numReadouts) < 10);
+  }
 
 	char message[128];
 	float kxyMax;
 	float kzMax;
   struct ConesInterpolation* schedule = cones->interpolation;
-	for(int r=0; r<waveforms; r++)
+  for(int r=0; r<numWaveformsTotal; r++)
 	{
 		int b;
 		if(storage==STORE_BASIS)

@@ -80,7 +80,7 @@ void allocateTrajectory(struct Trajectory *trajectory, int readoutPoints, int nu
 		count = readouts;
 
   if(numWaveformPoints)
-    trajectory->gradientWaveforms = (float*)malloc(dimensions*count*numWaveformPoints*sizeof(float));
+    trajectory->gradientWaveforms = (float*)calloc(dimensions * count * numWaveformPoints, sizeof(float));
 	if(readoutPoints)
 	{
 		trajectory->kSpaceCoordinates = (float*)malloc(dimensions*count*readoutPoints*sizeof(float));
@@ -707,4 +707,12 @@ void saveKSPaceFile(const char *filePath, const struct Trajectory *trajectory, c
         fwrite(coordinates, sizeof(float), trajectory->numDimensions, file);
         fwrite(&density, sizeof(float), 1, file);
       }
+}
+
+
+void kSpaceExtent(const float *spatialResolution, const int numDimensions, float *kMax)
+{
+  for (int d=0; d<numDimensions; d++) {
+    kMax[d] = 5 / spatialResolution[d];
+  }
 }

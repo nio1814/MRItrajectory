@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<typesystem>
+  <object-type name="Gridding">
+    <enum-type name="Direction" />
+  </object-type>
+  <object-type name="MRdata">
+    <extra-includes>
+      <include location="global" file-name="numpy.h"/>
+    </extra-includes>
+    <add-function signature="from_numpy(PyObject*)" return-type="MRdata" static="yes">
+      <inject-code>
+        initializeNumpy();
+
+        PyArrayObject* array = (PyArrayObject*)PyArray_Cast((PyArrayObject*)%1, NPY_COMPLEX64);
+        const npy_intp *dimensions = PyArray_DIMS(array);
+        int numPoints = 1;
+
+        std::vector&lt;int&gt; extent;
+        for (int d=0; d&lt;PyArray_NDIM(array); d++) {
+          extent.push_back(dimensions[d]);
+          numPoints *= dimensions[d];
+        }
+
+        std::vector&lt;complexFloat&gt; vectorData;
+        vectorData.reserve(numPoints);
+        complexFloat* arrayData = reinterpret_cast&lt;complexFloat*&gt;(PyArray_DATA(array));
+        std::copy(arrayData, arrayData + numPoints, std::back_inserter(vectorData));
+
+        const int numDimensions = extent.size() > 3 ? 3 : extent.size();
+        MRdata data(extent, numDimensions, vectorData);
+        %PYARG_0 = %CONVERTTOPYTHON[MRdata](data);
+      </inject-code>
+    </add-function>
+<!--    <modify-function signature="MRdata(std::vector&lt;int&gt;, int, const std::vector&lt;complexFloat&gt;)" remove="all"/>-->
+    <add-function signature="numpy()" return-type="PyObject*">
+      <inject-code>
+        initializeNumpy();
+
+        std::vector&lt;npy_intp&gt; dimensions;
+        std::vector&lt;npy_intp&gt; strides;
+        npy_intp stride = 1;
+        for (int dimension : %CPPSELF.dimensions()) {
+          dimensions.push_back(dimension);
+          strides.push_back(stride);
+          stride *= dimension;
+        }
+        %PYARG_0 = PyArray_NewFromDescr(&amp;PyArray_Type, PyArray_DescrFromType(NPY_COMPLEX64), %CPPSELF.dimensions().size(), dimensions.data(), NULL, %CPPSELF.signal().data(), NPY_ARRAY_WRITEABLE, NULL);
+      </inject-code>
+    </add-function>
+  </object-type>
+</typesystem>
