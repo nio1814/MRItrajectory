@@ -55,6 +55,8 @@ public:
   Cones* getConesTrajectory();
 
   int numDimensions();
+
+  std::string info();
 protected:
   TrajectoryType m_trajectoryType;
   float m_fieldOfView[3] = {28,28,28};

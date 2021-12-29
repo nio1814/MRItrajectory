@@ -11,14 +11,9 @@ int main(int argc, char *argv[])
 
   QCommandLineParser parser;
   parser.addHelpOption();
-  parser.addPositionalArgument("trajectory", "The type of trajectory to generate");
-
-  QCommandLineOption readoutDuration("readdur", "Readout duration", "readoutDuration");
-  parser.addOption(readoutDuration);
-
-  QCommandLineOption fieldOfView("fov", "Field of view", "fieldOfView");
-  parser.addOption(fieldOfView);
-
+  parser.addOptions({{"trajectory", "The type of trajectory to generate"},
+                     {"readdur", "Readout duration", "readoutDuration"},
+                     {"fov", "Field of view", "fieldOfView"}});
   parser.process(application);
 
   if(parser.positionalArguments().empty())
@@ -37,12 +32,12 @@ int main(int argc, char *argv[])
 
   TrajectoryGenerator generator;
   generator.setTrajectoryType(trajectoryType);
-  if(parser.isSet(readoutDuration))
-    generator.setReadoutDuration(parser.value(readoutDuration).toFloat());
+  if(parser.isSet("readoutDuration"))
+    generator.setReadoutDuration(parser.value("readoutDuration").toFloat());
 
-  if(parser.isSet(fieldOfView))
+  if(parser.isSet("fieldOfView"))
   {
-    const QStringList fieldsOfView = parser.values(fieldOfView);
+    const QStringList fieldsOfView = parser.values("fieldOfView");
     qDebug() << fieldsOfView;
     if (trajectoryType == CONES)
     {

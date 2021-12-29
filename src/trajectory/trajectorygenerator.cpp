@@ -253,6 +253,13 @@ int TrajectoryGenerator::numDimensions()
   return numDims;
 }
 
+std::string TrajectoryGenerator::info()
+{
+  std::string text;
+
+  return text;
+}
+
 Trajectory *TrajectoryGenerator::trajectory()
 {
   return m_trajectory;
