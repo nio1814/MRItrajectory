@@ -11,9 +11,12 @@ int main(int argc, char *argv[])
 
   QCommandLineParser parser;
   parser.addHelpOption();
-  parser.addOptions({{"trajectory", "The type of trajectory to generate"},
+  parser.addOptions({{"trajectory", "The type of trajectory to generate", "trajectory"},
                      {"readdur", "Readout duration", "readoutDuration"},
-                     {"fov", "Field of view", "fieldOfView"}});
+                     {"fov", "Field of view", "fieldOfView"},
+                     {"res", "Spatial resolution", "spatialResolution"},
+                     {"comp", "Cones compensation", "conesCompensation"},
+                     {"bases", "Number of basis waveforms", "numBases"}});
   parser.process(application);
 
   if(parser.positionalArguments().empty())
@@ -32,20 +35,33 @@ int main(int argc, char *argv[])
 
   TrajectoryGenerator generator;
   generator.setTrajectoryType(trajectoryType);
-  if(parser.isSet("readoutDuration"))
-    generator.setReadoutDuration(parser.value("readoutDuration").toFloat());
+  if(parser.isSet("readdur"))
+    generator.setReadoutDuration(parser.value("readdur").toFloat());
 
-  if(parser.isSet("fieldOfView"))
+  if(parser.isSet("fov"))
   {
-    const QStringList fieldsOfView = parser.values("fieldOfView");
-    qDebug() << fieldsOfView;
+    const QStringList fieldOfView = parser.values("fov");
     if (trajectoryType == CONES)
     {
-      const float fieldOfViewXY = fieldsOfView[0].toFloat();
-      const float fieldOfViewZ = fieldsOfView[1].toFloat();
+      const float fieldOfViewXY = fieldOfView[0].toFloat();
+      const float fieldOfViewZ = fieldOfView[1].toFloat();
       generator.setFieldOfView({fieldOfViewXY, fieldOfViewXY, fieldOfViewZ});
     }
   }
+
+  if(parser.isSet("res"))
+  {
+    const QStringList spatialResolution = parser.values("res");
+    if (trajectoryType == CONES)
+    {
+      const float spatialResolutionXY = spatialResolution[0].toFloat();
+      const float spatialResolutionZ = spatialResolution[1].toFloat();
+      generator.setSpatialResolution({spatialResolutionXY, spatialResolutionXY, spatialResolutionZ});
+    }
+  }
+
+  if(parser.isSet("bases"))
+    generator.setNumBases(parser.value("bases").toInt());
 
   generator.generate();
 
