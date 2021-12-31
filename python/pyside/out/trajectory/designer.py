@@ -2,16 +2,15 @@
 # See LICENSE for more information.
 
 # To distribute this file, substitute the full license for the above reference.
-from enum import Enum
 import os
 import sys
+
 from PySide2 import QtWidgets, QtUiTools
 from PySide2.QtCore import QFile
-import pyqtgraph as pg
 import numpy as np
+import pyqtgraph as pg
 
-from cmri.designer.trajectory.generator import QGenerator
-from cmri.trajectory.types import TrajectoryType
+from cmri.cmri import TrajectoryGenerator, TrajectoryType
 
 
 class Designer(QtWidgets.QMainWindow):
@@ -35,7 +34,7 @@ class Designer(QtWidgets.QMainWindow):
         file_ui.close()
 
         self.setCentralWidget(self.ui)
-        self.generator = QGenerator()
+        self.generator = TrajectoryGenerator()
 
         self.gradients_plot = pg.PlotWidget(name='Gradients')
         self.gradients_plot.setXRange(0, self.ui.readoutDurationSpinBox.maximum())
@@ -43,8 +42,7 @@ class Designer(QtWidgets.QMainWindow):
         self.ui.plotGridLayout.addWidget(self.gradients_plot, 0, 1);
         self.ui.trajectoryComboBox.currentIndexChanged[int].connect(self.set_trajectory_type)
 
-        for trajectory_type in TrajectoryType:
-            self.ui.trajectoryComboBox.addItem(trajectory_type.value, trajectory_type);
+        self.ui.trajectoryComboBox.addItem('Cones', TrajectoryType.CONES)
         
         self.field_of_view_spin_boxes = [
             self.ui.fieldOfViewXSpinBox, 

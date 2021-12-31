@@ -1,8 +1,9 @@
 project(pycmri)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 find_package(PySide2)
 find_package(Qt5 REQUIRED COMPONENTS Core)
+find_package(FFTW3 REQUIRED)
 
 if(PySide2_FOUND)
   get_target_property(PYSIDE2_INCLUDE_DIR PySide2::pyside2 INTERFACE_INCLUDE_DIRECTORIES)
@@ -49,8 +50,12 @@ else(PySide2_FOUND)
 
   pyside2_config(--shiboken2-generator-path SHIBOKEN2_GENERATOR_DIR)
   set(SHIBOKEN2 ${SHIBOKEN2_GENERATOR_DIR}/shiboken2${CMAKE_EXECUTABLE_SUFFIX})
+  pyside2_config(--shiboken2-generator-include-path SHIBOKEN_INCLUDE_DIR)
+  pyside2_config(--pyside2-include-path PYSIDE2_INCLUDE_DIR)
+  pyside2_config(--shiboken2-module-shared-libraries-cmake SHIBOKEN2_LIBRARY)
 endif(PySide2_FOUND)
 
+message(STATUS "shiboken library ${SHIBOKEN2_LIBRARY}")
 
 set(SHIBOKEN_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src/phantom
@@ -58,6 +63,8 @@ set(SHIBOKEN_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/gridding
   ${Python3_INCLUDE_DIRS}
+  ${FFTW3_INCLUDE_DIR}
+  ${Python3_NumPy_INCLUDE_DIRS}
 )
 
 # colon separated format for shiboken
@@ -138,17 +145,20 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
   ${SHIBOKEN2_LIBRARY}
   Qt5::Core
+  ${Python3_LIBRARIES}
   phantom
   trajectory
   gridding
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE
-  -Wno-deprecated-copy
-  -Wno-missing-field-initializers
-  -Wno-unused-parameter
-  -Wno-cast-function-type
-)
+if(NOT WIN32)
+  target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wno-deprecated-copy
+    -Wno-missing-field-initializers
+    -Wno-unused-parameter
+    -Wno-cast-function-type
+  )
+endif(NOT WIN32)
 
 set_target_properties(
   ${PROJECT_NAME} PROPERTIES
