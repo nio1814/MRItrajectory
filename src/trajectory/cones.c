@@ -715,6 +715,7 @@ int generateConesBasis(struct Cones *cones)
   const int interpolateCones = cones->trajectory->numBases > 0;
   if(!interpolateCones)
   {
+    cones->numBases = cones->numCones;
     cones->trajectory->numBases = cones->numCones;
     cones->numBasisReadoutPoints = (int*)malloc(cones->numCones*sizeof(int));
     cones->numBasisWaveformPoints = (int*)malloc(cones->numCones*sizeof(int));
@@ -939,10 +940,10 @@ int saveCones(const char* filename, const struct Cones* cones)
   writeArray(cones->coneAngles, cones->numCones, sizeof(float), file);
   writeArray(cones->coneAngleDensityCompensation, cones->numCones, sizeof(float), file);
   writeArray(cones->basisConeAngles, cones->numCones, sizeof(float), file);
-  writeArray(cones->numBasisReadoutPoints, cones->numCones, sizeof(int), file);
-  writeArray(cones->numBasisWaveformPoints, cones->numCones, sizeof(int), file);
-  writeArray(cones->basisGradientWaveforms, cones->numCones*cones->trajectory->numWaveformPoints*3, sizeof(float), file);
-  writeArray(cones->basisKspaceCoordinates, cones->numCones*cones->trajectory->numReadoutPoints*3, sizeof(float), file);
+  writeArray(cones->numBasisReadoutPoints, cones->numBases, sizeof(int), file);
+  writeArray(cones->numBasisWaveformPoints, cones->numBases, sizeof(int), file);
+  writeArray(cones->basisGradientWaveforms, cones->numBases * cones->trajectory->numWaveformPoints * 3, sizeof(float), file);
+  writeArray(cones->basisKspaceCoordinates, cones->numBases * cones->trajectory->numReadoutPoints * 3, sizeof(float), file);
 
   int numInterpolationReadouts = cones->interpolation ? cones->interpolation->numReadouts : 0;
   fwrite(&numInterpolationReadouts, sizeof(int), 1, file);
@@ -1048,6 +1049,7 @@ struct Cones *newCones(const int numBases)
 {
 	struct Cones *cones = (struct Cones*)malloc(sizeof(struct Cones));
 
+  cones->numBases = numBases;
 	cones->coneAngles = NULL;
 	cones->coneAngleDensityCompensation = NULL;
 	cones->basisConeAngles = NULL;

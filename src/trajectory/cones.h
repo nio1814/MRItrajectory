@@ -28,7 +28,8 @@ struct Cones
 	enum InterConeCompensation interconeCompensation;
 	float* coneAngles;
 	float* coneAngleDensityCompensation;
-	int numCones;
+  int numBases;
+  int numCones;
 	float* basisConeAngles;
 	int *numBasisReadoutPoints;
 	int *numBasisWaveformPoints;

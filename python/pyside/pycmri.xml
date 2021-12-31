@@ -5,6 +5,7 @@
   <load-typesystem name="trajectory.xml" />
   <load-typesystem name="gridding.xml" />
   <primitive-type name="size_t" />
+  <primitive-type name="std::string"/>
   <container-type name="std::vector" type="vector">
     <include file-name="vector" location="global"/>
     <conversion-rule>
