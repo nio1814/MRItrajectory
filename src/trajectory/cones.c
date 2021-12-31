@@ -939,7 +939,7 @@ int saveCones(const char* filename, const struct Cones* cones)
   fwrite(&cones->interconeCompensation, sizeof(enum InterConeCompensation), 1, file);
   writeArray(cones->coneAngles, cones->numCones, sizeof(float), file);
   writeArray(cones->coneAngleDensityCompensation, cones->numCones, sizeof(float), file);
-  writeArray(cones->basisConeAngles, cones->numCones, sizeof(float), file);
+  writeArray(cones->basisConeAngles, cones->numBases, sizeof(float), file);
   writeArray(cones->numBasisReadoutPoints, cones->numBases, sizeof(int), file);
   writeArray(cones->numBasisWaveformPoints, cones->numBases, sizeof(int), file);
   writeArray(cones->basisGradientWaveforms, cones->numBases * cones->trajectory->numWaveformPoints * 3, sizeof(float), file);
