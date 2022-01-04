@@ -27,7 +27,7 @@ private:
 	std::vector<float>  m_displacement; //displacement vectors.
 	std::vector<float>  m_principalAxes; //the length of the principal axes.
 	float  m_intensity; // signal intensity.
-	Type m_type;
+//	Type m_type;
 };
 
 #endif // SHAPE_H
