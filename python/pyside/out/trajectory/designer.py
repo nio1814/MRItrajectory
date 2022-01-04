@@ -4,6 +4,7 @@
 # To distribute this file, substitute the full license for the above reference.
 import os
 import sys
+from logging import warning
 
 from PySide2 import QtWidgets, QtUiTools
 from PySide2.QtCore import QFile
@@ -12,6 +13,14 @@ import pyqtgraph as pg
 
 from cmri.cmri import TrajectoryGenerator, TrajectoryType
 
+TRAJECTORY_NAMES = {TrajectoryType.CONES: 'Cones',
+                    TrajectoryType.SPIRAL: 'Spiral'}
+
+def invert_dictionary(data):
+    return {value: key for key, value in data.items()}
+
+def name_to_trajectory_type(name):
+    return invert_dictionary(TRAJECTORY_NAMES)[name]
 
 class Designer(QtWidgets.QMainWindow):
     READOUT_DURATION_SLIDER_SCALE = 1e4
@@ -20,7 +29,7 @@ class Designer(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.link_xy = False
-        
+
         current_directory = os.path.abspath(os.path.dirname(__file__))
         loader = QtUiTools.QUiLoader()
         file_path_ui = os.path.join(current_directory, 'mainwindow.ui')
@@ -40,21 +49,22 @@ class Designer(QtWidgets.QMainWindow):
         self.gradients_plot.setXRange(0, self.ui.readoutDurationSpinBox.maximum())
         self.gradients_plot.setYRange(-4, 4)
         self.ui.plotGridLayout.addWidget(self.gradients_plot, 0, 1);
-        self.ui.trajectoryComboBox.currentIndexChanged[int].connect(self.set_trajectory_type)
+        self.ui.trajectoryComboBox.currentIndexChanged[str].connect(self.set_trajectory_type)
 
-        self.ui.trajectoryComboBox.addItem('Cones', TrajectoryType.CONES)
-        
+        for trajectory_type, name in TRAJECTORY_NAMES.items():
+            self.ui.trajectoryComboBox.addItem(name, trajectory_type)
+
         self.field_of_view_spin_boxes = [
-            self.ui.fieldOfViewXSpinBox, 
-            self.ui.fieldOfViewYSpinBox, 
+            self.ui.fieldOfViewXSpinBox,
+            self.ui.fieldOfViewYSpinBox,
             self.ui.fieldOfViewZSpinBox
         ]
         for axis, spin_box in enumerate(self.field_of_view_spin_boxes):
             spin_box.editingFinished.connect(lambda dimension=axis: self.set_field_of_view(None, dimension))
 
         self.field_of_view_sliders = [
-            self.ui.fieldOfViewXSlider, 
-            self.ui.fieldOfViewYSlider, 
+            self.ui.fieldOfViewXSlider,
+            self.ui.fieldOfViewYSlider,
             self.ui.fieldOfViewZSlider
         ]
         for axis, slider in enumerate(self.field_of_view_sliders):
@@ -63,8 +73,7 @@ class Designer(QtWidgets.QMainWindow):
         self.ui.readoutDurationSlider.sliderMoved.connect(lambda index: self.set_readout_duration(index / self.READOUT_DURATION_SLIDER_SCALE))
         self.ui.readoutDurationSpinBox.editingFinished.connect(lambda: self.set_readout_duration(None))
 
-        self.ui.generatePushButton.clicked.connect(self.generator.generate)
-        self.generator.generated.connect(self.update_plots)
+        self.ui.generatePushButton.clicked.connect(self._generate)
 
         field_of_view_min = 140
         field_of_view_max = 400
@@ -82,6 +91,11 @@ class Designer(QtWidgets.QMainWindow):
         self.generator.generate()
 
     def set_field_of_view(self, field_of_view, axis, source=None):
+        if axis >= self.generator.numDimensions():
+            warning(f'Attempting to set {field_of_view} fov on axis {axis} for {self.generator.trajectoryType()} '
+                    'trajectory')
+            return
+
         if source == 'spin':
             field_of_view = self.field_of_view_spin_boxes[axis].value()
 
@@ -96,24 +110,27 @@ class Designer(QtWidgets.QMainWindow):
                 if element.value() != field_of_view:
                     element.setValue(field_of_view)
                 element.blockSignals(False)
-        
-        self.generator.set_axis_field_of_view(field_of_view, axes)
-        
+            # TODO Debug crash
+            # self.generator.setFieldOfView(field_of_view / 10, axis)
 
     def set_readout_duration(self, readout_duration):
         if readout_duration is None:
             readout_duration = self.ui.readoutDurationSpinBox.value() / self.READOUT_DURATION_SPIN_BOX_SCALE
         self.ui.readoutDurationSlider.setValue(readout_duration * self.READOUT_DURATION_SLIDER_SCALE)
         self.ui.readoutDurationSpinBox.setValue(readout_duration * self.READOUT_DURATION_SPIN_BOX_SCALE)
-        self.generator.set_readout_duration(readout_duration)
+        self.generator.setReadoutDuration(readout_duration)
 
     def set_trajectory_type(self, trajectory_type):
-        if isinstance(trajectory_type, int):
-            trajectory_type = list(TrajectoryType)[trajectory_type]
+        if isinstance(trajectory_type, str):
+            trajectory_type = name_to_trajectory_type(trajectory_type)
         self.generator.trajectory_type = trajectory_type
 
         if trajectory_type == TrajectoryType.SPIRAL:
             self.link_xy = True
+
+    def _generate(self):
+        self.generator.generate()
+        self.update_plots(self.generator.trajectory())
 
     def update_plots(self, trajectory):
         readout_index = self.ui.readoutSlider.value()

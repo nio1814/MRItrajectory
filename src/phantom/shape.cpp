@@ -115,7 +115,12 @@ float Shape::intensity()
 
 int Shape::dimensions()
 {
-	return m_principalAxes.size();
+  return m_principalAxes.size();
+}
+
+Shape::Type Shape::type() const
+{
+  return m_type;
 }
 
 void Shape::relativePosition(const float* position, float* positionRelative)

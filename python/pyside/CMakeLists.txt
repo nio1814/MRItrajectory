@@ -152,12 +152,17 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 if(NOT WIN32)
-  target_compile_options(${PROJECT_NAME} PRIVATE
-    -Wno-deprecated-copy
+  set(WARNING_OPTONS
     -Wno-missing-field-initializers
     -Wno-unused-parameter
-    -Wno-cast-function-type
   )
+  if(NOT APPLE)
+    list(APPEND WARNING_OPTONS
+      -Wno-deprecated-copy
+      -Wno-cast-function-type
+    )
+  endif(NOT APPLE)
+  target_compile_options(${PROJECT_NAME} PRIVATE ${WARNING_OPTONS})
 endif(NOT WIN32)
 
 if(WIN32)

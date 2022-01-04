@@ -24,6 +24,12 @@ public:
   void setTrajectoryType(TrajectoryType type);
   void setFieldOfView(double* fov, int numDims);
   void setFieldOfView(std::vector<float> fov);
+  /*!
+   * \brief Set the field of view for an individual axis.
+   * \param extent  The extent along the specified dimension [cm].
+   * \param axis  The dimension to set the field of view for.
+   */
+  void setFieldOfView(const float extent, const int axis);
   std::vector<float> fieldOfView();
   float maxFieldOfView();
   float maxFieldOfViewXY();

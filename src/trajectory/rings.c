@@ -75,7 +75,10 @@ int generateRingGradients(struct VariableDensity* variableDensity, float fieldOf
   float kypre;
   int useGDEPIN = 0;
   int Nrep0;
-  float *kdep, *gdep0, *sdep, *tdep;
+  float *kdep;
+  float *gdep0 = NULL;
+  float *sdep;
+  float *tdep;
 
   int n;
 
@@ -170,7 +173,7 @@ kypre = -(maxValue(kringy, *numReadoutPoints) + minValue(kringy,*numReadoutPoint
 % Target area
 Ktgt = kxpre + i*kypre;
 % Prewinder*/
-  int numDephasePointsInitial;
+  int numDephasePointsInitial = 0;
 if( useGDEPIN ); /* generate gdep0 based on input gdepIN
      scale gdepx to provide kxpre,
     adepx  = GMR*Tw*sum( real(gdepIN) );

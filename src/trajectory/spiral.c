@@ -434,7 +434,7 @@ struct StackOfSpirals* generateStackOfSpirals(struct VariableDensity *variableDe
   int imageSizeZ;
   adjustSpatialResolution(fieldOfViewZ, &imageSizeZ, &spatialResolutionZ);
 
-  struct PhaseEncoder* phaseEncoder;
+  struct PhaseEncoder* phaseEncoder = NULL;
   if(balance)
     phaseEncoder = newPhaseEncoder(fieldOfViewZ, spatialResolutionZ, 1, 1, 0, spirals->numReadoutPoints, samplingInterval, maxGradientAmplitude, maxSlewRate);
 
