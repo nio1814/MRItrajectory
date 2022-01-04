@@ -160,9 +160,19 @@ if(NOT WIN32)
   )
 endif(NOT WIN32)
 
+if(WIN32)
+  set(MODULE_EXTENSION ".pyd")
+  set_target_properties(
+    ${PROJECT_NAME} PROPERTIES
+    SUFFIX ${MODULE_EXTENSION}
+  )
+else(WIN32)
+  set(MODULE_EXTENSION ${PYTHON_EXTENSION_SUFFIX})
+endif(WIN32)
+    
 set_target_properties(
   ${PROJECT_NAME} PROPERTIES
-  OUTPUT_NAME "${MODULE}${PYTHON_EXTENSION_SUFFIX}"
+  OUTPUT_NAME ${MODULE}
   PREFIX ""
 )
 
