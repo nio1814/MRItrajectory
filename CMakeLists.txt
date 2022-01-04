@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10.2)
 PROJECT(mritrajectory)
 
 option(ENABLE_PYTHON "Compile python module" ON)
+option(ENABLE_CUDA "Compile CUDA components" OFF)
 
 set(CMAKE_MODULE_PATH
 	${CMAKE_MODULE_PATH}
@@ -35,3 +36,4 @@ add_subdirectory(trajectory)
 if(ENABLE_PYTHON)
   add_subdirectory(python)
 endif(ENABLE_PYTHON)
+

@@ -15,7 +15,7 @@ if(PySide2_FOUND)
   message(STATUS "shiboken include ${SHIBOKEN_INCLUDE_DIR}")
 else(PySide2_FOUND)
   execute_process(
-    COMMAND python -c "import PySide2; print(PySide2.__path__[0])"
+    COMMAND ${Python3_EXECUTABLE} -c "import PySide2; print(PySide2.__path__[0])"
     OUTPUT_VARIABLE PYSIDE2_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -169,7 +169,7 @@ if(WIN32)
 else(WIN32)
   set(MODULE_EXTENSION ${PYTHON_EXTENSION_SUFFIX})
 endif(WIN32)
-    
+
 set_target_properties(
   ${PROJECT_NAME} PROPERTIES
   OUTPUT_NAME ${MODULE}
