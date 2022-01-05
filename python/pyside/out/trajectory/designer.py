@@ -110,8 +110,7 @@ class Designer(QtWidgets.QMainWindow):
                 if element.value() != field_of_view:
                     element.setValue(field_of_view)
                 element.blockSignals(False)
-            # TODO Debug crash
-            # self.generator.setFieldOfView(field_of_view / 10, axis)
+            self.generator.setAxisFieldOfView(field_of_view / 10, axis)
 
     def set_readout_duration(self, readout_duration):
         if readout_duration is None:
@@ -135,8 +134,8 @@ class Designer(QtWidgets.QMainWindow):
     def update_plots(self, trajectory):
         readout_index = self.ui.readoutSlider.value()
         self.gradients_plot.clear()
-        data = trajectory['gradients'][readout_index]
-        time = 1e3 * trajectory['sampling_interval'] * np.arange(data.shape[-1])
+        data = trajectory.gradient_waveforms()[readout_index]
+        time = 1e3 * trajectory.samplingInterval * np.arange(data.shape[-1])
         for axis, gradient in enumerate(data):
             curve = self.gradients_plot.plot(x=time, y=gradient)
             color = [255] * 3

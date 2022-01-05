@@ -131,6 +131,7 @@ add_custom_target(
 
 add_library(${PROJECT_NAME} MODULE ${CLASSES_WRAPPED}
   ${CMAKE_SOURCE_DIR}/src/trajectory/trajectorygenerator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/numpy.cpp
 )
 
 add_dependencies(${PROJECT_NAME} wrapcmri)

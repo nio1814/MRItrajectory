@@ -48,7 +48,7 @@ void TrajectoryGenerator::setFieldOfView(std::vector<float> fov)
     m_fieldOfView[n] = fov[n];
 }
 
-void TrajectoryGenerator::setFieldOfView(const float extent, const int axis)
+void TrajectoryGenerator::setAxisFieldOfView(const float extent, const int axis)
 {
   m_fieldOfView[axis] = extent;
 }

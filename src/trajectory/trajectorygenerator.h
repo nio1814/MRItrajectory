@@ -29,7 +29,7 @@ public:
    * \param extent  The extent along the specified dimension [cm].
    * \param axis  The dimension to set the field of view for.
    */
-  void setFieldOfView(const float extent, const int axis);
+  void setAxisFieldOfView(const float extent, const int axis);
   std::vector<float> fieldOfView();
   float maxFieldOfView();
   float maxFieldOfViewXY();

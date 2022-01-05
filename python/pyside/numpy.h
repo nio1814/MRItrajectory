@@ -5,6 +5,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
+#include <vector>
 
 /*!
  * \brief Set up code for using the NumPy API.
@@ -18,5 +19,7 @@ inline void* initializeNumpy()
 
   return NULL;
 }
+
+PyObject* mapNumpyArray(void *data, std::vector<npy_intp> dimensions);
 
 #endif // NUMPY_H

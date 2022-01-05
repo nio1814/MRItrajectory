@@ -28,6 +28,26 @@
         %PYARG_0 = PyArray_NewFromDescr(&amp;PyArray_Type, PyArray_DescrFromType(NPY_FLOAT32), 3, dimensions.data(), NULL, %CPPSELF.kSpaceCoordinates, NPY_ARRAY_WRITEABLE, NULL);
       </inject-code>
     </add-function>
+    <add-function signature="gradient_waveforms()" return-type="PyObject*">
+      <extra-includes>
+        <include location="global" file-name="numpy.h"/>
+      </extra-includes>
+      <inject-code>
+        initializeNumpy();
+
+        QVector&lt;npy_intp&gt; dimensions = {%CPPSELF.numWaveformPoints, %CPPSELF.numDimensions, %CPPSELF.numReadouts};
+        QVector&lt;npy_intp&gt; strides = {};
+        npy_intp stride = 1;
+        for (const npy_intp dimension : dimensions) {
+          strides.append(stride);
+          stride *= dimension;
+        }
+
+        std::reverse(std::begin(dimensions), std::end(dimensions));
+        %PYARG_0 = PyArray_NewFromDescr(&amp;PyArray_Type, PyArray_DescrFromType(NPY_FLOAT32), 3, dimensions.data(), NULL, %CPPSELF.gradientWaveforms, NPY_ARRAY_WRITEABLE, NULL);
+        <!-- %PYARG_0 = mapNumpyArray(%CPPSELF.gradientWaveforms, {%CPPSELF.numWaveformPoints, %CPPSELF.numDimensions, %CPPSELF.numReadouts}); -->
+      </inject-code>
+    </add-function>
     <add-function signature="spatial_resolution()" return-type="std::vector&lt;float&gt;">
       <inject-code>
         std::vector&lt;float&gt; spatialResolution(%CPPSELF.spatialResolution, %CPPSELF.spatialResolution + %CPPSELF.numDimensions);
