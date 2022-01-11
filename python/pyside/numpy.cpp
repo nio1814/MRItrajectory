@@ -1,5 +1,7 @@
 #include "numpy.h"
 
+#include <algorithm>
+
 
 PyObject* mapNumpyArray(void *data, std::vector<npy_intp> dimensions)
 {

@@ -86,6 +86,9 @@ class Designer(QtWidgets.QMainWindow):
             self.field_of_view_spin_boxes[axis].setMaximum(field_of_view_max)
             self.set_field_of_view(280, axis)
 
+        self.ui.readoutSlider.valueChanged.connect(self.update_plots)
+        self.ui.readoutSlider.valueChanged.connect(self.ui.readoutSpinBox.setValue)
+
         self.set_trajectory_type(TrajectoryType.SPIRAL)
         self.set_readout_duration(4e-3)
         self.generator.generate()
@@ -129,13 +132,20 @@ class Designer(QtWidgets.QMainWindow):
 
     def _generate(self):
         self.generator.generate()
-        self.update_plots(self.generator.trajectory())
+        self.ui.readoutSlider.setMaximum(self._trajectory().numReadouts - 1)
+        self.update_plots()
 
-    def update_plots(self, trajectory):
+    def _trajectory(self):
+        return self.generator.trajectory()
+
+    def update_plots(self):
+        if not self._trajectory():
+            return
+
         readout_index = self.ui.readoutSlider.value()
         self.gradients_plot.clear()
-        data = trajectory.gradient_waveforms()[readout_index]
-        time = 1e3 * trajectory.samplingInterval * np.arange(data.shape[-1])
+        data = self._trajectory().gradient_waveforms()[readout_index]
+        time = 1e3 * self._trajectory().samplingInterval * np.arange(data.shape[-1])
         for axis, gradient in enumerate(data):
             curve = self.gradients_plot.plot(x=time, y=gradient)
             color = [255] * 3
