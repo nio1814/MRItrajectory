@@ -73,6 +73,12 @@
         %PYARG_0 = %CONVERTTOPYTHON[std::vector&lt;float&gt;](fieldOfView);
       </inject-code>
     </add-function>
+    <add-function signature="waveform_duration" return-type="float">
+      <inject-code>
+        const float duration = %CPPSELF.numWaveformPoints * %CPPSELF.samplingInterval;
+        %PYARG_0 = %CONVERTTOPYTHON[float](duration);
+      </inject-code>
+    </add-function>
   </object-type>
   <enum-type name="TrajectoryType" />
 </typesystem>

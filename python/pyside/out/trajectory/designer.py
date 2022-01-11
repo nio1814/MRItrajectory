@@ -133,6 +133,7 @@ class Designer(QtWidgets.QMainWindow):
     def _generate(self):
         self.generator.generate()
         self.ui.readoutSlider.setMaximum(self._trajectory().numReadouts - 1)
+        self.gradients_plot.setXRange(0, self._trajectory().waveform_duration() * 1e3)
         self.update_plots()
 
     def _trajectory(self):
