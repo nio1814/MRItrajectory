@@ -125,7 +125,8 @@ class Designer(QtWidgets.QMainWindow):
     def set_trajectory_type(self, trajectory_type):
         if isinstance(trajectory_type, str):
             trajectory_type = name_to_trajectory_type(trajectory_type)
-        self.generator.trajectory_type = trajectory_type
+        self.generator.setTrajectoryType(trajectory_type)
+        self.ui.trajectoryComboBox.setCurrentText(TRAJECTORY_NAMES[trajectory_type])
 
         if trajectory_type == TrajectoryType.SPIRAL:
             self.link_xy = True
@@ -133,6 +134,7 @@ class Designer(QtWidgets.QMainWindow):
     def _generate(self):
         self.generator.generate()
         self.ui.readoutSlider.setMaximum(self._trajectory().numReadouts - 1)
+        self.ui.readoutSpinBox.setMaximum(self._trajectory().numReadouts - 1)
         self.gradients_plot.setXRange(0, self._trajectory().waveform_duration() * 1e3)
         self.update_plots()
 
